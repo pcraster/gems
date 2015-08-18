@@ -1,0 +1,14 @@
+
+	#start projection.map#
+	#
+	# The projection keyword specifies the projection in which the original
+	# data is stored. In the virtual globe all model outputs are converted 
+	# to pseudo-mercator projection automatically.
+	#
+	# Setting the epsg here means its not required anymore in the MAP meta-
+	# data section.
+	#
+    PROJECTION
+        "init=epsg:3857"
+    END
+    #end projection.map#

@@ -1,0 +1,79 @@
+#start layers.map#
+{% for layer in model.reporting %}
+    #
+    # ===============================================
+    # Layer: {{layer}}
+	#
+    # -----------------------------------------------
+
+    LAYER
+        STATUS ON
+        NAME "tileindex_{{layer}}"
+        TYPE POLYGON
+        METADATA
+            "wfs_title"         "Tileindex for layer {{layer}}"
+            "wfs_srs"           "EPSG:4326" 
+            "wfs_enable_request" "*"
+            "gml_include_items" "all" ## Optional (serves all attributes for layer)
+            "gml_featureid"     "ID" ## REQUIRED
+            #"wms_timeextent" "2014-01-01 00:00:00/2014-01-01 03:00:00"
+            #"wms_timeitem" "timestamp"
+            #"wms_timedefault" "2014-01-01 03:00:00"
+        END
+        VALIDATION
+            'default_configkey' 'd426718ab405d9958c03b6b6c6063f13'
+            'configkey' '^[0-9a-f]{32}$'
+        END
+        CONNECTION "dbname=digitalearth user=koko password= host="
+        CONNECTIONTYPE postgis
+        DATA "geom_web_mercator from map using srid=3857"
+        FILTER (config_key='%configkey%' and attribute='{{layer}}')
+    END
+    LAYER
+        NAME "{{layer}}"
+        METADATA
+            "wcs_label"           "{{layer}}"
+            "wcs_description"     "Description for layer {{layer}}"
+            "wcs_name"            "{{layer}}"
+            "wcs_abstract"        "More information for layer {{layer}}"
+            "wcs_title"           "Title for layer {{layer}}"
+            "wcs_rangeset_name"   "Range 1"
+            "wcs_rangeset_label"  "My Label"
+            "wcs_rangeset_nullvalue" "-32768" 
+            "wcs_srs"                   "epsg:3857"
+            "ows_extent"                ""
+            "wcs_resolution"            "100 100"
+            "wcs_bandcount"             "1"
+            "wcs_formats"               "Float32"
+            "wcs_nativeformat"          "Float32"
+            "wcs_enable_request"           "*"
+
+            "wms_title" "Title for WMS layer..."
+            "wms_srs"   "EPSG:3857" 
+            #"wms_timeextent" "{{model.mapserver_config_params['wms_timeextent']}}"
+            "wms_timeextent" "1970-01-01T00:00:00/2099-12-31T00:00:00"
+            "wms_timeitem" "timestamp"
+            "wms_timedefault" "{{model.mapserver_config_params['wms_timedefault']}}"
+        END
+        TYPE RASTER
+        STATUS ON
+        TILEINDEX "tileindex_{{layer}}"
+        TILEITEM "filename"
+
+        #
+        # Styles
+        #
+        {{ model.styles[layer] }}
+        #
+        # End Styles
+        #
+
+        PROJECTION
+            "init=epsg:3857"
+        END
+    END
+	# ===============================================
+
+
+{% endfor %}
+#end layer.map#

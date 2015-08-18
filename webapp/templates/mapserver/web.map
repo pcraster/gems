@@ -1,0 +1,41 @@
+    #start web.map#
+    WEB
+        IMAGEPATH "/ms4w/tmp/ms_tmp/"
+        IMAGEURL "/ms_tmp/"
+        METADATA 
+            #
+            # WCS Web Coverage Service
+            #
+            "wcs_label"           "WCS Demo Server"
+            "wcs_description"     "Some text description of the service"
+            "wcs_onlineresource"  "http://localhost/cgi-bin/mapserv?"
+            "wcs_fees"            "none"
+            "wcs_accessconstraints"    "none"
+            "wcs_keywordlist"          "wcs,test"
+            "wcs_metadatalink_type"    "TC211"
+            "wcs_metadatalink_format"  "text/plain"
+            "wcs_metadatalink_href"    "http://someurl.com"
+            "wcs_address"              "124 Gilmour Street"
+            "wcs_city"                 "Ottawa"
+            "wcs_stateorprovince"      "ON"
+            "wcs_postcode"             "90210"
+            "wcs_country"              "Canada"
+            "wcs_contactelectronicmailaddress" "blah@blah"
+            "wcs_contactperson"            "me"
+            "wcs_contactorganization"      "unemployed"
+            "wcs_contactposition"          "manager"
+            "wcs_contactvoicetelephone"    "613-555-1234"
+            "wcs_contactfacimiletelephone" "613-555-1235"
+            "wcs_service_onlineresource"   "http://localhost/cgi-bin/mapserv?"
+            "wcs_enable_request"           "*"
+
+            #
+            # WMS Web Map Service
+            #
+            "wms_title" "WMS service for model {{model.name}}"
+            "wms_onlineresource" "http://localhost/cgi-bin/mapserv?"
+            "wms_enable_request" "*"
+
+        END
+    END
+    #end web.map#

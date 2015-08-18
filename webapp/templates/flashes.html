@@ -1,0 +1,25 @@
+<!--flashes.html-->
+{% with messages = get_flashed_messages(with_categories=true) %}
+  {% if messages %}
+	<div class="container-fluid" style="padding-top:17px;background-color:#F5F5F5;border-bottom:1px solid #ddd;">
+		<ul class="list-group">
+		{% for category,message in messages %}
+			<li class="list-group-item {% if category=="debug" %}debug-item{% endif %}">
+				{% if category == "error" %}
+					<span style="color:red"><i class="fa fa-times-circle"></i> {{message|safe}}</span>
+				{% elif category == "info" %}
+					<span style="color:darkblue"><i class="fa fa-info-circle"></i></span> {{message|safe}}
+				{% elif category == "ok" %}
+					<span style="color:green"><i class="fa fa-check-circle"></i></span> {{message|safe}}
+				{% elif category == "debug" %}
+					<span style="color:orange"><i class="fa fa-minus-circle"></i></span> {{message|safe}}
+				{% else %}
+					<span style="color:black"><i class="fa fa-dot-circle-o"></i></span> {{message|safe}}
+				{% endif %}
+			</li>
+		{% endfor %}
+    	</ul>
+    </div>
+  {% endif %}
+{% endwith %}
+<!--/flashes.html-->

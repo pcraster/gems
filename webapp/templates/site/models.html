@@ -1,0 +1,14 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+	<h2>List of models</h2>
+	<p>
+		Choose your poison:
+	</p>
+	<ul>
+	{% for model in models %}
+		<li><a href="{{url_for('modeller.show_modeller',model_name=model.name)}}">{{model.name}}</a>
+	{% endfor %}
+	</ul>
+{% endblock %}

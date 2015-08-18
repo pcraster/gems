@@ -1,0 +1,126 @@
+{% extends "base.html" %}
+
+{% block headjs %}
+	<script src="/static/lib/codemirror/codemirror-compressed.js"></script>
+{% endblock %}
+
+{% block headcss %}
+	<link href="/static/lib/codemirror/codemirror.css" rel="stylesheet">
+{% endblock %}
+
+{% block editor %}
+<!--
+<div class="container-fluid">
+<div class="row">
+<div class="col-md-12 col-sm-12">
+-->
+<div style="background-color:#fff;top:51px;position:fixed;border-bottom:1px solid #ddd;width:100%">
+      <ul class="nav navbar-nav" id="navbar-secondary">
+        <li class="active"><a href="editor"><i class="fa fa-pencil"></i> Code Editor</span></a></li>
+        <li><a href="parameters"><i class="fa fa-wrench"></i> Parameter Form</a></li>
+      </ul>
+</div>
+  <!-- Nav tabs 
+  <ul class="nav nav-tabs" role="tablist" style="margin-top:10px;">
+    <li role="presentation" class="active"><a href="#tab-code-editor" aria-controls="home" role="tab" data-toggle="tab"><i class="fa fa-pencil"></i> Code Editor</a></li>
+    <li role="presentation"><a href="#profile" aria-controls="profile" role="tab" data-toggle="tab"> Parameter Form Schema</a></li>
+  </ul>-->
+
+  <!-- Tab panes -->
+		<div id="editor">
+			<form id="codeform">
+				<textarea name="code" id="ta" name="ta" style="height:auto;">{{model.code|safe}}</textarea>
+			</form>
+		</div>
+
+<!--
+</div>
+</div>
+</div>
+-->
+
+
+	<style type="text/css">
+		.CodeMirror {
+			border: 1px solid #eee;
+			border:none;
+			width: 100%;
+			font-size:0.85em;
+		}
+		ul.nav li a.disabled:hover,
+		ul.nav li a.disabled {
+		    color: #888;
+		}
+		div#editor {
+			width:100%;
+			position:fixed;
+			top:102px;
+		}
+	</style>
+	<script>
+
+
+	</script>
+{% endblock %}
+
+{% block footjs %}
+	<script>
+		$(window).bind('keydown', function(event) {
+			if (event.ctrlKey || event.metaKey) {
+				switch (String.fromCharCode(event.which).toLowerCase()) {
+					case 's':
+						event.preventDefault();
+						saveChanges()
+						break;
+				}
+			}
+		});
+
+		function saveChanges(){
+			$.ajax({
+				url: '/api/v1/model/{{model.name}}',
+				type: 'POST',
+				data: {
+					'code':editor.getValue()
+				},
+				success: function(data) {
+					alert("Code saved!")
+				},
+				error: function() {
+					alert("An error occurred while saving your code.")
+				}
+			});
+
+			return false;
+		}
+
+		$(document).ready(function(){
+			$("nav").addClass("navbar-fixed-top")
+
+			$("ul#navbar-secondary").append('<li><a href="#" id="menu-savechanges"><i class="fa fa-check"></i> Save Changes</a></li>')
+		
+			$("a#menu-savechanges").click(function(evt){
+				evt.preventDefault()
+				saveChanges()
+				$(this).blur()
+			})
+
+
+		window.editor = CodeMirror.fromTextArea(document.getElementById("ta"),{
+		        mode: {
+					name: "python",
+					version: 3,
+					singleLineStringErrors: false},
+					lineNumbers: true,
+					smartIndent: false,
+					indentUnit: 4,
+					matchBrackets: true,
+					viewportMargin: Infinity
+		    	}
+		    );
+
+		});
+
+		
+	</script>
+{% endblock %}

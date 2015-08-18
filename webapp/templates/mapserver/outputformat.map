@@ -1,0 +1,45 @@
+
+	#start outputformat.map#
+    OUTPUTFORMAT
+        NAME "Float32"
+        DRIVER "GDAL/GTiff"
+        MIMETYPE "image/tiff"
+        IMAGEMODE FLOAT32
+        EXTENSION "tif"
+        FORMATOPTION "COMPRESS=DEFLATE"
+    END
+    OUTPUTFORMAT
+        NAME "Int16"
+        DRIVER "GDAL/GTiff"
+        MIMETYPE "image/tiff"
+        IMAGEMODE "INT16"
+        EXTENSION "tif"
+        FORMATOPTION "COMPRESS=DEFLATE"
+    END
+    OUTPUTFORMAT
+        NAME "Byte"
+        DRIVER "GDAL/GTiff"
+        MIMETYPE "image/tiff"
+        IMAGEMODE "BYTE"
+        EXTENSION "tif"
+        FORMATOPTION "COMPRESS=DEFLATE"
+    END
+    OUTPUTFORMAT
+        NAME "png8"
+        DRIVER AGG/PNG8
+        MIMETYPE "image/png; mode=8bit"
+        IMAGEMODE RGB
+        EXTENSION "png"
+        FORMATOPTION "QUANTIZE_FORCE=on"
+        FORMATOPTION "QUANTIZE_COLORS=256"
+        FORMATOPTION "GAMMA=0.75"
+    END
+    OUTPUTFORMAT
+        NAME "jpeg"
+        DRIVER AGG/JPEG
+        MIMETYPE "image/jpeg"
+        IMAGEMODE RGB
+        EXTENSION "jpg"
+        FORMATOPTION "GAMMA=0.75"
+    END
+    #end outputformat.map#

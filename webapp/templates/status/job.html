@@ -1,0 +1,52 @@
+{% extends "base.html" %}
+
+{% block content %}
+<!--<h2>Job overview</h2>-->
+
+&nbsp;
+<div class="panel panel-default" style="padding-bottom:0">
+	<div class="panel-heading">
+		<strong>Job log {{job.shortkey}}</strong>
+	</div>
+
+		<table class="table"><!--
+		<thead>
+			<tr><th>Name</th><th>Description</th><th>Resolution</th></tr>
+		</thead>-->
+		<tbody>
+			<tr>
+				<td style="padding-left:15px;">Submitted</td>
+				<td>Job</td>
+				<td>Configuration</td>
+				<td>Job Chunks</td>
+			</tr>
+			<tr>
+				<td style="padding-left:15px;">
+					{{job.shortdate}}
+				</td>
+				<td><i class="fa fa-fw fa-sitemap"></i> <code><a href="/api/v1/job/{{job.uuid}}"> {{job.shortkey}}</a></code></td>
+				<td><i class="fa fa-fw fa-wrench"></i> <code><a href="/api/v1/config/{{job.modelconfiguration.key}}">{{job.modelconfiguration.shortkey}}</a></code></td>
+				<td>
+				{% for c in job.jobchunks %}
+					<p style="margin-bottom:3px;">
+					{% if c.status_code == 0 %}
+					<i class="fa fa-circle" style="color:#cccccc;"></i>
+					{% endif %}
+					{% if c.status_code == -1 %}
+					<i class="fa fa-circle" style="color:#e50000;"></i>
+					{% endif %}
+					{% if c.status_code == 1 %}
+					<i class="fa fa-circle" style="color:#15b01a;"></i>
+					{% endif %}
+					<code>{{loop.index}}/{{job.jobchunks_total}}</code><i class="fa fa-fw fa-angle-right" style="color:#666;"></i><code><a href="{{url_for('api.jobchunk_get_log',jobchunk_uuid=c.uuid)}}">{{c.shortkey}}</a></code> <!--<a href="{{url_for('api.jobchunk_get_log',jobchunk_uuid=c.uuid)}}">View run log</a> or <a href="{{url_for('api.jobchunk_get_package',jobchunk_uuid=c.uuid)}}">download maps package</a>.-->
+					</p>
+				{% endfor %}
+				</td>
+		
+			</tr>
+			</tbody>
+		</table>
+
+</div>
+
+{% endblock %}

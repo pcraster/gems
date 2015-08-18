@@ -1,0 +1,112 @@
+{% extends "base.html" %}
+
+
+{% block headcss %}
+
+	<style>
+		a:hover {
+			text-decoration:none;
+		}
+	</style>
+{% endblock %}
+
+{% block content %}
+
+	<div class="row" style="margin-top:15px;">
+	
+
+			{% for columns in models | slice(2) -%}
+				<div class="col-md-4 col-sm-4">
+				{%- for model in columns -%}
+					<div class="panel panel-default">
+					  <div class="panel-heading" style="background-color:#eee;">
+					  	<h3 style="margin:0">
+					  		<a href="{{url_for('modeller.show_modeller',model_name=model.name)}}">
+					  			{{model.name}}
+					  		</a>
+							<i class="fa fa-globe" style="color:#ccc;float:right;"></i>
+					  	</h3>
+					  </div>
+					  <div class="panel-heading" style="padding-top:4px;padding-bottom:4px;">
+					  	
+							<a href="{{url_for('modeller.show_modeller',model_name=model.name)}}"><i class="fa fa-cog" style="color:#888;"></i> load modeller</a> 
+							{% if current_user.is_admin %}
+							or <a href="{{url_for('admin.model_editor',model_name=model.name)}}"><i class="fa fa-pencil" style="color:#888;"></i> edit code</a>
+							{% endif %}
+
+							<p style="float:right;color:#888;">
+								<i class="fa fa-user" style="color:#888;"></i> {{model.meta["author"]}}
+							</p>
+
+					  </div>
+					  <div class="panel-body">
+
+					    <p>{{model.meta["abstract"]}}</p>
+					    
+					    <p>
+					    Starts at: {{model.start}}
+					    </p>
+							
+						<p style="color:#aaa;font-size:12px;margin:0;">
+							{% for tag in model.meta["tags"] %}
+								<i class="fa fa-tag"></i> {{tag}}&nbsp;
+							{% endfor %}
+						</p>
+					  </div>
+					</div>
+			
+	    		{%- endfor -%}
+			</div>
+				<!--endcol-->
+			{% endfor %}
+
+	
+		<div class="col-md-4 col-sm-4">
+			<div class="panel panel-default">
+				{% if current_user.is_admin %}
+					<div class="panel-heading" style="background-color:#fff;">
+						<strong>System administration</strong>
+					</div>
+					<div class="panel-body">
+						Logged in as a system administrator.
+					</div>
+				
+					<div class="list-group">
+						<a href="/admin/datasets" class="list-group-item"><i class="fa fa-fw fa-database"></i> Datasets</a></a>
+						<a href="/admin/discretization" class="list-group-item"><i class="fa fa-fw fa-pie-chart"></i> Domain Discretization</a>
+						<a href="/admin/processing" class="list-group-item"><i class="fa fa-fw fa-gear"></i> Processing</a>
+						<a href="/admin/models" class="list-group-item"><i class="fa fa-fw fa-leaf"></i> Environmental Models</a>
+					</div>
+				{% else %}
+					<div class="panel-body">
+						You are logged in as a demo user. This means you have 
+						limited priveleges and your model runs may take a little 
+						longer than normal.
+					</div>
+				{% endif %}
+
+			</div>
+
+			{% if current_user.is_admin %}
+			<div class="panel panel-default">
+				<div class="panel-heading" style="background-color:#fff;">
+				<strong>System status</strong>
+				</div>
+				<div class="panel-body">
+				<p>
+				There are currently <strong>{{stats['current-workers']}} clients</strong> listening to the job queue.
+				</p>
+				<p>
+					System info about disk space in use, number of connected workers, running processes, available datasets, etc.
+				</p>
+				</div>
+			</div>
+			{% endif %}
+		</div>
+
+
+	</div>
+
+
+
+{% endblock %}

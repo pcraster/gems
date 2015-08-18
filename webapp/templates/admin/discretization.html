@@ -1,0 +1,83 @@
+{% extends "base.html" %}
+
+{% block content %}
+<h2 style="text-align:center;">Domain Discretization</h2>
+
+<div class="panel panel-default" style="padding-bottom:0">
+	<div class="panel-heading">
+		<strong>Discretizations</strong>
+	</div>
+	
+		<table class="table"><!--
+		<thead>
+			<tr><th>Name</th><th>Description</th><th>Resolution</th></tr>
+		</thead>-->
+		<tbody>
+			<tr>
+				<td style="padding-left:15px;">Name</td>
+				<td>Description</td>
+				<td class="text-center">Processing Units</td>
+				<td class="text-center">Seeded</td>
+				<td class="text-center">Resolution</td>
+				<td></td>
+			</tr>
+		{% for d in discretizations %}
+			<tr>
+				<td style="padding-left:15px;vertical-align:middle;"><code>{{d.name}}</code> (id={{d.id}}) </td>
+				<td style="vertical-align:middle;">{{d.description}}</td>
+				<td style="vertical-align:middle;" class="text-center">{{d.num_of_chunks}}</td>
+				<td style="vertical-align:middle;" class="text-center">-</td>
+				<td style="vertical-align:middle;" class="text-center">{{d.cellsize}}</td>
+				<td style="vertical-align:middle;" class="text-center">
+					<a href="/admin/discretization/" class="btn btn-sm btn-default">View details <i class="fa fa-long-arrow-right"></i></a>
+				</td>
+			</tr>
+		{% endfor %}
+		</tbody>
+		</table>
+	
+</div>
+<div class="panel panel-default">
+	<div class="panel-heading">
+		<strong>Create a new discretization</strong>
+	</div>
+	<div class="panel-body">
+		<form role="form" action="" method="post" enctype="multipart/form-data">
+			<div class="form-group">
+				<label for="chunkscheme-name">Name (only alphanumeric and underscore characters)</label>
+				<input type="name" name="name" class="form-control" id="chunkscheme-name" placeholder="Enter a name">
+			</div>
+			<div class="form-group">
+				<label for="chunkscheme-name">Description</label>
+				<input type="name" name="description" class="form-control" id="chunkscheme-description" placeholder="Enter a short description">
+			</div>
+			<div class="form-group">
+				<label for="chunkscheme-resolution">Spatial resolution (m)</label>
+				<input type="name" name="cellsize" class="form-control" id="chunkscheme-resolution" placeholder="Eg. 100">
+			</div>
+			<div class="form-group">
+				<label for="chunkscheme-name">Zipped shapefile</label>
+				<input type="file" name="shapefile">
+			</div>
+			<p>
+			Please note the following before creating new discretizations:
+			<ul>
+				<li>Any non-alphanumeric or underscore characters are automatically removed from chunkscheme names. The name is also lowercased automatically.</li>
+				<li>Only polygon features are converted to discrete units/chunks on which models are run.</li>
+				<li>Try to use simple polygons with as few points as possible. This makes all the operations that need to be done on the units much easier.</li>
+				<li>Choose the spatial resolution wisely! If you have chunks the size of France and use a spatial resolution of 100m things are not going to perform well.</li>
+				<li>You cannot modify a discretization afterwards, so choose the parameters carefully!</li>
+			</ul>
+			</p>
+			<button type="submit" class="btn btn-primary btn-sm">Create new domain discretization <i class="fa fa-long-arrow-right"></i></button>
+		</form>
+	</div>
+</div>
+
+
+<!--
+<pre>
+{{completed}}
+</pre>
+-->
+{% endblock %}

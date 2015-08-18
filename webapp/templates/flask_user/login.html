@@ -1,0 +1,121 @@
+{% extends 'flask_user/public_base.html' %}
+
+{% block headcss %}
+    <style>
+    body {
+        background-image:url("/static/gfx/login-splash-1.jpg");
+        background-repeat:no-repeat;
+        background-position:center center;
+        background-size: 100%;
+    }
+    div#login-panel {
+        background-color: rgba(255, 255, 255, 0.65);
+        padding: 15px 10px;
+        border-radius:10px;
+        display: table-cell;
+        vertical-align: middle;
+    }
+    input.form-control {
+        border:1px solid #777;
+    }
+    </style>
+{% endblock %}
+
+{% block footjs %}
+    <script>
+        function fixPanel() {
+            var offset=(($(window).height()-100-$("div#login-panel").height()-33)/2)
+            $("div#login-panel").css("margin-top",offset+"px")
+        }
+        $(document).on("ready",fixPanel);
+        $(window).on("resize",fixPanel);
+        $(document).on("ready",function(){
+            $("input#username").focus();
+        })
+    </script>
+{% endblock %}
+
+
+{% block content %}
+{% from "flask_user/_macros.html" import render_field, render_checkbox_field, render_submit_field %}
+
+
+    <div class="row" style="height:100%">
+      <div class="col-md-4 col-md-offset-4 col-sm-6 col-sm-offset-3" id="login-panel">
+
+
+    <!--<h1>{%trans%}Sign in{%endtrans%}</h1>-->
+    <!--<h2>Explore</h2>-->
+    <p>
+        <strong>Please sign in to use the virtual globe</strong>
+    </p>
+    <p>
+        If you do not have an account and would like to take it for a 
+        spin anyway, use "demo" as both a login and password.
+    </p>
+
+    <form action="" method="POST" class="form" role="form">
+        {{ form.hidden_tag() }}
+
+        {# Username or Email field #}
+        {% set field = form.username if user_manager.enable_username else form.email %}
+        <div class="form-group {% if field.errors %}has-error{% endif %}">
+            {# Label on left, "New here? Register." on right #}
+            <div class="row">
+                <div class="col-xs-6">
+                    <label for="{{ field.id }}" class="control-label">{{ field.label.text }}</label>
+                </div>
+                <div class="col-xs-6 text-right">
+                    {% if user_manager.enable_register and not user_manager.require_invitation %}
+                        <a href="{{ url_for('user.register') }}" tabindex='190'>
+                            {%trans%}New here? Register.{%endtrans%}</a>
+                    {% endif %}
+                </div>
+            </div>
+            {{ field(class_='form-control', tabindex=110) }}
+            {% if field.errors %}
+                {% for e in field.errors %}
+                    <p class="help-block">{{ e }}</p>
+                {% endfor %}
+            {% endif %}
+        </div>
+
+        {# Password field #}
+        {% set field = form.password %}
+        <div class="form-group {% if field.errors %}has-error{% endif %}">
+            {# Label on left, "Forgot your Password?" on right #}
+            <div class="row">
+                <div class="col-xs-6">
+                    <label for="{{ field.id }}" class="control-label">{{ field.label.text }}</label>
+                </div>
+                <div class="col-xs-6 text-right">
+                    {% if user_manager.enable_forgot_password %}
+                        <a href="{{ url_for('user.forgot_password') }}" tabindex='195'>
+                            {%trans%}Forgot your Password?{%endtrans%}</a>
+                    {% endif %}
+                </div>
+            </div>
+            {{ field(class_='form-control', tabindex=120) }}
+            {% if field.errors %}
+                {% for e in field.errors %}
+                    <p class="help-block">{{ e }}</p>
+                {% endfor %}
+            {% endif %}
+        </div>
+        <!--
+        {# Remember me #}
+        {{ render_checkbox_field(login_form.remember_me, tabindex=130) }}
+        -->
+        <p style="float:right;padding-top:6px;margin:0px;">
+        <small>Image credits <a style="color:#444;text-decoration:underline;" href="http://earthobservatory.nasa.gov/IOTD/view.php?id=85632&eocn=home&eoci=iotd_grid" target="_blank">NASA Earth Observatory</small>
+        </p>
+        
+        {# Submit button #}
+        {{ render_submit_field(form.submit, tabindex=180) }}
+
+    </form>
+
+    </div>
+    </div>
+
+{% endblock %}

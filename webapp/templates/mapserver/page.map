@@ -1,0 +1,44 @@
+###########################################################
+#
+# Automatically generated mapserver configuration file.
+#
+# This file provides configures mapserver so that it can 
+# provide WMS and WCS services for data created using 
+# virtual globe models. Each model has one configuration 
+# file.
+#
+# The output attributes of the model which are reported in
+# the model script are considered to be layers, each with
+# a name and a timestamp. 
+#
+# IMPORTANT! Mapserver MUST be supplied with a CONFIGKEY
+# variable which is replaced at runtime. This CONFIGKEY
+# is used to select the right model configuration for which
+# maps have been created.
+#
+# Model name:       {{model.name}}
+# Model version:    {{model.identifier}}
+#
+# Reported output attributes:{% for layer in model.reporting %}
+#   - {{layer}}{% endfor %}
+#
+###########################################################
+
+#start page.map#
+MAP
+    NAME "sample"
+    STATUS ON
+    SIZE 600 400
+    EXTENT -180 -90 180 90
+    UNITS DD
+    #SHAPEPATH "../data"
+    IMAGECOLOR 255 255 255
+    MAXSIZE 4096
+    #FONTSET "../etc/fonts.txt"
+
+    {% include "mapserver/web.map" %}
+    {% include "mapserver/projection.map" %}
+    {% include "mapserver/layers.map" %}
+    {% include "mapserver/outputformat.map" %}
+END
+#end page.map#

@@ -1,0 +1,161 @@
+{% extends "base.html" %}
+
+{% block headjs %}
+	<script src="/static/lib/codemirror/codemirror-compressed.js"></script>
+{% endblock %}
+
+{% block headcss %}
+	<link href="/static/lib/codemirror/codemirror.css" rel="stylesheet">
+{% endblock %}
+
+{% block editor %}
+<!--
+<div class="container-fluid">
+<div class="row">
+<div class="col-md-12 col-sm-12">
+-->
+<div style="background-color:#fff;top:51px;position:fixed;border-bottom:1px solid #ddd;width:100%">
+      <ul class="nav navbar-nav" id="navbar-secondary">
+        <li class="active"><a href="editor"><i class="fa fa-pencil"></i> Code Editor</span></a></li>
+        <li><a href="parameters"><i class="fa fa-wrench"></i> Parameter Form</a></li>
+      </ul>
+</div>
+  <!-- Nav tabs 
+  <ul class="nav nav-tabs" role="tablist" style="margin-top:10px;">
+    <li role="presentation" class="active"><a href="#tab-code-editor" aria-controls="home" role="tab" data-toggle="tab"><i class="fa fa-pencil"></i> Code Editor</a></li>
+    <li role="presentation"><a href="#profile" aria-controls="profile" role="tab" data-toggle="tab"> Parameter Form Schema</a></li>
+  </ul>-->
+
+  <!-- Tab panes -->
+	<div style="margin-top:102px;display:block;width:50%;float:left;border-right:1px solid #ddd;">
+		<p style="background-color:#f5f5f5;padding:5px;text-align:left;border-bottom:1px solid #ddd;margin:0px;padding-left:14px;padding-right:14px;">
+		A. Default Model Parameters (only editable in code editor)
+		</p>
+    	<textarea name="parameter-values" id="parameter-values" readonly="true">{{model.parameters_as_pretty_json|safe}}</textarea>
+		<p style="background-color:#f5f5f5;padding:5px;text-align:left;border-bottom:1px solid #ddd;margin:0px;padding-left:14px;padding-right:14px;">
+		B. Schema <a href="#" style="float:right;text-decoration:none;"><i class="fa fa-magic"></i>
+ Load a default schema from the model parameters</a>
+		</p>
+    	<textarea name="parameter-schema" id="parameter-schema">{{model.parameters_as_json_schema|safe}}</textarea>
+		<p style="background-color:#f5f5f5;padding:5px;text-align:left;border-bottom:1px solid #ddd;margin:0px;padding-left:14px;padding-right:14px;">
+		C. Form Definition <a href="#" style="float:right;text-decoration:none;"><i class="fa fa-magic"></i>
+ Load a default form definition</a>
+		</p>
+    	<textarea name="parameter-form" id="parameter-form"></textarea>
+	</div>
+	<div style="margin-top:102px;display:block;width:50%;float:left;">
+		
+		<p style="background-color:#f5f5f5;padding:5px;text-align:center;font-weight:bold;border-bottom:1px solid #ddd;margin:0px;">
+		Parameter Form Preview
+		</p>
+
+	</div>
+
+
+	<style type="text/css">
+		.CodeMirror {
+			border-bottom: 1px solid #ddd;
+			width: 100%;
+			font-size:0.85em;
+			height:150px;
+		}
+		ul.nav li a.disabled:hover,
+		ul.nav li a.disabled {
+		    color: #888;
+		}
+		div#editor {
+			width:100%;
+		}
+	</style>
+	<script>
+
+
+	</script>
+{% endblock %}
+
+{% block footjs %}
+	<script>
+		$(window).bind('keydown', function(event) {
+			if (event.ctrlKey || event.metaKey) {
+				switch (String.fromCharCode(event.which).toLowerCase()) {
+					case 's':
+						event.preventDefault();
+						saveChanges()
+						break;
+				}
+			}
+		});
+
+		function saveChanges(){
+			$.ajax({
+				url: '/api/v1/model/{{model.name}}',
+				type: 'POST',
+				data: {
+					'code':editor.getValue()
+				},
+				success: function(data) {
+					alert("Code saved!")
+				},
+				error: function() {
+					alert("An error occurred while saving your code.")
+				}
+			});
+
+			return false;
+		}
+
+		$(document).ready(function(){
+			$("nav").addClass("navbar-fixed-top")
+
+			$("ul#navbar-secondary").append('<li><a href="#" id="menu-savechanges"><i class="fa fa-check"></i> Save Changes</a></li>')
+		
+			$("a#menu-savechanges").click(function(evt){
+				evt.preventDefault()
+				saveChanges()
+				$(this).blur()
+			})
+
+
+
+		var paramValues = CodeMirror.fromTextArea(document.getElementById("parameter-values"),{
+		        mode: {name:"javascript"},
+				lineNumbers: true,
+				smartIndent: false,
+				indentUnit: 4,
+				matchBrackets: true,
+				viewportMargin: Infinity,
+				readOnly: true
+	    	}
+	    )
+		var paramSchema = CodeMirror.fromTextArea(document.getElementById("parameter-schema"),{
+		        mode: {
+					name: "javascript",
+					json:true
+				},
+				lineNumbers: true,
+				smartIndent: false,
+				indentUnit: 4,
+				matchBrackets: true,
+				viewportMargin: Infinity,
+				readOnly: false
+	    	}
+	    )
+		var paramForm = CodeMirror.fromTextArea(document.getElementById("parameter-form"),{
+		        mode: {
+					name: "javascript",
+					json:true
+				},
+				lineNumbers: true,
+				smartIndent: false,
+				indentUnit: 4,
+				matchBrackets: true,
+				viewportMargin: Infinity,
+				readOnly: false
+	    	}
+	    )
+
+		});
+
+		
+	</script>
+{% endblock %}

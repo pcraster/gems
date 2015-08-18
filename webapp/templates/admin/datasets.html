@@ -1,0 +1,44 @@
+{% extends "base.html" %}
+
+{% block content %}
+<h2>Datasets</h2>
+
+
+
+{% for w in wcs %}
+<div class="panel panel-default" style="padding-bottom:0">
+	<div class="panel-heading">
+		<strong>Web Coverage Service</strong>
+		<span class="pull-right"><code>{{w.url}}</code></span>
+	</div>
+	
+		<table class="table"><!--
+		<thead>
+			<tr><th>Name</th><th>Description</th><th>Resolution</th></tr>
+		</thead>-->
+		<tbody>
+			<tr>
+				<td style="padding-left:15px;">Name</td>
+				<td>Title</td>
+				<!--<td>Bounding Box</td>-->
+			</tr>
+			{% for d in w.layers %}
+			<tr>
+				<td style="padding-left:15px;vertical-align:middle;"><code>{{d.name}}</code></td>
+				<td style="vertical-align:middle;">{{d.data.title|safe}}</td>
+				<!--<td style="vertical-align:middle;"><code>{{d.data.boundingBoxWGS84}}</code></td>-->
+
+				<!--
+				<td style="vertical-align:middle;" class="text-center">
+					<a href="/modeller/" class="btn btn-sm btn-primary">Load modeller <i class="fa fa-paper-plane"></i></a>
+					<a href="/admin/models/" class="btn btn-sm btn-primary">Code editor <i class="fa fa-wrench"></i></a>
+				</td>-->
+			</tr>
+		{% endfor %}
+		</tbody>
+		</table>
+	
+</div>
+{% endfor %}
+
+{% endblock %}

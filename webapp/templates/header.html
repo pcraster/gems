@@ -1,0 +1,32 @@
+<nav class="navbar navbar-default navbar-inverse " role="navigation">
+  <div class="container-fluid">
+      <ul class="nav navbar-nav navbar-left" id="navbar-main">
+      {% if request.path != '/' and request.path != '/user/login' %}
+        <li><a href="/"><i class="fa fa-arrow-left"></i> Home</a></li>
+      {% endif %}
+
+      </ul>
+        <!--
+        {% if not current_user.is_anonymous() %}
+        <p class="navbar-text navbar-left" style="color:#ddd;">Logged in as <strong>{{current_user.username}}</strong></p>
+        {% endif %}
+        -->
+    <ul class="nav navbar-nav navbar-right">
+      <li><a href="{{url_for('site.datasources')}}" style="color:#888;"><i class="fa fa-caret-right"></i> Data sources and attribution</a></li>
+      <li><a href="{{url_for('site.about')}}" style="color:#888;"><i class="fa fa-caret-right"></i> About this project</a></li>
+      <li><a href="{{url_for('status.home')}}" style="color:#888;"><i class="fa fa-caret-right"></i> System status</a></li>
+
+      {% if not current_user.is_anonymous() %}
+        <li><a href="{{url_for('user.logout')}}" style="color:#888;"><i class="fa fa-caret-right"></i> Log out</a></li>
+      {% endif %}
+    </ul>
+    <!--
+      	<p class="navbar-text pull-right" style="color:#aaa;">
+      		<i class="fa fa-user"></i> 
+      		Hello, Administrator
+      	</p> 
+    -->
+
+    <!--</div>--><!-- /.navbar-collapse -->
+  </div><!-- /.container-fluid -->
+</nav>

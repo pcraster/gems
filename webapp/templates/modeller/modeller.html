@@ -1,0 +1,310 @@
+{% extends "base.html" %}
+
+{% block footjs %}
+	<script src="/static/lib/jquery/jquery-debounce.js"></script>
+	
+
+	<script src="/static/lib/leaflet/leaflet.js"></script>
+	<script src="/static/lib/leaflet-plugins/grid/L.Grid.js"></script>
+
+
+	<script src="/static/lib/chart/Chart.min.js"></script>
+
+	<script src="/static/lib/flot/jquery.flot.min.js"></script>
+	<script src="/static/lib/flot/jquery.flot.time.min.js"></script>
+	<script src="/static/lib/flot/jquery.flot.selection.min.js"></script>
+
+	<script src="/static/lib/gem/modeller.js"></script>
+	<script src="/static/lib/gem/modeller-legends.js"></script>
+	<script src="/static/lib/gem/modeller-charts.js"></script>
+	<script src="/static/lib/gem/geohash.js"></script>
+	<script src="/static/lib/gem/util.js"></script>
+
+	<script type="text/javascript">
+		$('form#jobform').on("submit",function(evt){
+			evt.preventDefault();
+			$(this).find("input[name='bbox']").val(map.getBounds().toBBoxString())
+			$.ajax({
+				type: "POST",
+				url:$(this).attr('action'),
+				data:$(this).serialize(),
+				success: function(data) {
+					console.log("SUCCESS!")
+				},
+				error: function(){
+					console.log("FAILURE!!")
+				}
+			})
+		})
+
+		$('#menu-editcode').tooltip({
+			html:true,
+			placement:'auto',
+			title:'Activate the inline editing console.<br/><span style="color:#666;"><nobr> Ctrl&ndash;M</nobr></span>',
+			trigger:'hover focus',
+			viewport:{ selector: 'body', padding: 7 }
+		})
+
+		$('#menu-moreoptions').tooltip({
+			html:true,
+			placement:'auto',
+			title:'More options.',
+			trigger:'hover focus',
+			viewport:{ selector: 'body', padding: 7 }
+		})
+
+		$('#menu-editparameters').tooltip({
+			html:true,
+			placement:'auto',
+			title:'Edit the input or calibration parameters for this model.<br/><span style="color:#666;"><nobr> Ctrl&ndash;E</nobr></span>',
+			trigger:'hover focus',
+			viewport:{ selector: 'body', padding: 7 }
+		})
+
+		$(document).ready(function() { 
+			M.init({
+				model:'{{model.name}}',
+				mapfile:'{{model.mapserver_mapfile}}',
+				mapserver:'{{url_for("data.mapserver")}}',
+				api:'{{url_for("api.home")}}',
+				default_config_key:'{{model.default_config_key}}',
+				hash:'{{model.default_modeller_hash}}',
+				geonames_api_username:'{{config["GEONAMES_API_USERNAME"]}}'
+			}); 
+		});
+
+	</script>
+{% endblock %}
+
+{% block header %}
+
+<nav class="navbar navbar-default navbar-inverse " role="navigation">
+  <div id="waiting">&nbsp;</div>
+  <div class="container-fluid">
+      <ul class="nav navbar-nav navbar-left">
+        <li><a href="{{ url_for('site.home')}}" id="menu-switch"><i class="fa fa-arrow-left"></i> Home</a></li>
+        <li><a href="#" id="menu-run"><i class="fa fa-play"></i> Run</a></li>
+        <li><a href="#" id="menu-editparameters"><i class="fa fa-wrench"></i> <u>E</u>dit parameters</a></li>
+        <!--<li><a href="#" id="menu-editcode"><i class="fa fa-pencil"></i> Edit code</a></li>-->
+        <li><a href="#" id="menu-findplaces"><i class="fa fa-search"></i> <u>F</u>ind places</a></li>
+        <!--<li><a href="/admin/datasets"><i class="fa fa-star"></i> Favorites</a></li>-->
+      </ul>
+		<ul class="nav navbar-nav navbar-right">
+			<li><a href="{{url_for('site.datasources')}}" style="color:#888;"><i class="fa fa-caret-right"></i> Data sources and attribution</a></li>
+			<li><a href="{{url_for('site.about')}}" style="color:#888;"><i class="fa fa-caret-right"></i> About this project</a></li>
+			<li><a href="{{url_for('status.home')}}" style="color:#888;" target="_blank"><i class="fa fa-caret-right"></i> System status</a></li>
+        {% if not current_user.is_anonymous() %}
+      <li><a href="{{url_for('user.logout')}}" style="color:#888;"><i class="fa fa-caret-right"></i> Log out</a></li>
+        {% endif %}
+		</ul>
+
+
+
+    <!--</div>--><!-- /.navbar-collapse -->
+  </div><!-- /.container-fluid -->
+</nav>
+
+
+{% endblock %}
+
+{% block headjs %}
+
+{% endblock %}
+
+{% block headcss %}
+	<link rel="stylesheet" href="/static/lib/leaflet/leaflet.css" />
+	<link rel="stylesheet" href="/static/lib/leaflet-plugins/grid/L.Grid.css" />
+	<link rel="stylesheet" href="/static/lib/gem/modeller.css" />
+	<style>
+	.leaflet-grid-label .lng {
+margin-left: 8px;
+-webkit-transform: rotate(90deg);
+transform: rotate(90deg);
+}
+.leaflet-grid-label .lat,
+.leaflet-grid-label .lng {
+text-shadow: none;
+opacity:0.8;
+}
+
+</style>
+{% endblock %}
+
+{% block modeller %}
+	
+	{% if modelconfiguration %}
+		loading with configuration
+	{% endif %}
+
+		<div id="map"></div>
+
+		<div id="panel" class="map-control map-control-left" style="margin:0px;padding:0px;">
+			<div id="panel-notifications" class="map-panel">
+				<h2> Please wait while your model is run</h2>
+
+				<div class="progress" style="margin-top:10px;height:7px;border-radius:2px;margin-bottom:7px;">
+				  <div class="progress-bar" role="progressbar" aria-valuenow="60" aria-valuemin="0" aria-valuemax="100" style="width: 0%;">
+				    <span class="sr-only"></span>
+				  </div>
+				</div>
+
+				<p style="margin-bottom:0px;" id="notification-message"></p>
+				<div id="notification" style="display:none;"></div>
+			</div>
+			<div id="panel-params" class="map-panel">
+				<h2>Model parameters</h2>
+				<form id="model-parameters" action="/api/v1/job" method="POST" class="form-horizontal">
+					<div class="form-group" style="display:none;">
+						<label for="model_name" class="col-sm-7 control-label">Model Identifier</label>
+						<div class="col-sm-5">
+							<input type="text" class="form-control input-sm" name="model_name" style="width:100%;text-align:center;" value="{{model.name}}">
+						</div>
+					</div>
+					{% for parameter in model.parameters %}
+					<div class="form-group">
+						<label for="{{parameter}}" class="col-sm-7 control-label">{{parameter}}</label>
+						<div class="col-sm-5">
+							<input type="text" class="form-control input-sm" id="{{parameter}}" placeholder="" name="{{parameter}}" style="width:100%;text-align:center;" value="###">
+							<!-- 
+							The '###' values will be replaced when a JavaScript loads the 
+							actual parameters corresponding to the model configuration.
+							-->
+						</div>
+					</div>
+					{% endfor %}
+				</form>
+				<!--<a href="#" id="close-params-link"><i class="fa fa-chevron-left"></i></a>-->
+			</div>
+			<div id="panel-findplaces" class="map-panel">
+            	<h2>Find places</h2>
+                <p>
+                Enter a location such as a city or country nearby where you would like to run your model.
+                </p>
+                <form id="find-places" action="http://api.geonames.org/searchJSON" method="GET">
+                	<input type="hidden" name="username" value="kokoalberti" />
+                	<input type="hidden" name="maxRows" value="6" />
+
+					<div class="form-group" style="margin-bottom:10px;">
+						<input type="text" class="form-control input-sm" placeholder="Eg: Monaco, Mont Blanc, Bonaire, Cagliari, Malta, etc." name="q" style="width:100%;text-align:left;">
+					</div>
+					<div id="results-list" style="margin:0" class="list-group"></div>
+		        </form>
+	        </div>
+		</div>
+
+		<div id="panel-attributes" class="map-control map-control-right" style="width:350px;">
+			<h2>Output layers</h2>
+			<p style="color:#888;">Hint: Hold down SPACE to quickly show and hide the data layer.</p>
+			<form class="form-horizontal" id="attribute-form">
+				{% for attribute in model.reporting %}
+				<div class="radio">
+					<label><input type="radio" name="selected-attribute" id="selected-attribute-{{attribute}}" value="{{attribute}}">{{model.reporting[attribute]['title']}} <!--[{{model.reporting[attribute]['units']}}]--></label>
+				</div>
+				{% endfor %}
+
+			</form>		
+			<div id="panel-timesteps">
+				<hr/>
+				<strong>Timesteps</strong><br/>
+				<p id="panel-timesteps-label" style="margin-top:0px;margin-bottom:4px;font-weight:bold;"></p>
+				<select id="selected-timestamp" size="3" style="width:100%;">
+					<!--
+					{% for timestamp in model.timestamp_list %}
+					<option value="{{timestamp}}">{{loop.index}}. {{timestamp}}</option>
+					{% endfor %}
+					-->
+				</select>
+			</div>
+
+			<hr/>
+			<div id="panel-legend">
+				{% for attribute in model.reporting %}
+				<div id="legend-item-{{attribute}}" class="legend-item" data-legend-for-attribute="{{attribute}}">
+					<h2>
+					{{ model.reporting[attribute].title }} [{{model.reporting[attribute].units}}]
+					</h2>
+
+					{% if model.reporting[attribute].symbolizer.type == "categorical" or model.reporting[attribute].symbolizer.type == "classified" %}
+						<ul class="legend-items">
+						{% for label in model.reporting[attribute].symbolizer.labels %}
+							<li>
+								<div class="legend-item-colorsample" style="background-color:{{model.reporting[attribute].symbolizer.colors[loop.index0]}}"></div>
+								{{label}}
+							</li>
+						{% endfor %}
+						</ul>
+					{% endif %}
+					{% if model.reporting[attribute].symbolizer.type == "pseudocolor" %}
+						<div style="display:block;position:relative;width:100%;height:30px;">
+							<ul class="ticks" id="ticks-for-{{attribute}}">
+								<li style="left:0%">0</li>
+								<li style="left:20%">100</li>
+								<li style="left:40%">200</li>
+								<li style="left:50%">300</li>
+								<li style="left:80%">400</li>
+								<li style="left:100%">500</li>
+							</ul>
+						</div>
+						<canvas 
+							id="legend-item-{{attribute}}-colormap" 
+							width="255" 
+							height="28" 
+							class="legend-colormap" 
+							data-layer="{{attribute}}" 
+							data-color-stops="{% for color in model.reporting[attribute].symbolizer.colors %}{{color}} {% endfor %}" 
+							data-min="{{ model.reporting[attribute].symbolizer['values'][0] }}" 
+							data-max="{{ model.reporting[attribute].symbolizer['values'][1] }}" 
+							data-ticks="{{model.reporting[attribute].symbolizer['ticks']}}" 
+							data-ticks-ul="ticks-for-{{attribute}}">
+						</canvas>
+					{% endif %}
+					<p>{{ model.reporting[attribute].info }}</p>
+				</div>
+				{% endfor %}
+				
+
+				<div id="legend-chart-timeseries" class="legend-chart" data-chart-id="timeseries">
+					<hr/>
+					<h2>Timeseries</h2>
+					<p style="color:#888;">Hint: Click a location on the map to view the timeseries data.</p>
+					<div id="legend-chart-timeseries-placeholder" class="legend-chart-placeholder">
+					</div>
+					<!--
+					<canvas id="legend-chart-timeseries-canvas" width="255" height="160" style="width:255px;height:160px;border:1px solid black;"></canvas>
+					-->
+				</div>
+
+				<!--
+				{% for attribute in model.reporting %}
+				{% if model.reporting[attribute].symbolizer.type == "pseudocolor" %}
+
+				<div id="legend-chart-{{attribute}}" class="legend-chart">
+					<hr/>
+					<h2>Timeseries: {{ model.reporting[attribute].title }}</h2>
+					<p style="color:#888;">Hint: Click a location on the map to view the timeseries data.</p>
+					<canvas 
+						id="legend-chart-canvas-{{attribute}}"
+						data-min="{{ model.reporting[attribute].symbolizer['values'][0] }}" 
+						data-max="{{ model.reporting[attribute].symbolizer['values'][1] }}" 
+						data-ticks="{{model.reporting[attribute].symbolizer['ticks']}}"
+						data-labels="1,2,3,4,5,6,7,8,9,10,11,12" 
+						data-timesteps="{{model.time['timesteps']}}" 
+						data-for-attribute="{{attribute}}" 
+						width="255" 
+						height="160">
+					</canvas>
+				</div>
+				{% endif %}
+				{% endfor %}
+				-->
+
+			</div>
+			<!--
+			<hr/>
+			<p>
+			Developed by the <a target="_blank" href="http://pcraster.geo.uu.nl">PCRaster</a> team at Utrecht University. Find out about <a target="_blank" href="http://virtualglobe.geo.uu.nl/datasets/">data sources and attribution</a> or <a href="#">developing your own models</a>.
+			</p>
+			-->
+		</div>
+	
+{% endblock %}
