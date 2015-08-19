@@ -15,6 +15,9 @@ SQLALCHEMY_DATABASE_URI=    'postgresql:///digitalearth'
 MAPSERVER_URL=              'http://127.0.0.1/cgi-bin/mapserv'
 GEONAMES_API_USERNAME=      'kokoalberti'
 MAPDELIVERY_URL=            ''
+CODE=                       '/home/koko/code/digitalearth/'
+
+
 
 #
 # Application Configuration Settings

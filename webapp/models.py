@@ -356,14 +356,14 @@ class Model(db.Model):
     Describes a pcraster-python model which can be run in this environment.
 
     Todo:
-        - Saving the model creates a new instance with a new model id etc.
-        
-        
         - add owner
         - add 'public' boolean
         - add 'nocache' boolean
         - add last updated
         - use a getter and setter for the code attribute
+        - use templates for generating mapserver config
+        
+        - clean up and refactor code
 
     """
     __tablename__='model'
@@ -388,6 +388,14 @@ class Model(db.Model):
     
     def __repr__(self):
         return "<Model: name=%s id=%d>"%(self.name,self.id)
+        
+    def __init__(self,name="",code=""):
+        name=re.sub(r'\W+',' ',name).lower()
+        name="_".join(map(str,name.split()))
+        self.name=name
+        self.version=1
+        self.updatecode(code)        
+        
     @property
     def as_dict(self):
         return {
@@ -487,12 +495,13 @@ class Model(db.Model):
         
 
         sys.path.append(self.filedir)
-        sys.path.append("/home/koko/code/digitalearth/framework/")
+        
+        code_path = os.path.join(current_app.config["CODE"],"processing")
+        
+        sys.path.append(code_path)
         
         module=__import__("modelcode")
         model=getattr(module,"Model")
-        
-
 
         m=model()
         
@@ -520,7 +529,7 @@ class Model(db.Model):
         del sys.modules["modelcode"]
         del m
         sys.path.remove(self.filedir)
-        sys.path.remove("/home/koko/code/digitalearth/framework/")
+        sys.path.remove(code_path)
         
     def update_mapserver_template(self):
         """
@@ -587,7 +596,7 @@ class Model(db.Model):
         modelparams.update({
             '__start__':            self.start.isoformat(),
             '__timesteps__':        self.time['timesteps'],
-            '__discretization__':   "world_onedegree_100m",
+            '__discretization__':   "newzealand_subcatchments_100m",
             '__model__':            self.name,
             '__version__':          self.version
         })
@@ -739,15 +748,6 @@ class Model(db.Model):
         return styles
         
 
-    def __init__(self,name="",code=""):
-        name=re.sub(r'\W+',' ',name).lower()
-        name="_".join(map(str,name.split()))
-        self.name=name
-        self.version=1
-        self.updatecode(code)
-
-
-        #self.code=code
 
 class ModelConfiguration(db.Model):
     """
