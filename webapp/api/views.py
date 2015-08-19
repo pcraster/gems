@@ -66,7 +66,7 @@ def job():
     PCRaster framework to start up the actual model run.
     
     """
-    max_chunks = 4
+    max_chunks = 1
     model = Model.query.filter_by(name=request.values.get("model_name")).first()
     if model is None:
         raise Exception("Model could not be found.")        

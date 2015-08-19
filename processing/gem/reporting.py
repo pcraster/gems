@@ -14,7 +14,7 @@ from osgeo import gdalconst
 
 
 sys.path.append("/home/koko/pcraster/pcraster-4.0.2_x86-64/python")
-from pcraster import readmap, pcr2numpy
+from pcraster import readmap, pcr2numpy, ifthenelse
 
 logger=logging.getLogger()
 
@@ -33,7 +33,13 @@ class ModelReporter(object):
         """
         if identifier in self.reporting:
             logger.debug("Reporting map '%s' (datatype:%s timestep:%d timestamp:%s timestamplocal:%s)"%(identifier,self.reporting[identifier]["datatype"],self.timestep,self.timestamp,self.timestamplocal))
-            data=pcr2numpy(data,-9999)
+
+            # Crop by the mask. Set all data outside mask to nodata value
+            data = ifthenelse(self._mask, data, -9999)            
+            
+            # Convert to numpy array. The numpy array will be added to stack
+            # of maps, one for each timestep.
+            data = pcr2numpy(data, -9999)
             #
             #Todo: implement some kind of clamp functionality here. if 'clamp' is set to true 
             #      on the symbolizer for this output attribute, set all values

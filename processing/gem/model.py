@@ -25,11 +25,12 @@ tz = tzwhere.tzwhere()
 logger.debug("Loading pcraster and the modelling framework...")
 from pcraster import *
 from pcraster.framework import *
+
 from providers import get_provider_by_name
 from reporting import ModelReporter
 
 
-
+from osgeo import gdal, gdalconst, ogr, osr
 
 #workaround because pcraster also imports max, min, time functions and 
 #thereby overwrites python's builtin ones :/ we use time for general timing
@@ -170,24 +171,63 @@ class GemModel(DynamicModel,ModelReporter):
 
     def setGrid(self,grid):
         """
-        Sets the model grid that this run will be done on. This also sets the
-        pcraster clone map dynamically. This is useful so we don't have to 
-        get a clone map from a wcs server first, convert to map, then run
-        setclone on it. 
+        Sets the model grid that this model will be run on. Several things
+        happen here:
         
-        See docs at: http://pcraster.geo.uu.nl/pcraster/4.1.0/doc/pcraster/changes.html
-        
-        Added a setclone overload taking nrRows, nrCols, cellSize, west, north. No need to pass the name of an existing raster anymore.
+        - Dynamically set the pcraster clone map by calling setclone() with
+          the required rows and columns.
+          
+        - Create an in-memory shapefile with a single feature: the polygon
+          of the particular chunk this model is run for.
+          
+        - Rasterize this in memory shapefile to create a raster mask for
+          this run. This allows model runs in oddly shaped chunks such as 
+          river catchments, provinces, or other shapes which are not 
+          rectanguler. This mask is stored in the self._mask variable. If
+          something goes wrong at this step the mask is set to equal the
+          grid. During reporting the self._mask variable is used to crop
+          any output layers along the mask. It is important that self._mask
+          is always set!
+          
         """
+        self._grid = grid
+        
         logger.debug("Setting the modelling grid on a UTM projection:")
         logger.debug(" - Rows: %d"%(grid['rows']))
         logger.debug(" - Columns: %d"%(grid['cols']))
         logger.debug(" - Bounding box (projected): %s"%(str(grid['bbox'])))
         logger.debug(" - Bounding box (lat-lng): %s"%(str(grid['bounds'])))
-        self._grid=grid
+        logger.debug(" - Geojson mask: %s"%(str(grid['mask'])))
+        
         logger.debug("Setting the pcraster clone map dynamically with the following params:")
-        logger.debug("nrRows=%d nrCols=%d cellSize=%d west=%f north=%f"%(grid["rows"],grid["cols"],grid["cellsize"],1.212,1.223))
+        logger.debug("   nrRows=%d nrCols=%d cellSize=%d west=%f north=%f"%(grid["rows"],grid["cols"],grid["cellsize"],1.212,1.223))
+        
         setclone(grid["rows"],grid["cols"],grid["cellsize"],1.212,1.223)
+        
+        logger.debug("Trying to create the mask for this chunk.")
+        try:
+            drv = ogr.GetDriverByName("ESRI Shapefile")
+            ds = drv.CreateDataSource("/vsimem/temp.shp")
+            layer = ds.CreateLayer("feature_layer", geom_type = ogr.wkbPolygon)    
+            feature = ogr.Feature(layer.GetLayerDefn())
+            feature.SetGeometry(ogr.CreateGeometryFromWkt(str(grid['mask'])))
+            layer.CreateFeature(feature)
+
+            self._mask = gdal.GetDriverByName('MEM').Create('', self._grid['cols'], self._grid['rows'], 1, gdalconst.GDT_Float32)
+            self._mask.SetGeoTransform(self._grid["geotransform"])
+            self._mask.SetProjection(self._grid["projection"])
+            err = gdal.RasterizeLayer(self._mask, (1,), layer, burn_values=(1,), options=["ALL_TOUCHED=TRUE"])
+            if err != 0:
+                raise Exception("Rasterization failed with error code %d"%(err))
+            else:
+                logger.debug("Rasterization of mask succeeded.")
+                mask = self._mask.GetRasterBand(1).ReadAsArray()
+                self._mask = numpy2pcr(Boolean, mask, 0)  
+        except Exception as e:
+            logger.debug("Rasterization of the mask failed! Hint: %s"%(e))
+            self._mask = boolean(1)
+        finally:
+            ds = None
 
     def setTime(self):
         try:

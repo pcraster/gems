@@ -48,6 +48,7 @@ def creatediscretizations():
     creatediscretization("newzealand_onedegree")
     creatediscretization("frankrijk_veldwerkgebied")
     creatediscretization("newzealand_subcatchments")
+    creatediscretization("newzealand_randompolygons")
     
 @manager.command
 def createmodels():

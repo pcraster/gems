@@ -165,9 +165,11 @@ class Chunk(db.Model):
     jobchunks = db.relationship('JobChunk', backref='chunk', lazy='dynamic')
     uuid = db.Column(UUID, index=True)
     geom = db.Column(Geometry(geometry_type='POLYGON', srid=4326))
+    
     def __init__(self,wkt_polygon):
         self.uuid=str(uuid.uuid4())
         self.geom=from_shape(loads(wkt_polygon),srid=4326)
+        
     @property
     def as_grid(self):
         geom=to_shape(self.geom)
@@ -181,6 +183,12 @@ class Chunk(db.Model):
         }
     @property
     def grid(self):
+        """
+        Returns a grid representation of this chunk, including the bounding box,
+        geotransform variables, cellsize, rows, cols, etc. All this information
+        is used to construct a grid and a mask on which the model will be run
+        in the end.
+        """
         geom=to_shape(self.geom)
         return {
             'bounds':geom.bounds,
@@ -194,7 +202,8 @@ class Chunk(db.Model):
             'srid':self.srid,
             'rows':self.rows,
             'cols':self.cols,
-            'projection':self.projection
+            'projection':self.projection,
+            'mask':self.mask.wkt
         }
     @property
     def srid(self):
@@ -231,6 +240,14 @@ class Chunk(db.Model):
         """
         project=partial(pyproj.transform, pyproj.Proj(init="epsg:4326"), pyproj.Proj(init="epsg:%d"%(self.srid)))
         return transform(project,to_shape(self.geom)).bounds
+        
+    @property
+    def mask(self):
+        """
+        Return the chunk polygon in a local projection.
+        """
+        project=partial(pyproj.transform, pyproj.Proj(init="epsg:4326"), pyproj.Proj(init="epsg:%d"%(self.srid)))
+        return transform(project,to_shape(self.geom))
         
     @property
     def rows(self):
@@ -596,7 +613,7 @@ class Model(db.Model):
         modelparams.update({
             '__start__':            self.start.isoformat(),
             '__timesteps__':        self.time['timesteps'],
-            '__discretization__':   "newzealand_subcatchments_100m",
+            '__discretization__':   "newzealand_randompolygons_100m",
             '__model__':            self.name,
             '__version__':          self.version
         })
@@ -1091,7 +1108,7 @@ class JobChunk(db.Model):
     @property
     def pickled(self):
         """
-        Returns a pickled representation of this JobChunk that can be posted
+        Returns a pickled representation of this JobChunk that is posted
         straight into the beanstalk queue for processing by backend workers.
         """
         return cPickle.dumps({
