@@ -29,6 +29,7 @@ def purgedb():
     """
     dropdb()
     createdb()
+    createusers()
     initdb()
     
 @manager.command
@@ -36,9 +37,24 @@ def initdb():
     """
     Initializes the database with default users, chunkschemes, and models.
     """
+    creatediscretizations()
+    
+@manager.command
+def creatediscretizations():
+    """
+    Initializes the database with default users, chunkschemes, and models.
+    """
     creatediscretization("world_onedegree")
     creatediscretization("newzealand_onedegree")
     creatediscretization("frankrijk_veldwerkgebied")
+    creatediscretization("newzealand_subcatchments")
+    
+@manager.command
+def createmodels():
+    createmodel("example")
+    #createmodel("pcrtopo")
+    #createmodel("forecast")
+    #createmodel("globerosion")
 
 @manager.command
 def resetpassword():
@@ -86,6 +102,8 @@ def creatediscretization(name):
     except Exception as e:
         db.session.rollback()
         print "Failed! Hint: %s"%(e)
+    else:
+        print "Discretization created successfully!"
     finally:
         ds = None
 
@@ -94,7 +112,19 @@ def createmodel(name):
     """
     Creates a new model.
     """
-    pass
+    try:
+        filename = os.path.join(os.path.dirname(os.path.abspath(__file__)),"data","models",name,name+".py")
+        with open(filename) as f:
+            print "Creating model '%s'..."%(name)
+            db.session.add(Model(name=name,code=f.read()))
+            db.session.commit()
+    except Exception as e:
+        db.session.rollback()
+        print "Failed! Hint: %s"%(e)
+    else:
+        print "Model created successfully!"
+    finally:
+        pass
 
 @manager.command
 def createuser(name):
