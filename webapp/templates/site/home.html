@@ -13,8 +13,18 @@
 {% block content %}
 
 	<div class="row" style="margin-top:15px;">
-	
-
+		{% if not models %}
+			<div class="col-md-8 col-sm-8">
+				<div class="panel panel-default" style="padding-bottom:0">
+					<div class="panel-heading">
+						<strong>Models</strong>
+					</div>
+					<div class="panel-body">
+						<p>No environmental models found in the system. Create the default models by running <code>./manage.py createmodels</code> using the management script.</p>
+					</div>
+				</div>
+			</div>
+		{% else %}
 			{% for columns in models | slice(2) -%}
 				<div class="col-md-4 col-sm-4">
 				{%- for model in columns -%}
@@ -59,8 +69,7 @@
 			</div>
 				<!--endcol-->
 			{% endfor %}
-
-	
+		{% endif %}
 		<div class="col-md-4 col-sm-4">
 			<div class="panel panel-default">
 				{% if current_user.is_admin %}

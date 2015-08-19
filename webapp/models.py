@@ -68,9 +68,10 @@ class Discretization(db.Model):
     name = db.Column(db.String(512), unique=True, nullable=False, index=True)
     description = db.Column(db.String(1024), unique=False, nullable=True, index=False)
     cellsize = db.Column(db.Integer(), nullable=False, default=100)
+    num_of_chunks = db.Column(db.Integer(), nullable=False)
     buffer_ = db.Column(db.Integer(), nullable=False, default=1000)
-    #coverage = db.Column(Geometry(geometry_type='MULTIPOLYGON', srid=4326))
-    #bounds = db.Column(Geometry(geometry_type='POLYGON', srid=4326))
+    coverage = db.Column(Geometry(geometry_type='MULTIPOLYGON', srid=4326))
+    extent = db.Column(Geometry(geometry_type='POLYGON', srid=4326))
 
     def __repr__(self):
         return "<Discretization: %s>"%(self.name)
@@ -114,26 +115,39 @@ class Discretization(db.Model):
             name = name+"_%dm"%(self.cellsize)
         self.name = name
         
+        num_of_chunks = 0
         for polygon in polygons:
             self.chunks.append(Chunk(wkt_polygon=polygon))
+            num_of_chunks+=1
             
-        chunk_polygons = MultiPolygon(polygons=[loads(wkt) for wkt in polygons])
+        self.num_of_chunks=num_of_chunks
+            
+        chunk_polygons = MultiPolygon(polygons=[loads(wkt).buffer(0.001) for wkt in polygons])
         chunk_union = cascaded_union(chunk_polygons)
+        
+        if chunk_union.geom_type == 'Polygon':
+            # If all the chunks were connected to each other then a Polygon is
+            # is created rather than a MultiPolygon. Our database column needs
+            # a MultiPolygon, so convert it before saving it.
+            chunk_union = MultiPolygon([chunk_union])
+        
         chunk_box = box(*chunk_union.bounds)
-                
+        self.coverage = from_shape(chunk_union, srid=4326)
+        self.extent =  from_shape(chunk_box, srid=4326)
         
-        #flash("Bounds:")
-        #flash(str(mp2.bounds))
-        #
-        #with open("/tmp/merged.wkt","w") as f:
-        #    f.write(mp2.wkt)
-        #print "unioned"
-
-        
-
     @property
-    def num_of_chunks(self):
-        return self.chunks.count()
+    def extent_as_bounds(self):
+        bounds=to_shape(self.extent).bounds
+        return ",".join(map(str,bounds))
+        #return db.session.scalar(ST_AsGeoJSON(self.extent))
+        
+    @property
+    def coverage_as_geojson(self):
+        return json.dumps(json.loads(db.session.scalar(ST_AsGeoJSON(self.coverage))))
+#    @property
+#    def extent_as_json(self):
+#        return db.session.scalar(ST_AsGeoJSON(self.extent))
+        #return json.loads(db.session.scalar(ST_AsGeoJSON(self.extent)))
 
 
 class Chunk(db.Model):
@@ -1073,18 +1087,7 @@ class JobChunk(db.Model):
             'status_message':self.status_message
         }
         
-#    @property
-#    def for_worker(self):
-#        """
-#        Todo: delete, this should be deprecated as .pickled() is now used.
-#        """
-#        _dict=self.as_dict
-#        _dict.update({
-#            'parameters':self.job.modelconfiguration.parameters,
-#            'model':self.job.modelconfiguration.model.name,
-#            'chunk':self.chunk.as_grid
-#        })
-#        return _dict
+
     @property
     def pickled(self):
         """

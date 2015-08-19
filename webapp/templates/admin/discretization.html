@@ -1,42 +1,89 @@
 {% extends "base.html" %}
 
-{% block content %}
-<h2 style="text-align:center;">Domain Discretization</h2>
+{% block headcss %}
+	<link rel="stylesheet" href="/static/lib/leaflet/leaflet.css" />
+	<style>
+		div.panel-map {
+			height:280px;
+			display:block;
+		}
+	</style>
+{% endblock %}
+{% block footjs %}
+	<script src="/static/lib/leaflet/leaflet.js"></script>
+	<script type="text/javascript">
+		$(document).ready(function() { 
+			$("div.panel-map").each(function(){
+				var el=$(this)
+				var bounds=el.data("bounds").split(",").map(parseFloat)
+				console.log(bounds)
+				var map = L.map(el[0].id,{
+					'scrollWheelZoom':true,
+					'zoomControl':false,
+					'minZoom':1,
+					'maxZoom':20,
+					'attributionControl':false,
+				});
+				L.tileLayer('http://otile{s}.mqcdn.com/tiles/1.0.0/map/{z}/{x}/{y}.jpg', {
+					attribution: '',
+					maxZoom: 18,
+					subdomains: '1234'
+				}).addTo(map);
 
-<div class="panel panel-default" style="padding-bottom:0">
-	<div class="panel-heading">
-		<strong>Discretizations</strong>
-	</div>
-	
-		<table class="table"><!--
-		<thead>
-			<tr><th>Name</th><th>Description</th><th>Resolution</th></tr>
-		</thead>-->
-		<tbody>
-			<tr>
-				<td style="padding-left:15px;">Name</td>
-				<td>Description</td>
-				<td class="text-center">Processing Units</td>
-				<td class="text-center">Seeded</td>
-				<td class="text-center">Resolution</td>
-				<td></td>
-			</tr>
-		{% for d in discretizations %}
-			<tr>
-				<td style="padding-left:15px;vertical-align:middle;"><code>{{d.name}}</code> (id={{d.id}}) </td>
-				<td style="vertical-align:middle;">{{d.description}}</td>
-				<td style="vertical-align:middle;" class="text-center">{{d.num_of_chunks}}</td>
-				<td style="vertical-align:middle;" class="text-center">-</td>
-				<td style="vertical-align:middle;" class="text-center">{{d.cellsize}}</td>
-				<td style="vertical-align:middle;" class="text-center">
-					<a href="/admin/discretization/" class="btn btn-sm btn-default">View details <i class="fa fa-long-arrow-right"></i></a>
-				</td>
-			</tr>
+				//map.setView([51.505, -0.09], 13);
+				map.fitBounds([[bounds[1],bounds[0]],[bounds[3],bounds[2]]]);
+
+				//console.log("trying to parse:")
+				//console.log(el.data("coverage"))
+				//coverage_geojson=JSON.parse();
+				L.geoJson(el.data("coverage"),{
+				'style':{
+					"color": "#e50000",
+					"weight": 0,
+					"opacity": 1.0,
+					"fillOpacity": 0.5
+				}
+			}).addTo(map);
+			})
+		});
+	</script>
+{% endblock %}
+
+{% block content %}
+<br/>
+<div class="row">
+	{% if not discretizations %}
+		<div class="panel panel-default" style="padding-bottom:0">
+			<div class="panel-heading">
+				<strong>Discretizations</strong>
+			</div>
+			<div class="panel-body">
+				<p>No discretizations found! You can create the default discretizations by running <code>./manage.py creatediscretizations</code> using the management script.</p>
+			</div>
+		</div>
+	{% else %}
+		{% for columns in discretizations | slice(2) -%}
+			{%- for d in columns -%}
+				<div class="col-md-4 col-sm-4">
+					<div class="panel panel-default" style="padding-bottom:0">
+						<div class="panel-heading">
+							<strong>{{d.name}}</strong>
+							<span style="float:right;"></span>
+						</div>
+						
+						<div class="panel-map" id="map-discretization-{{d.id}}" data-bounds='{{d.extent_as_bounds|safe}}' data-coverage='{{d.coverage_as_geojson|safe}}'></div>
+
+						<div class="panel-body">
+						{{d.num_of_chunks}} chunks at {{d.cellsize}}m resolution
+						</div>
+
+					</div>
+				</div>
+			{%- endfor -%}
 		{% endfor %}
-		</tbody>
-		</table>
-	
+	{% endif %}
 </div>
+
 <div class="panel panel-default">
 	<div class="panel-heading">
 		<strong>Create a new discretization</strong>
@@ -74,10 +121,4 @@
 	</div>
 </div>
 
-
-<!--
-<pre>
-{{completed}}
-</pre>
--->
 {% endblock %}
