@@ -14,7 +14,8 @@ class Model(GemModel):
         'contact':              'kokoalberti@fastmail.nl',
         'abstract':             'This is an example model which shows all the configuration settings for the virtual globe. It is also useful as a starting point for building your own models.',
         'license':              'All Rights Reserved',
-        'tags':					['example','test']
+        'tags':			 ['example','test'],
+        'discretizations':      ['world_onedegree_100m','frankrijk_veldwerkgebied_100m','newzealand_randompolygons_100m']
     }
     parameters={
         #

@@ -2,30 +2,19 @@ from gem.model import *
 
 class Model(GemModel):
     """
-        This is a cellular automata model of a forest fire spread. It 
-        is a forecasting model which predicts the next 3 hours in 10
-        minute timesteps.
-
-        Some additional features:
-
-        - It uses live forecasting data for wind speed and direction
-        - If rain is predicted within the model run time it will 
-          dampen the fire.
-        - Vegetation cover 
-
-        Please not that this is a demo model used for demonstration
-        purposes only.
+    Model description
     """
     meta={
         #
         # Metadata
         #
-        'name':                 'firecast',
+        'name':                 'forecast',
         'author':               'Koko Alberti',
         'contact':              'kokoalberti@fastmail.nl',
-        'abstract':             'Cellular automata forest fire model.',
+        'abstract':             'Cellular automata model which uses GFS forecasts',
         'license':              'All Rights Reserved',
-        'tags':					['demo','fire','forest fire','forecast','cellular automata']
+        'tags':			 ['demo','fire','forest fire','forecast','cellular automata'],
+        'discretizations':      ['world_onedegree_100m','frankrijk_veldwerkgebied_100m','newzealand_randompolygons_100m']
     }
     parameters={
         #

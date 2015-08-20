@@ -11,9 +11,10 @@ class Model(GemModel):
         'name':                 'pcrtopo',
         'author':               'Koko Alberti',
         'contact':              'kokoalberti@fastmail.nl',
-        'abstract':             'Calculates topographic derivates from the SRTM digital elevation model. This model wants to be expanded with other topography based indeces (wetness, automatic geomorphology classifciation, etc).',
+        'abstract':             'Calculates topographic derivates from the SRTM digital elevation model.',
         'license':              'All Rights Reserved',
-        'tags':					['topography','SRTM','slope','aspect']
+        'tags':			 ['topography','SRTM','slope','aspect'],
+        'discretizations':      ['world_onedegree_100m']
     }
     parameters={
         #

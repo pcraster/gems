@@ -16,7 +16,8 @@ class Model(GemModel):
         'contact':              'kokoalberti@fastmail.nl',
         'abstract':             'Estimates monthly soil erosion estimates using a RUSLE in monthly timesteps. Uses global soil, elevation, climate, and vegetation data based on MODIS imagery from 2012.',
         'license':              '',
-        'tags':					['erosion','rusle','land degradation']
+        'tags':                 ['erosion','rusle','land degradation'],
+        'discretizations':      ['world_onedegree_100m','frankrijk_veldwerkgebied_100m','newzealand_randompolygons_100m']
     }
     parameters={
         #
@@ -24,9 +25,9 @@ class Model(GemModel):
         # specified in the web application
         #
         'slopelength':          50.0,
-        'lapserate':			0.2,
-        'test':					10.0,
-        'test2':				4
+        'lapserate':            0.2,
+        'test':                    10.0,
+        'test2':                4
     }
     time={
         'start':                 '2014-01-15T00:00:00',
@@ -52,7 +53,7 @@ class Model(GemModel):
             'http://turbo.geo.uu.nl/cgi-bin/mapserv?MAP=/data/projectdata/globaldata/globaldata.map'        
         ],
         'forecastio':[
-        	'api_key'
+            'api_key'
         ]
     }
     reporting={
@@ -66,28 +67,28 @@ class Model(GemModel):
         'soilloss': {
             'title':        "Monthly soil loss",
             'units':        "t/ha",
-            'info':			"Estimated monthly soil losses in tons per hectare per month.",
-            'datatype':		"Float32",
+            'info':            "Estimated monthly soil losses in tons per hectare per month.",
+            'datatype':        "Float32",
             'symbolizer':{
-                'type':		"pseudocolor",
-                'clamp':	True,
-                'ticks':	5, #ticks only works on pseudocolor symbolizers
-                'colors':	["#008000","#FFFF00","#FF0000"], #["#ff0000","#ffff00","#00ff00","#00ffff","#0000ff","#ff00ff","#ff0000"],
-                'values':	[0.0,5.0],
-                'labels':	[]
+                'type':        "pseudocolor",
+                'clamp':    True,
+                'ticks':    5, #ticks only works on pseudocolor symbolizers
+                'colors':    ["#008000","#FFFF00","#FF0000"], #["#ff0000","#ffff00","#00ff00","#00ffff","#0000ff","#ff00ff","#ff0000"],
+                'values':    [0.0,5.0],
+                'labels':    []
             }
         },
         'soillosstotal': {
             'title':        "Cumulative soil loss test",
             'units':        "t/ha",
-            'info':			"Estimated monthly cumulative soil losses in tons per hectare",
-            'datatype':		"Float32",
+            'info':            "Estimated monthly cumulative soil losses in tons per hectare",
+            'datatype':        "Float32",
             'symbolizer':{
-                'type':		"classified",
-                'clamp':	True,
-                'colors':	["#008000","#FFFF00","#FFA500","#FF0000"], #["#ff0000","#ffff00","#00ff00","#00ffff","#0000ff","#ff00ff","#ff0000"],
-                'values':	[0.0,5.0,10.0,20.0,50.0],
-                'labels':	["Slight","Moderate","High","Severe"]
+                'type':        "classified",
+                'clamp':    True,
+                'colors':    ["#008000","#FFFF00","#FFA500","#FF0000"], #["#ff0000","#ffff00","#00ff00","#00ffff","#0000ff","#ff00ff","#ff0000"],
+                'values':    [0.0,5.0,10.0,20.0,50.0],
+                'labels':    ["Slight","Moderate","High","Severe"]
             }
         },
         'kfactor': {
@@ -97,8 +98,8 @@ class Model(GemModel):
             'datatype':     "Float32",
             'symbolizer':{
                 'type':     "pseudocolor",
-                'ticks':	5, #ticks only works on pseudocolor symbolizers
-                'clamp':	True,
+                'ticks':    5, #ticks only works on pseudocolor symbolizers
+                'clamp':    True,
                 'colors':   ["#006600","#FFCC00","#CC0000"],
                 'values':   [0.0,0.5],
                 'labels':   []
@@ -111,8 +112,8 @@ class Model(GemModel):
             'datatype':     "Float32",
             'symbolizer':{
                 'type':     "pseudocolor",
-                'clamp': 	True,
-                'ticks':	5, #ticks only works on pseudocolor symbolizers
+                'clamp':     True,
+                'ticks':    5, #ticks only works on pseudocolor symbolizers
                 'colors':   ["#006600","#FFCC00","#CC0000"],
                 'values':   [0.0,10.0],
                 'labels':   []
@@ -125,8 +126,8 @@ class Model(GemModel):
             'datatype':     "Float32",
             'symbolizer':{
                 'type':     "pseudocolor",
-                'clamp':	True,
-                'ticks':	5, #ticks only works on pseudocolor symbolizers
+                'clamp':    True,
+                'ticks':    5, #ticks only works on pseudocolor symbolizers
                 'colors':   ["#92DEFC","#2A27E8","#62066A"],
                 'values':   [0.0,4.0],
                 'labels':   []
@@ -139,8 +140,8 @@ class Model(GemModel):
             'datatype':     "Float32",
             'symbolizer':{
                 'type':     "pseudocolor",
-                'clamp':	True,
-                'ticks':	5, #ticks only works on pseudocolor symbolizers
+                'clamp':    True,
+                'ticks':    5, #ticks only works on pseudocolor symbolizers
                 'colors':   ["#006400","#6B8E23","#9ACD32","#FFD700"],
                 'values':   [0.0,1.0],
                 'labels':   []
@@ -194,7 +195,7 @@ class Model(GemModel):
         #
         # To calculate the monthly rainfall erosivity we need the annual 
         # rainfall total as well. So, calculate that first by fetching 
-		# all the monthly rainfall maps here in the initial section of
+        # all the monthly rainfall maps here in the initial section of
         # the model. Once the worldclim maps have been loaded the first 
         # time from the WCS using self.readmap() they should be cached
         # locally.

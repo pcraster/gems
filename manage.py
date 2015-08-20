@@ -53,9 +53,9 @@ def creatediscretizations():
 @manager.command
 def createmodels():
     createmodel("example")
-    #createmodel("pcrtopo")
-    #createmodel("forecast")
-    #createmodel("globerosion")
+    createmodel("pcrtopo")
+    createmodel("forecast")
+    createmodel("globerosion")
 
 @manager.command
 def resetpassword():

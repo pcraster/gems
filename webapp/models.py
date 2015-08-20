@@ -613,7 +613,7 @@ class Model(db.Model):
         modelparams.update({
             '__start__':            self.start.isoformat(),
             '__timesteps__':        self.time['timesteps'],
-            '__discretization__':   "newzealand_randompolygons_100m",
+            '__discretization__':   "frankrijk_veldwerkgebied_100m",
             '__model__':            self.name,
             '__version__':          self.version
         })
