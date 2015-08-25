@@ -41,7 +41,7 @@ from sqlalchemy import func
 from sqlalchemy.dialects.postgresql import UUID, JSON
 
 from shapely.ops import transform, cascaded_union
-from shapely.geometry import box, Polygon, Point, MultiPolygon
+from shapely.geometry import box, mapping, Polygon, Point, MultiPolygon
 from shapely.wkt import loads
 
 from utils import create_configuration_key, parse_model_time
@@ -84,6 +84,16 @@ class Discretization(db.Model):
         - cell size (integer in meters)
         - name
         
+        Todo:
+        Look into other ways of simplifying the coverage. If a large shapefile with
+        very detailed polygons is uploaded it creates a lot of overhead. We solve this
+        now by creating the coverage by doing a cascaded union on the envelopes of 
+        all the individual polygons. This saves a lot of processing, and while the 
+        results are a bit more ugly than neatly unioned polygons with real catchment
+        shapes, it doesnt make much difference in the end when the coverage is just used
+        for showing where the model can be run, and setting the map to this location
+        automatically if no other place was specified.
+        
         """
         if dataset is None:
             raise Exception("Dataset with features cannot be accessed.")
@@ -91,7 +101,17 @@ class Discretization(db.Model):
         layer = dataset.GetLayer(0)
         srs = layer.GetSpatialRef()
         srs.AutoIdentifyEPSG()
-        layer_epsg = int(srs.GetAuthorityCode(None))
+        srs_authority_code = srs.GetAuthorityCode(None)
+        layer_epsg = None
+        
+        if srs_authority_code is None:
+            raise Exception("Could not get epsg code of the shapefile using srs.GetAuthorityCode")
+            
+        try:
+            layer_epsg = int(srs.GetAuthorityCode(None))
+        except:
+            layer_epsg = None
+            
         polygons = []
 
         if layer_epsg != 4326:
@@ -100,9 +120,12 @@ class Discretization(db.Model):
             feature = layer.GetNextFeature()
             while feature:
                 if feature:
-                    geom = feature.GetGeometryRef()
-                    if geom.GetGeometryName() == "POLYGON":
-                        polygons.append(geom.ExportToWkt())
+                    try:
+                        geom = feature.GetGeometryRef()
+                        if geom.GetGeometryName() == "POLYGON":
+                            polygons.append(geom.ExportToWkt())
+                    except Exception as e:
+                        print "Skipping a feature: %s"%(e)
                 feature = layer.GetNextFeature()
 
         self.cellsize = cellsize
@@ -120,36 +143,42 @@ class Discretization(db.Model):
             self.chunks.append(Chunk(wkt_polygon=polygon))
             num_of_chunks+=1
             
+        print "Found %d polygon features."%(num_of_chunks)
         self.num_of_chunks=num_of_chunks
             
-        chunk_polygons = MultiPolygon(polygons=[loads(wkt).buffer(0.001) for wkt in polygons])
-        chunk_union = cascaded_union(chunk_polygons)
+        print "Creating cascaded union... This may take a while if your polygons are complicated..."
+        chunk_polygons = MultiPolygon(polygons=[loads(wkt).buffer(0.01) for wkt in polygons])
+        
+        chunk_extents = MultiPolygon(polygons=[box(*loads(wkt).buffer(0.01).bounds) for wkt in polygons])
+        
+        chunk_union = cascaded_union(chunk_extents)
+
+        print "Simplifying the merged polygon further since this one is only used for display purposes."
+        chunk_union.simplify(0.01)
         
         if chunk_union.geom_type == 'Polygon':
             # If all the chunks were connected to each other then a Polygon is
             # is created rather than a MultiPolygon. Our database column needs
             # a MultiPolygon, so convert it before saving it.
             chunk_union = MultiPolygon([chunk_union])
-        
+        print "Done!"
         chunk_box = box(*chunk_union.bounds)
+
         self.coverage = from_shape(chunk_union, srid=4326)
-        self.extent =  from_shape(chunk_box, srid=4326)
+        self.extent = from_shape(chunk_box, srid=4326)
+        print "Storing..."
         
     @property
     def extent_as_bounds(self):
-        bounds=to_shape(self.extent).bounds
+        bounds = to_shape(self.extent).bounds
         return ",".join(map(str,bounds))
         #return db.session.scalar(ST_AsGeoJSON(self.extent))
         
     @property
     def coverage_as_geojson(self):
-        return json.dumps(json.loads(db.session.scalar(ST_AsGeoJSON(self.coverage))))
-#    @property
-#    def extent_as_json(self):
-#        return db.session.scalar(ST_AsGeoJSON(self.extent))
-        #return json.loads(db.session.scalar(ST_AsGeoJSON(self.extent)))
-
-
+        cov = to_shape(self.coverage)
+        return json.dumps(mapping(cov))
+        
 class Chunk(db.Model):
     """
     Describes a unit within a discretization. For example, the discretization
@@ -613,7 +642,7 @@ class Model(db.Model):
         modelparams.update({
             '__start__':            self.start.isoformat(),
             '__timesteps__':        self.time['timesteps'],
-            '__discretization__':   "frankrijk_veldwerkgebied_100m",
+            '__discretization__':   "european_catchments_100m",
             '__model__':            self.name,
             '__version__':          self.version
         })
@@ -661,15 +690,15 @@ class Model(db.Model):
         """
         modelconfig=self.configure()
         return modelconfig.key
-        #
-        #config_key,config_string,parameters=create_configuration_key(self.name,self.version,"world_onedegree",self.parameters)
-#
-#        modelconfiguration=ModelConfiguration.query.filter(ModelConfiguration.key==config_key).first()
-#        if modelconfiguration is None:
-#            modelconfiguration=ModelConfiguration(config_key,config_string,self,parameters)
-#            db.session.add(modelconfiguration)
-#            db.session.commit()
-#        return modelconfiguration.key
+        
+        
+    @property
+    def preferred_discretization_name(self):
+        try:
+            discretization_name = self.meta.get('discretizations')[0]
+        except:
+            discretization_name = "world_onedegree_100m"
+        return discretization_name
 
     @property
     def parameters_as_pretty_json(self):

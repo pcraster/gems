@@ -166,9 +166,13 @@ var M=$.extend(M || {},{
 				M.hash.values['zoom']=parseInt(hash[1])
 			}
 			if (2 in hash) {
+				console.log("Found a geohash.. go there!")
 				M.hash.values['geohash']=hash[2]
 				var gh=decodeGeoHash(hash[2])
 				M.hash.values['center']=[gh.latitude[2],gh.longitude[2]]
+			} else {
+				console.log("no geohash found..")
+
 			}
 			if (3 in hash) {
 				M.hash.values['layers']=hash[3]
@@ -869,40 +873,35 @@ var M=$.extend(M || {},{
 			*/
 			M.gui.busy('api-prognosis')
 			M.state['prognosis']=false
-			$.ajax({
-				type:"GET",
-				url:"/api/v1/job",
-				data:M.params.serialize(),
-				dataType:'json',
-				success:function(data) {
-					console.log("Prognosis for config '"+data["configkey"].substr(0,6)+"': "+data["message"])
-					M.map.geojsonlayer.clearLayers()
-					// for(var i=0;i<data.features.length;i++){
-					// 	var feature=data.features[i]
-					// 	console.log("Found feature:")
-					// 	console.log(feature)
-						
-						
 
-					// }
-					M.map.geojsonlayer.addData(data.features)
-					M.map.geojsonlayer.bringToFront()
-					//M.map.geojsonlayer.add
-
-
-					M.state['prognosis']=true
-					M.state['prognosis_message']=data["message"]
-					M.gui.done('api-prognosis')
-				},
-				error:function(xhr){
-					M.map.geojsonlayer.clearLayers()
-					var data=xhr.responseJSON
-					console.log("Prognosis for config '"+data["configkey"].substr(0,6)+"': "+data["message"])
-					M.state['prognosis']=false
-					M.state['prognosis_message']=data["message"]
-					M.gui.done('api-prognosis')
-				}
-			})
+			/*
+			Add a debounce because sometimes one request per map move is too much,
+			especially if the user is panning the map and a JSON file with the closest
+			chunk needs to be loaded on every move event.
+			*/
+				$.ajax({
+					type:"GET",
+					url:"/api/v1/job",
+					data:M.params.serialize(),
+					dataType:'json',
+					success:function(data) {
+						console.log("Prognosis for config '"+data["configkey"].substr(0,6)+"': "+data["message"])
+						M.map.geojsonlayer.clearLayers()
+						M.map.geojsonlayer.addData(data.features)
+						M.map.geojsonlayer.bringToFront()
+						M.state['prognosis']=true
+						M.state['prognosis_message']=data["message"]
+						M.gui.done('api-prognosis')
+					},
+					error:function(xhr){
+						M.map.geojsonlayer.clearLayers()
+						var data=xhr.responseJSON
+						console.log("Prognosis for config '"+data["configkey"].substr(0,6)+"': "+data["message"])
+						M.state['prognosis']=false
+						M.state['prognosis_message']=data["message"]
+						M.gui.done('api-prognosis')
+					}
+				});
 		},
 		jobstatus:function() {
 			/*

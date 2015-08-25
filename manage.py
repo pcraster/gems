@@ -49,6 +49,8 @@ def creatediscretizations():
     creatediscretization("frankrijk_veldwerkgebied")
     creatediscretization("newzealand_subcatchments")
     creatediscretization("newzealand_randompolygons")
+    creatediscretization("european_catchments")
+    creatediscretization("thames")
     
 @manager.command
 def createmodels():
@@ -89,6 +91,9 @@ def creatediscretization(name):
     polygon features. New disretizations are created by uploading a shapefile
     in the admin interface. This bit of code is used when initializing the
     app from scratch.
+    
+    Todo:
+    - implement a cell size parameter
     """
     try:
         filename = os.path.join(os.path.dirname(os.path.abspath(__file__)),"data","discretizations",name+".zip")

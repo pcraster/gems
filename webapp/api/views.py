@@ -118,12 +118,14 @@ def job():
         #      connected to the app to do processing..
         features=[]
         for c in chunks:
+            feat = to_shape(c.geom).simplify(0.005)
+            
             features.append({
                 'type':'Feature',
                 'properties':{
                     'id':str(c.uuid)
                 },
-                'geometry':json.loads(db.session.scalar(ST_AsGeoJSON(c.geom)))
+                'geometry':mapping(feat)
             })
 
             #print c.geom
@@ -202,13 +204,22 @@ def model_status(model_name):
     if request.method=="GET":
         return Response(m.code,mimetype="text/plain")
     if request.method=="POST":
-        #try:
-        if True:    
+        try:
             m.updatecode(request.form.get("code"))
             db.session.commit()
             return jsonify(model=m.name,message="Model code updated."),200
-        #except Exception as e:
-        #    return jsonify(model=m.name,message="Code update failed! Hint: %s"%(e)),400
+        except Exception as e:
+            return jsonify(model=m.name,message="Code update failed! Hint: %s"%(e)),400
+            
+@api.route('/discretization/<discretization_name>/bounds', methods=["GET"])
+def discretization_bounds(discretization_name):
+    d = Discretization.query.filter_by(name=discretization_name).first_or_404()
+    return jsonify(bounds=d.extent_as_bounds)
+    
+@api.route('/discretization/<discretization_name>/coverage.json', methods=["GET"])
+def discretization_coverage(discretization_name):
+    d = Discretization.query.filter_by(name=discretization_name).first_or_404()
+    return Response(d.coverage_as_geojson,mimetype="application/json")
 
 @api.route('/model/list')
 def model_list():

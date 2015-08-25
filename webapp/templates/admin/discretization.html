@@ -74,7 +74,7 @@
 						<div class="panel-map" id="map-discretization-{{d.id}}" data-bounds='{{d.extent_as_bounds|safe}}' data-coverage='{{d.coverage_as_geojson|safe}}'></div>
 
 						<div class="panel-body">
-						{{d.num_of_chunks}} chunks at {{d.cellsize}}m resolution
+						{{d.num_of_chunks}} chunks at {{d.cellsize}}m resolution.<br/><a href="{{url_for('api.discretization_coverage',discretization_name=d.name)}}">View coverage as GeoJSON</a>.
 						</div>
 
 					</div>

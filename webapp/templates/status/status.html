@@ -3,6 +3,12 @@
 {% block content %}
 <h2>System status overview</h2>
 
+
+<code>
+
+{{stats}}
+
+</code>
 {{completed}}
 
 <ul class="list-group">
@@ -26,6 +32,9 @@
 		<strong>Beanstalk server statistics</strong>
 	</div>
 	<div class="panel-body">
+					<p>
+				There are currently <strong>{{stats['current-workers']}} clients</strong> listening to the job queue.
+				</p>
 		<div class="row">
 			{% for column in server_stats | sort | slice(4) -%}
 			<div class="col-xs-3 col-md-3">

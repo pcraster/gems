@@ -1,7 +1,7 @@
 <!--flashes.html-->
 {% with messages = get_flashed_messages(with_categories=true) %}
   {% if messages %}
-	<div class="container-fluid" style="padding-top:17px;background-color:#F5F5F5;border-bottom:1px solid #ddd;">
+	<div class="container-fluid" style="padding-top:17px;background-color:#fff;border-bottom:0px solid #ddd;">
 		<ul class="list-group">
 		{% for category,message in messages %}
 			<li class="list-group-item {% if category=="debug" %}debug-item{% endif %}">
