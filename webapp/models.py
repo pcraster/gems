@@ -642,7 +642,7 @@ class Model(db.Model):
         modelparams.update({
             '__start__':            self.start.isoformat(),
             '__timesteps__':        self.time['timesteps'],
-            '__discretization__':   "european_catchments_100m",
+            '__discretization__':   self.preferred_discretization_name,
             '__model__':            self.name,
             '__version__':          self.version
         })

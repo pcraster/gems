@@ -34,9 +34,13 @@
 					  		<a href="{{url_for('modeller.show_modeller',model_name=model.name)}}">
 					  			{{model.name}}
 					  		</a>
-							<i class="fa fa-globe" style="color:#ccc;float:right;"></i>
+							{% if current_user.is_admin %}
+							<a style="float:right;" href="{{url_for('admin.model_editor',model_name=model.name)}}"><i class="fa fa-pencil" style="color:#70A2CD;"></i></a>
+							{% endif %}
+							
 					  	</h3>
 					  </div>
+					  <!--
 					  <div class="panel-heading" style="padding-top:4px;padding-bottom:4px;">
 					  	
 							<a href="{{url_for('modeller.show_modeller',model_name=model.name)}}"><i class="fa fa-cog" style="color:#888;"></i> load modeller</a> 
@@ -49,20 +53,21 @@
 							</p>
 
 					  </div>
+					  -->
 					  <div class="panel-body">
-
-					    <p>{{model.meta["abstract"]}}</p>
-					    
-					    <p>
-					    Starts at: {{model.start}}
-					    </p>
-							
-						<p style="color:#aaa;font-size:12px;margin:0;">
-							{% for tag in model.meta["tags"] %}
-								<i class="fa fa-tag"></i> {{tag}}&nbsp;
-							{% endfor %}
-						</p>
+					    <p style="margin:0;">{{model.meta["abstract"]}}</p>
 					  </div>
+					    <table class="table" style="font-size:12px;color:#555;">
+					    	<tr><td style="padding-left:15px;">Time:</td><td>Runs {{model.time["timesteps"]}} timestep(s) starting at {{model.start}} UTC.</td></tr>
+					    	<tr><td style="padding-left:15px;">Discretization:</td><td><a href="/admin/discretization/">{{model.preferred_discretization_name}}</a></td></tr>
+					    	<tr><td style="padding-left:15px;">Author:</td><td>{{model.meta["author"]}}</td></tr>
+					    	<tr><td style="padding-left:15px;">Tags:</td><td style="color:#aaa;">
+							{% for tag in model.meta["tags"] %}
+								<nobr><i class="fa fa-tag"></i> {{tag}}&nbsp;</nobr>
+							{% endfor %}
+					    	</td></tr>
+
+					    </table>
 					</div>
 			
 	    		{%- endfor -%}

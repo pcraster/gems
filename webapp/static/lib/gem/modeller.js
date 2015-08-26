@@ -146,8 +146,9 @@ var M=$.extend(M || {},{
 		values:{
 			configkey:'',
 			zoom:9,
-			geohash:'rch2v30yzbzc',
+			geohash:'lala',
 			center:[-40.3, 176.4],
+			bounds:undefined,
 			layers:undefined,
 			time:undefined
 		},
@@ -162,16 +163,19 @@ var M=$.extend(M || {},{
 				console.log("Hash was found to have a config key in it: "+hash[0])
 				M.hash.values['configkey']=hash[0]
 			}
-			if (1 in hash) {
+			if (1 in hash && 2 in hash) {
+				console.log("Geohash and zoom level found in hash!")
 				M.hash.values['zoom']=parseInt(hash[1])
-			}
-			if (2 in hash) {
 				console.log("Found a geohash.. go there!")
 				M.hash.values['geohash']=hash[2]
 				var gh=decodeGeoHash(hash[2])
 				M.hash.values['center']=[gh.latitude[2],gh.longitude[2]]
 			} else {
-				console.log("no geohash found..")
+				console.log("Either no geohash or no zoom found. Regardless, we don't know where to set initialize the map.")
+				console.log("Therefore fall back to the bounds specified in M.config.default_view_extent")
+				console.log(M.config.default_view_extent)
+				var b = M.config.default_view_extent.split(",").map(parseFloat)
+				M.hash.values['bounds']=[[b[1],b[0]],[b[3],b[2]]]
 
 			}
 			if (3 in hash) {
@@ -292,7 +296,15 @@ var M=$.extend(M || {},{
 			M.map.obj.on('moveend',M.map.moveend)
 			M.map.obj.on('load',M.map.updateSize)
 			M.map.obj.on('click',M.map.pointInfo)
-			M.map.obj.setView(M.hash.values['center'], M.hash.values['zoom']);
+
+			console.log("setting view to hash center and zoom:")
+			console.log(M.hash.values)
+			if (M.hash.values['bounds'] != undefined) {
+				console.log("Fitting to bounds:")
+				M.map.obj.fitBounds(M.hash.values['bounds'])
+			} else {
+				M.map.obj.setView(M.hash.values['center'], M.hash.values['zoom']);
+			}
 
 
 			var LeafIcon = L.icon({
