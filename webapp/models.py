@@ -85,7 +85,8 @@ class Discretization(db.Model):
         - name
         
         Todo:
-        Look into other ways of simplifying the coverage. If a large shapefile with
+        
+        - Look into other ways of simplifying the coverage. If a large shapefile with
         very detailed polygons is uploaded it creates a lot of overhead. We solve this
         now by creating the coverage by doing a cascaded union on the envelopes of 
         all the individual polygons. This saves a lot of processing, and while the 
@@ -93,6 +94,19 @@ class Discretization(db.Model):
         shapes, it doesnt make much difference in the end when the coverage is just used
         for showing where the model can be run, and setting the map to this location
         automatically if no other place was specified.
+        
+        - Make a primitive area calculation, an integer field in units of ha or sq. km,
+        then allow per model definition of the max number of sq km which is allowed to
+        be calculated in one job. Depending on that the system can then automatically
+        select one, two, three, or ten chunks to process.
+        
+        - Make a description field for each chunk which can be used in the "Find places"
+        menu. That way, if we're modelling on a list of US counties, we can search by
+        county name, for catchments by catchment name, etc. This is pretty low priority
+        though. A number of these parameters (area, name, id, etc) can then also be shown
+        in the web interface in a popup item surrounding the shape outline or at the 
+        shape centroid with an (I)nfo icon.
+        
         
         """
         if dataset is None:

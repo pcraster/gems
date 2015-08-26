@@ -283,6 +283,14 @@ var M=$.extend(M || {},{
 					"weight": 2,
 					"opacity": 1.0,
 					"fillOpacity": 0
+				},
+				onEachFeature: function(feature, layer) {
+					layer.on('click', function(e) {
+						M.map.obj.fitBounds(layer.getBounds(),{'padding':[20,20]})
+						//console.log("Clickity on:")
+						//console.log(feature)
+
+					})
 				}
 			}).addTo(M.map.obj);
 
