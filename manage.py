@@ -38,7 +38,14 @@ def initdb():
     Initializes the database with default users, chunkschemes, and models.
     """
     creatediscretizations()
-    
+
+@manager.command
+def createdirectories():
+    """
+    Initializes the directory structure in the data directory.
+    """
+    pass
+
 @manager.command
 def creatediscretizations():
     """
@@ -69,7 +76,12 @@ def resetpassword():
 @manager.command
 def checkrequirements():
     """
-    Checks the requirements
+    Checks the requirements.
+    
+    Todo:
+        - check the required modules
+        - make sure mapserver can be found
+        - make sure pcraster can be found and imported
     """
     pass
 

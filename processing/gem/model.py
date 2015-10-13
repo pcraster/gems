@@ -1,6 +1,6 @@
 
-import yaml
-import subprocess
+#import yaml
+#import subprocess
 import psycopg2
 import psycopg2.extras
 import sys
@@ -19,8 +19,9 @@ logger=logging.getLogger()
 
 logger.debug("Loading timezone information, please wait...")
 import pytz
-from tzwhere import tzwhere
-tz = tzwhere.tzwhere()
+
+#from tzwhere import tzwhere
+#tz = tzwhere.tzwhere()
 
 logger.debug("Loading pcraster and the modelling framework...")
 from pcraster import *
@@ -237,17 +238,18 @@ class GemModel(DynamicModel,ModelReporter):
             logging.critical("Could not establish a starting datetime for this model run. The __time__ parameter passed was: %s"%(userModel.parameters.get("__time__","(empty)")))
             raise Exception("Could not establish a starting datetime for this model run.")
             
-        logging.debug("Calculating centroid...")
-        centroid = box(*self._grid['bounds']).centroid
-        logging.debug("Establishing timezone for chunk's centroid location: x=%.3f y=%.3f"%(centroid.x,centroid.y))
-        try:
-            tzone = tz.tzNameAt(centroid.y,centroid.x)
-            logging.debug("Found timezone:")
-            logging.debug(tzone)
-            self._timezone = pytz.timezone(tzone)
-        except:
-            logging.debug("A timezone could not be found for this chunk centroid. It is most likely near or in the ocean, for which timezones cannot be reliably calculated.")
-            self._timezone = None
+        #logging.debug("Calculating centroid...")
+        #centroid = box(*self._grid['bounds']).centroid
+        #logging.debug("Establishing timezone for chunk's centroid location: x=%.3f y=%.3f"%(centroid.x,centroid.y))
+        #try:
+         #   tzone = tz.tzNameAt(centroid.y,centroid.x)
+         #   logging.debug("Found timezone:")
+          #  logging.debug(tzone)
+           # self._timezone = pytz.timezone(tzone)
+        #except:
+        #    logging.debug("A timezone could not be found for this chunk centroid. It is most likely near or in the ocean, for which timezones cannot be reliably calculated.")
+        #    self._timezone = None
+        self._timezone = None
         logging.debug("The (approximate) timezone of this model run is: %s"%(str(self._timezone)))
         logging.debug("You can access the 'timestamplocal' property on this model instance to get the current model time converted to local time.")
 

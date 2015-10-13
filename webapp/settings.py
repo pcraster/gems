@@ -1,23 +1,36 @@
+###############################################################################
+### Flask Configuration Settings
+###############################################################################
 import os
-#
-# Flask Configuration Settings
-#
-DEBUG = True 
-BCRYPT_LEVEL = 12
-MAIL_FROM_EMAIL = "koko@fastmail.com"
-SECRET_KEY = '&S*D(#DJO*DS(DS*D'
-#SERVER_NAME = 'digitalearth:8080'
-#SERVER_NAME = '127.0.0.1:8080'
 
-HOME=                       '/var/digitalearth'
-TEMP=                       '/var/digitalearth/tmp'
-SQLALCHEMY_DATABASE_URI=    'postgresql:///digitalearth'
+BCRYPT_LEVEL = 12
+
+###############################################################################
+### Copy the following parameters into a local_settings.py file. Do not fill
+### sensitive information in the settings.py file.
+###############################################################################
+DEBUG = False 
+MAIL_FROM_EMAIL =           ''
+SECRET_KEY =                ''
+HOME=                       '/var/wwwdata/gems'
+CODE=                       '/var/www/gems'
+
+SQLALCHEMY_DATABASE_URI =   'postgresql://gems@/gemsdb'
 MAPSERVER_URL=              'http://127.0.0.1/cgi-bin/mapserv'
 GEONAMES_API_USERNAME=      'kokoalberti'
 MAPDELIVERY_URL=            ''
-CODE=                       '/home/koko/code/digitalearth/'
+
+###############################################################################
+### End Local Settings
+###############################################################################
 
 
+#not used at the moment.
+BEANSTALK_HOST=             'localhost'
+BEANSTALK_PORT=             11300
+
+
+TEMP = os.path.join(HOME, "tmp")
 
 #
 # Application Configuration Settings
@@ -68,7 +81,7 @@ BEANSTALK={
 # Configure Flask-User
 USER_PRODUCT_NAME           = "Virtual Globe"     # Used by email templates
 USER_ENABLE_USERNAME        = True              # Register and Login with username
-USER_ENABLE_EMAIL           = True              # Register and Login with email
+USER_ENABLE_EMAIL           = False              # Register and Login with email
 USER_LOGIN_TEMPLATE         = 'flask_user/login.html'
 USER_REGISTER_TEMPLATE      = 'flask_user/login_or_register.html'
 USER_AFTER_LOGIN_ENDPOINT   = 'site.home'

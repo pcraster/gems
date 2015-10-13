@@ -11,18 +11,25 @@ from .modeller import modeller
 from .site import site
 from .admin import admin
 from .status import status
+from .install import install
 
 app = Flask(__name__)
 
 FlaskUUID(app)
 
+#Load the base configuration from settings.py
 app.config.from_object('webapp.settings')
+
+#Overwrite any settings with local_settings.py
+try: app.config.from_object('webapp.local_settings')
+except: print " * Local settings file coult not be imported."
 
 from models import *
 
 db.init_app(app)
 
 db_adapter = SQLAlchemyAdapter(db,  User)
+print "INit usernamanger"
 user_manager = UserManager(db_adapter, app)
 
 app.register_blueprint(modeller,    url_prefix='/modeller')
@@ -30,6 +37,7 @@ app.register_blueprint(data,        url_prefix='/data')
 app.register_blueprint(api,         url_prefix='/api/v1')
 app.register_blueprint(admin,       url_prefix='/admin')
 app.register_blueprint(status,      url_prefix='/status')
+app.register_blueprint(install,     url_prefix='/install')
 app.register_blueprint(site)
 
 if __name__ == "__main__":

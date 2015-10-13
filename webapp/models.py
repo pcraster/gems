@@ -1,11 +1,11 @@
 import os
 import uuid
 import pyproj
-import mercantile
+#import mercantile
 import subprocess
 import hashlib
-import base64
-import StringIO
+#import base64
+#import StringIO
 import random
 import re
 import sys
@@ -16,8 +16,8 @@ import cPickle
 import datetime
 
 import numpy as np
-import numpy.ma as ma
-import matplotlib.cm as mpcm
+#import numpy.ma as ma
+#import matplotlib.cm as mpcm
 
 from osgeo import gdal, gdalconst, ogr, osr
 
@@ -48,8 +48,7 @@ from utils import create_configuration_key, parse_model_time
 
 db = SQLAlchemy()
 
-beanstalk = beanstalkc.Connection(host='localhost',port=11300)
-
+beanstalk = beanstalkc.Connection('localhost',port=11300)
 
 class Discretization(db.Model):
     """
@@ -472,6 +471,7 @@ class Model(db.Model):
     def filedir(self):
         _model_dir=os.path.join(current_app.config["HOME"],"models",self.name)
         if not os.path.isdir(_model_dir):
+            print "model dir no exist..try to create... %s"%(_model_dir)
             os.makedirs(_model_dir)
         return os.path.join(_model_dir)
     @property
@@ -537,32 +537,22 @@ class Model(db.Model):
         # to file first, then if there are any errors they persist in the file,
         # which is not what we want to have happen.
         #
-    
-        print "Removing old code:"
-        c=["/bin/rm",os.path.join(self.filedir,"modelcode.py")]
-        print " ".join(c)     
-        subprocess.call(c)
 
-        c=["/bin/rm",os.path.join(self.filedir,"modelcode.pyc")]
-        print " ".join(c)     
-        subprocess.call(c)
-
-
+        if os.path.exists(self.filename):
+            os.remove(self.filename)
+            
+        if os.path.exists(self.filename+"c"):
+            os.remove(self.filename+"c")
+            
         print " * Update code, writing to: %s"%(self.filename)
-        #subprocess.call("/bin/rm",)
         with open(self.filename,'w') as f:
             f.write(code)
         
-
         sys.path.append(self.filedir)
-        
         code_path = os.path.join(current_app.config["CODE"],"processing")
-        
         sys.path.append(code_path)
-        
         module=__import__("modelcode")
         model=getattr(module,"Model")
-
         m=model()
         
         print "meta:"
