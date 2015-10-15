@@ -3,7 +3,7 @@
     #
     # ===============================================
     # Layer: {{layer}}
-	#
+    #
     # -----------------------------------------------
 
     LAYER
@@ -24,7 +24,7 @@
             'default_configkey' 'd426718ab405d9958c03b6b6c6063f13'
             'configkey' '^[0-9a-f]{32}$'
         END
-        CONNECTION "dbname=digitalearth user=koko password= host="
+        CONNECTION "{{mapserver_postgis_connect}}"
         CONNECTIONTYPE postgis
         DATA "geom_web_mercator from map using srid=3857"
         FILTER (config_key='%configkey%' and attribute='{{layer}}')

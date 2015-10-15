@@ -47,11 +47,7 @@
     <!--<h1>{%trans%}Sign in{%endtrans%}</h1>-->
     <!--<h2>Explore</h2>-->
     <p>
-        <strong>Please sign in to use the virtual globe</strong>
-    </p>
-    <p>
-        If you do not have an account and would like to take it for a 
-        spin anyway, use "demo" as both a login and password.
+        <strong>Please sign in to use GEMS</strong>
     </p>
 
     <form action="" method="POST" class="form" role="form">
@@ -60,17 +56,19 @@
         {# Username or Email field #}
         {% set field = form.username if user_manager.enable_username else form.email %}
         <div class="form-group {% if field.errors %}has-error{% endif %}">
-            {# Label on left, "New here? Register." on right #}
+            {# Label on left, "New here? Regisister." on right #}
             <div class="row">
                 <div class="col-xs-6">
                     <label for="{{ field.id }}" class="control-label">{{ field.label.text }}</label>
                 </div>
+                <!--
                 <div class="col-xs-6 text-right">
                     {% if user_manager.enable_register and not user_manager.require_invitation %}
                         <a href="{{ url_for('user.register') }}" tabindex='190'>
                             {%trans%}New here? Register.{%endtrans%}</a>
                     {% endif %}
                 </div>
+                -->
             </div>
             {{ field(class_='form-control', tabindex=110) }}
             {% if field.errors %}
@@ -106,12 +104,32 @@
         {# Remember me #}
         {{ render_checkbox_field(login_form.remember_me, tabindex=130) }}
         -->
-        <p style="float:right;padding-top:6px;margin:0px;">
-        <small>Image credits <a style="color:#444;text-decoration:underline;" href="http://earthobservatory.nasa.gov/IOTD/view.php?id=85632&eocn=home&eoci=iotd_grid" target="_blank">NASA Earth Observatory</small>
-        </p>
+
+        <div class="form-group" style="margin-bottom:0;">
+            <div class="row">
+                 <div class="col-xs-3">
+                    <!--{{ render_submit_field(form.submit, tabindex=180) }}-->
+                    <input type="submit" class="btn btn-primary btn-sm" value="Sign in" tabindex="180" style="width:100%;">
+                    
+                 </div>
+                 <div class="col-xs-9" style="border-left:1px solid #666;">
+                     <p>
+                        Welcome to GEMS. 
+                        {% if user_manager.enable_register and not user_manager.require_invitation %}
+                            If you would like to try out the application for yourself, feel free to <a href="{{ url_for('user.register') }}" tabindex='190'>create an account</a> or use demo/demo as credentials.
+                        {% endif %}
+
+                    </p>
+                    <p>
+                        For more information, or to get in touch with the developers send an e-mail to <a href="mailto:k.alberti@uu.nl">Koko Alberti</a> at Utrecht University.
+                     </p>
+                    <small>Background image by <a style="color:#444;text-decoration:underline;" href="http://earthobservatory.nasa.gov/IOTD/view.php?id=85632&eocn=home&eoci=iotd_grid" target="_blank">NASA Earth Observatory</a>.</small>
+                 </div>
+            </div>
+        </div>
         
         {# Submit button #}
-        {{ render_submit_field(form.submit, tabindex=180) }}
+        
 
     </form>
 

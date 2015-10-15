@@ -18,8 +18,7 @@ def home():
     if current_user.is_anonymous():
         return redirect(url_for('user.login'))
     else:
-        stats=beanstalk.stats()
-        return render_template("site/home.html",models=Model.query.all(),stats=stats)
+        return render_template("site/home.html",models=Model.query.all())
 
 @site.route('/models')
 def models():

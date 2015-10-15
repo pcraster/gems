@@ -878,8 +878,9 @@ var M=$.extend(M || {},{
 					*/
 					M.api.jobstatus()
 				},
-				error: function(){
-					alert("Yikes! An unexpected error occurred!")
+				error: function(xhr){
+					alert("Job not created. API Returned ("+xhr.status+") "+xhr.responseJSON['message'])
+					M.gui.done('running-model')
 				}
 			})
 		},
@@ -934,6 +935,12 @@ var M=$.extend(M || {},{
 
 			Todo: check the status_code field. If it's -1 an error has occurred during
 			this run.
+
+			Todo: Rather than use this polling method, implement a solution using
+			EventStream, that's much more efficient. The API should eventstream from
+			some job status endpoint like /job/<jobid>/eventstream. When the run is
+			complete or an error occurs, cancel the eventstream and reset the gui
+			as usual.
 			*/
 			var percent_list = [];
 			var identical_timeouts = 25;

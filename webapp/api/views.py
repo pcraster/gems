@@ -13,10 +13,17 @@ from datetime import datetime, timedelta
 
 from ..models import *
 
+##
+## Todo: implement http error handers so we can just raise 50x or 40x anywhere
+## and have a properly formatted error message.
+##
 
 @api.route('/')
 def home():
-    return jsonify(hello="world")
+    if beanstalk:
+        return jsonify(hello="world",message="Welcome to the GEMS API",status=True)
+    else:
+        return jsonify(message="The work queue server is unavailable.",status=False),503
 
 @api.route('/job',methods=["POST","GET"])
 def job():
@@ -103,15 +110,27 @@ def job():
         
     if request.method=="POST":
         try:
+            if not beanstalk.ok:
+                raise BeanstalkConnectionFailure("Cannot connect to work queue.")
+                
+            if beanstalk.workers == 0:
+                raise BeanstalkWorkersFailure("No workers connected to work queue.")
+                
             job=Job(modelconfig,chunks_to_be_processed,geom)
             db.session.add(job)
-            db.session.commit()           
-            print "commiting session"
+            db.session.commit()     
             for jobchunk in job.jobchunks:
-                beanstalk.put(jobchunk.pickled)
-            return jsonify(job=job.uuid,message="Job accepted"),200
+                beanstalk.queue.put(jobchunk.pickled)
+                
+        except BeanstalkWorkersFailure as e:
+            return jsonify(job='', message="Job not accepted. %s"%(e)),503
+        except BeanstalkConnectionFailure as e:
+            return jsonify(job='', message="Job not accepted. %s"%(e)),503
         except Exception as e:
-            return jsonify(job='',message="Job not accepted. Hint: %s"%(e)),400
+            return jsonify(job='', message="Job not accepted. %s"%(e)),500
+        else:
+            return jsonify(job=job.uuid, message="Job accepted."),200
+            
     if request.method=="GET":
         #Todo: make this limit variable on a per model basis...
         #Todo: some kind of check to see if there are clients 

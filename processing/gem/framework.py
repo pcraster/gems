@@ -10,21 +10,20 @@ from time import time as now
 
 from owslib.wcs import WebCoverageService
 
-sys.path.append("/home/koko/pcraster/pcraster-4.0.2_x86-64/python")
 from pcraster import *
 from pcraster.framework import *
 
-logger=logging.getLogger()
+logger = logging.getLogger()
 
 class GemFramework(DynamicFramework):
     """
     Framework class for Gem models
     """
-    def __init__(self, options):
+    def __init__(self, options, gems_api="http://localhost/api/v1"):
         logger.info("Initializing the modelling framework")
-        
-        time_start=now()
-        self.time_total=now()
+
+        time_start = now()
+        self.time_total = now()
         #this dict stores some timing information for the model which, at the
         #end of the run, is outputted to the logger. 
         self._timings={
@@ -36,6 +35,8 @@ class GemFramework(DynamicFramework):
             'providers':0,
             'packaging':0
         }        
+
+
         
         self._options={}
         self._options.update(options)
@@ -45,7 +46,7 @@ class GemFramework(DynamicFramework):
         parameters=self._options["parameters"]
         grid=self._options["grid"]
 
-        self._wd=os.path.join(os.environ["DIGITALEARTH_RUNDIR"],uuid)
+        self._wd=os.path.join(os.getcwd(),uuid)
         if not os.path.isdir(self._wd):
             os.makedirs(self._wd)
         logger.debug("Working directory of this model run: %s"%(self._wd))
@@ -61,12 +62,11 @@ class GemFramework(DynamicFramework):
         userModel._mapspackage=None
         userModel._phase="prepare"
 
+        userModel.setAPI(gems_api)
         userModel.setParameters(parameters)
         userModel.setGrid(grid)
         userModel.setProviders(userModel.datasources)
         userModel.setJob(options)
-        userModel.setClone()
-        
         userModel.setTime() #must come after setParameters()
 
         try:
@@ -92,28 +92,34 @@ class GemFramework(DynamicFramework):
 
     def _loadModel(self):
         """
-        Loads a model
+        Loads the model
         """
-        logger.debug("Loading model code")
         try:
+            logger.debug("Attempting to load the model code:")
             sys.path.append(self._wd)
-            self._module=__import__("modelcode")
-            self._model=getattr(self._module,"Model")
-            m=self._model()
-            logger.debug("Loading model code... Successful.")
-            return m
+            self._module = __import__("modelcode")
+            self._model = getattr(self._module,"Model")
+            m = self._model()
         except Exception as e:
-            logger.debug("Loading model code... An error occurred. Hint: %s."%(e))
+            logger.critical(" - An error occurred while trying to load the model: %s."%(e))
+        else:
+            logger.debug(" - Model code loaded successfully.")
+            return m
 
     def _unloadModel(self):
         """
         Unloads a model
         """
-        logger.debug("Unloading model code")
-        del self._module
-        del sys.modules["modelcode"]
-        del self._model
-        sys.path.remove(self._wd)
+        try:
+            logger.debug("Attempting to unload the model code:")
+            del self._module
+            del sys.modules["modelcode"]
+            del self._model
+            sys.path.remove(self._wd)
+        except Exception as e:
+            logger.debug(" - Failed to unload model code.")
+        else:
+            logger.debug(" - Unloaded model code successfully.")
         
     def _preRun(self):
         """

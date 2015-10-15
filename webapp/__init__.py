@@ -29,7 +29,6 @@ from models import *
 db.init_app(app)
 
 db_adapter = SQLAlchemyAdapter(db,  User)
-print "INit usernamanger"
 user_manager = UserManager(db_adapter, app)
 
 app.register_blueprint(modeller,    url_prefix='/modeller')

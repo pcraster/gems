@@ -1,0 +1,11 @@
+[Unit]
+Description=GEMS Worker
+
+[Service]
+Type=simple
+ExecStart=/var/www/gems/processing/client.py
+StandardOutput=syslog
+StandardError=syslog
+
+[Install]
+WantedBy=multi-user.target

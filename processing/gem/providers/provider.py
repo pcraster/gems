@@ -1,36 +1,46 @@
 import sys
 import os
-sys.path.append("/home/koko/pcraster/pcraster-4.0.2_x86-64/python")
-from pcraster import readmap
 import numpy as np
 import logging
+
 from osgeo import gdal, gdalconst
-logger=logging.getLogger()
+from pcraster import readmap
+
+logger = logging.getLogger()
 
 class Provider(object):
     """
-    Base class for a data provider in the virtual globe. 
-    
-    Implement some form of caching for the providers.
+    Base class for a GEMS data provider. All providers must extend this 
+    class and implement their own provide() method which provides the 
+    layer that the model is requesting. See the example.py provider for
+    some ideas.
+
+    The provider base provides functionality that all providers share, 
+    as well as some additional convenience methods that allow providers
+    to easily reproject a grid onto the model grid (e.g. warp_to_grid).
     """
     def __init__(self, config, grid):
-        
         # Initialize some properties that all the providers have in common
         # and may want to utilize for their own purposes.
-        logger.debug("Initializing provider '%s'"%(self.__class__.__name__))
+        logger.debug(" - Initializing '%s'"%(self.__class__.__name__))
+
+        # Set some attributes
         self._config = config
         self._grid = grid
         self._name = self.__class__.__name__
+        self.available_layers = []
         
         #
         # Create an empty gdal dataset to use as a target for any warping.
         # This empty dataset matches the cell size and extent of the raster
         # grid that we're running on.
         #
-        logger.debug("Creating an empty gridded dataset")
-        self._clone = gdal.GetDriverByName('MEM').Create('', self._grid['cols'], self._grid['rows'], 1, gdalconst.GDT_Float32)
-        self._clone.SetGeoTransform(self._grid["geotransform"])
-        self._clone.SetProjection(self._grid["projection"])
+        logger.debug(" - Creating an empty map as a template for this provider")
+        self._clone = self.create_clone()
+
+        #self._clone = gdal.GetDriverByName('MEM').Create('', self._grid['cols'], self._grid['rows'], 1, gdalconst.GDT_Float32)
+        #self._clone.SetGeoTransform(self._grid["geotransform"])
+        #self._clone.SetProjection(self._grid["projection"])
         
         
         # Create a caching directory which is unique for this provider and 
@@ -38,41 +48,40 @@ class Provider(object):
         # computations in and to store cached files which have been requested
         # previously. This way a second run in the same area doesn't need to
         # download the data all over again.
-        logger.debug("Creating cache directory...")
-        self._cache = os.path.join(os.environ.get('DIGITALEARTH_RUNDIR'), "provider-data", self._name, self._grid['uuid'], "cache")
-        if not os.path.isdir(self._cache):        
-            os.makedirs(self._cache) #create the cache directory
-        logger.debug("Cache directory: %s"%(self._cache))
-    
-        #
-        # Stored the names of available layers
-        #    
-        self.available_layers = []
 
-            
-    def layers(self):
-        """
-        Returns a list of layer names that this provider offers.
-        """
-        return []
+        # TODO:::: maybe get rid of this.... caching is a bit of a premature optimization at this point...
+        try:
+            self._cache = os.path.join('/tmp/', "gems-provider-data", self._name, self._grid['uuid'], "cache")
+            if not os.path.isdir(self._cache):        
+                os.makedirs(self._cache) #create the cache directory
+        except:
+            raise Exception("Creating cache directory %s for provider %s failed!"%(self._cache, self._name))
+        else:
+            logger.debug(" - Cache directory for %s provider: %s"%(self._name, self._cache))
+
+    
+    # def layers(self):
+    #     """
+    #     Returns a list of layer names that this provider offers.
+    #     """
+    #     return []
         
-    def readmap(self):
-        """
-        Reads a map from this provider
-        """
-        return "This is a map"
+    # def readmap(self):
+    #     """
+    #     Reads a map from this provider
+    #     """
+    #     return "This is a map"
         
-    def provide(self,name,options={}):
+    def provide(self, name, options={}):
         """
         The provide method of a provider must return a numpy array of the 
         dimensions specified in the self._grid dict to the model. How it does
         this, or what datatype it makes this array is completely up to the 
         provider to decide.
-        
         """
-        pass
+        raise NotImplementedError()
     
-    def create_clone(self, datatype = gdalconst.GDT_Float32, nodatavalue=None, initvalue=None):
+    def create_clone(self, datatype=gdalconst.GDT_Float32, nodatavalue=None, initvalue=None):
         """
         Returns an in memory raster map which matches the projection and cell
         size required for this particular chunk/run. The provider can then 

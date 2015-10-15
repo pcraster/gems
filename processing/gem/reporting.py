@@ -1,4 +1,3 @@
-
 import os
 import sys
 import numpy as np
@@ -12,8 +11,6 @@ from osgeo import gdal
 from osgeo import gdal_array
 from osgeo import gdalconst
 
-
-sys.path.append("/home/koko/pcraster/pcraster-4.0.2_x86-64/python")
 from pcraster import readmap, pcr2numpy, ifthenelse
 
 logger=logging.getLogger()
@@ -23,53 +20,109 @@ class ModelReporter(object):
         """
         Initialize some variables that we need for the reporting of map layers.
         """
-        self._report_maps=[]
-        self._report_layers={}
-        self._packaging_progress=0
+        self._report_maps = []
+        self._report_layers = {}
+        self._packaging_progress  =0
         
-    def _report(self,data,identifier,timestamp):
+    def _report(self, data, identifier, timestamp):
         """
-        Report function to store a map
-        """
-        if identifier in self.reporting:
-            logger.debug("Reporting map '%s' (datatype:%s timestep:%d timestamp:%s timestamplocal:%s)"%(identifier,self.reporting[identifier]["datatype"],self.timestep,self.timestamp,self.timestamplocal))
+        Report function to store an attribue maps. In the traditional PCRaster 
+        the report function writes a map straight to a location on disk, with
+        a directory structure and filename which is representative of the attribute
+        and timestep at which the reporting takes place. This can cause some 
+        problems thougg. For example, a model reports 8 attributes, and the model
+        has 24 timesteps. This will result in 192 map files, each of which (due to the
+        PCRaster file format) is uncompressed, does not have detailed georeference
+        information, does not contain overviews for quick zooming out, and is in 
+        the wrong projection (that of the model, rather than web mercator that we
+        need).
 
-            # Crop by the mask. Set all data outside mask to nodata value
-            data = ifthenelse(self._mask, data, -9999)            
-            
-            # Convert to numpy array. The numpy array will be added to stack
-            # of maps, one for each timestep.
-            data = pcr2numpy(data, -9999)
-            #
-            #Todo: implement some kind of clamp functionality here. if 'clamp' is set to true 
-            #      on the symbolizer for this output attribute, set all values
-            #      above the max to the max value, and all below the min to the 
-            #      min value. Allow overriding this in the model's report function like:
-            #     report(data,'map',clamp=True) and then use pcraster/numpy to clamp the data.
-            #
-            (rows,cols)=data.shape
-            if identifier not in list(self._report_layers):
-                self._report_layers.update({identifier:[]})
-            self._report_layers[identifier].append((data,timestamp))
-            
-            return True
-        else:
-            logger.error("Don't know how to report '%s', please specify in the 'reporting' section of your model configuration."%(identifier))
+        In GEMS we choose a slightly different approach and use GeoTiff as the 
+        storage mechanism. The variable self._report_layers contains the model 
+        outputs and has the following structure:
+
+        {
+            '<attribute_name>' : [ (<data_array>, <utc_timestamp>), (...), (...) ]
+        }
+
+        This way, accessing self._report_layers['snow_depth'] will return an array
+        of tuples, of which each tuple contains a numpy array and a timestamp.
+
+        To get a list of the reported attributes we can simply use list(self._report_layers)
+
+        Every time an attribute is reported it is added to this variable, and 
+        at the end of the model run the _report_postprocess() is called, which turns
+        each reported attribute into a separate geotiff file where the bands in
+        the geotiff file correspond to one of the timesteps. Performing operations
+        on these stacked geotiffs (such as creating overviews, requesting subsections,
+        slices, or reprojecting) is much more efficient than on separate files.
+        """
+        try:
+            if identifier in self.reporting:
+                logger.debug("Reporting map '%s' (datatype:%s timestep:%d timestamp:%s)"%(identifier, self.reporting[identifier]["datatype"], self.timestep, self.timestamp))
+                # Crop by the mask. Set all data outside mask to nodata value
+                data = ifthenelse(self._mask, data, -9999)            
+                # Convert to numpy array. The numpy array will be added to stack
+                # of maps, one for each timestep.
+                data = pcr2numpy(data, -9999)
+                #
+                #Todo: implement some kind of clamp functionality here. if 'clamp' is set to true 
+                #      on the symbolizer for this output attribute, set all values
+                #      above the max to the max value, and all below the min to the 
+                #      min value. Allow overriding this in the model's report function like:
+                #      report(data,'map', clamp=True) and then use pcraster/numpy to clamp the data.
+                #
+                (rows,cols) = data.shape
+                if identifier not in list(self._report_layers):
+                    self._report_layers.update({identifier:[]})
+                self._report_layers[identifier].append((data, timestamp))
+            else:
+                logger.error("Don't know how to report '%s', please specify in the 'reporting' section of your model configuration."%(identifier))
+        except:
+            logger.error("An exception occurred while trying to report '%s'"%(identifier))
             return False
-        
+        else:
+            logger.debug(" - Reporting map '%s' completed."%(identifier))
+            return True
+
     def _report_postprocess(self):
         """
-        This is called at the end of the model run and is meant for
-        consolidating all the reported data and writing it to an output
-        file for example, or for additional postprocessing like reprojection
-        to a web mercator projection or something.
-        
-        Todo:
-        - reproject to pseudomercator (compressed, tiled)
-        - add overviews
-        - create a vrt file for each timestep
-        - create maps.csv file which can be used to fill the mapindex
-             <config>,<attribute>,<time>,<vrt_file>
+        The reporting postprocess method is called at the end of the model run, and
+        assembles the attribute maps reported into the self._report_layers attribute 
+        throughout the model run into a single highly optimized "maps package" which
+        is then posted back to the API. This maps package contains all the model's 
+        output maps. Furthermore, it creates .vrt (virtual datasets) which reference
+        'slices' of the geotiff files, one for each timestep. We do this because 
+        mapserver can't index the time component on a certain band (i.e. time x
+        corresponds to band n of file.tif). 
+
+        Using these vrt files we can make a nice tileindex in mapserver with a 
+        time field in the database and a filelocation field which points to the 
+        vrt file. All the while our raster maps are still stored as geotiffs, so 
+        they profit from all the advantages (reprojected, overviews, tiling, 
+        compression, etc.) 
+
+        So, here we, for each attribute map:
+            - Stack the timesteps into a single GeoTiff
+            - Warp to web mercator projection
+            - Compress with deflate algorithm on fastest mode
+            - Add overviews
+            - Add tiling
+            - Create a vrt file for each timestep
+
+        Then for all the maps together:
+            - Create a manifest.json file which contains an entry for each file for 
+              the postgis/mapserver tile index.
+            - Package all the files into a single tar file (uncompressed, as the
+              rasters themselves are already compressed)
+            - This "maps package" is the finished result of the model run, and can
+              be posted to the API. 
+            
+        Notes and todos:
+            - Investigate if it's possible to further optimize this by using the 
+              gdal libraries in python, rather than using subprocess to call the
+              gdal executables directly.
+
         """
         
 

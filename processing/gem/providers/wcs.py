@@ -1,98 +1,52 @@
-"""
-
-WCS provider for the virtual globe.
-
-Todo:
-- use provider.warp_to_grid to reproject any data not available in the 
-  correct projection/coordinate system.
-
-"""
-
 import os
 import sys
 import logging
 import provider
-
 import numpy as np
 
 from owslib.wcs import WebCoverageService
 from urlparse import urlparse, parse_qs
-
 from osgeo import gdal, gdalconst
 
-sys.path.append("/home/koko/pcraster/pcraster-4.0.2_x86-64/python")
 logger=logging.getLogger()
 
 class WcsProvider(provider.Provider):
     def __init__(self, config, grid):
-        #
-        # Initialize the provider. This sets up a temporary directory and some
-        # general stuff that all providers need.
-        #
+        """
+        Initialization code for this specific provider. First initialize the
+        base provider and then to some custom setup stuff specific to the 
+        wcs provider.
+
+        The provider needs to update the self.available_layers attribute and
+        append all the layers that it can provide to this attribute. Since 
+        a provider can literally provide any sort of layer and any number of 
+        them, this cannot be done automatically, and therefore must be done
+        explicitly in the provider's __init__.
+        """
         provider.Provider.__init__(self, config, grid)
         
-        #
-        # Set up stuff specific for this provider
-        #        
-        self._layers = {}
-        for wcs_url in config:
-            wcs=WebCoverageService(wcs_url, version='1.0.0')
-            contents=list(wcs.contents)
-            for layer in contents:
-                self.available_layers.append(layer)
-                #make a mapping in the _layers variable about which wcs url 
-                #we need to query to fetch a particular layer
-                self._layers.update({layer:wcs_url})
-                
-#    def valid_layer(self,name):
-#        if name in self._layers:
-#            return True
-#        else:
-#            return False
-#    
-#    def request_map(self,name):
-#        try:
-#            target_file=self.request_filename(name)
-#            return readmap(target_file.encode('utf-8'))
-#        except Exception as e:
-#            print " * File could not be read! Hint:%s"%(e)
-#
-#    def request_filename(self,name,file_format='map'):
-#        if self.valid_layer(name):
-#            target_file=os.path.join(self._cache,"%s.%s"%(name,file_format))
-#            #if not os.path.isfile(target_file):
-#            self.fetch(name)
-#            return target_file
-#            
-#    def request_metadata(self,name):
-#        """
-#        return metadata for a layer
-#        """      
-#        try:
-#            target_file=self.request_filename(name,file_format="tif")
-#            dataset=gdal.Open(target_file,GA_ReadOnly)
-#            return {
-#                'rows':dataset.RasterYSize,
-#                'cols':dataset.RasterXSize,
-#                'bands':dataset.RasterCount,
-#                'projection':dataset.GetProjection(),
-#                'geotransform':dataset.GetGeoTransform()
-#            }
-#        except Exception as e:
-#            print " * File could not be read! Hint:%s"%(e)
+        try:
+            self._layers = {}
+            for wcs_url in config:
+                wcs = WebCoverageService(wcs_url, version='1.0.0')
+                contents = list(wcs.contents)
+                for layer in contents:
+                    self.available_layers.append(layer)
+                    #make a mapping in the _layers variable about which wcs url 
+                    #we need to query to fetch a particular layer
+                    self._layers.update({layer:wcs_url})
+        except:
+            logger.debug(" - %s provider couldn't find any layers to make available.")
 
     def provide(self,name,options={}):
         """
-        
-        Return a numpy array of the requested data
-        
-        todo:
-        - split into a download() or get_from_cache()
-        
+        The providers' provide() method returns a numpy with the
+        correct data type and propotions given the layer name and
+        possibly some extra options. The readmap() in the model 
+        will convert the numpy array to a pcraster map when it is 
+        requested.
         """
-        
-        
-        target_file=os.path.join(self._cache,"%s"%(name))
+        target_file = os.path.join(self._cache,"%s"%(name))
         
         
         url=urlparse(self._layers[name])

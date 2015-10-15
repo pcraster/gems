@@ -1,0 +1,12 @@
+[Unit]
+Description=Beanstalk Work Queue
+After=network.target
+
+[Service]
+Type=simple
+User=beanstalk
+ExecStart=/opt/beanstalkd/bin/beanstalkd -p 11300 -z 262140
+Restart=on-abort
+
+[Install]
+WantedBy=multi-user.target

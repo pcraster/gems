@@ -53,14 +53,15 @@ table#eventstream-table tr:first-child td {
 			and loading some default models and chunkschemes. 
 			</p>
 			<p>
-			Once the installation has been completed, the file <code>./install/install-ok.txt</code> will be created in the data directory <code>{{config["HOME"]}}</code>. If this file exists, the installer cannot run. Either remove the file to be able to be able to rerun the installer, or delete the entire contents of the GEMS data directory, and then visit this install page again.
+			Once the installation has been completed, the file <code>./install/install-ok.txt</code> will be created in the data directory <code>{{config["HOME"]}}</code>. If this file exists, the installer cannot run. Either remove the file to be able to be able to rerun the installer, or delete the entire contents of the GEMS data directory, and then visit this install page again. If you've modified any 
+			of the configuration files you have to <code>touch ./gems.wsgi</code> in the GEMS application directory for Apache to reload the application.
 			</p>
 			<p>
 			<strong>Running the install script will delete and reinstall all the database tables, users, models, everything! All data in the current installation will be lost! Do not click the button if you want to keep your data.</strong>
 			</p>
 			<p id="start-install-wrapper">
 				<a class="btn btn-primary" href="/" role="button"><i class="fa fa-close"></i> Yikes! Get me out of here!</a>
-			 	<a class="btn btn-default" href="#" role="button" id="start-install"><i class="fa fa-rocket"></i> Run the installer! I know that I'm doing!</a>
+			 	<a class="btn btn-default" href="#" role="button" id="start-install"><i class="fa fa-rocket"></i> All systems are go! I know that I'm doing!</a>
 			</p>
 		{% else %}
 			<p>

@@ -1,11 +1,8 @@
 import os
 import uuid
 import pyproj
-#import mercantile
 import subprocess
 import hashlib
-#import base64
-#import StringIO
 import random
 import re
 import sys
@@ -14,10 +11,8 @@ import json
 import utm
 import cPickle
 import datetime
-
+import time 
 import numpy as np
-#import numpy.ma as ma
-#import matplotlib.cm as mpcm
 
 from osgeo import gdal, gdalconst, ogr, osr
 
@@ -48,7 +43,117 @@ from utils import create_configuration_key, parse_model_time
 
 db = SQLAlchemy()
 
-beanstalk = beanstalkc.Connection('localhost',port=11300)
+class BeanstalkConnectionFailure(Exception):
+    pass
+
+class BeanstalkWorkersFailure(Exception):
+    pass
+
+class Beanstalk(object):
+    """
+    Wrapper to manage the beanstalk connection and prevent socket errors from
+    occurring in the web app. You can check if the beanstalk connection is
+    still active:
+    
+    if beanstalk:
+        #active
+    else:
+        #not active
+    
+    If the connection has been closed for whatever reason, checking "if beanstalk"
+    will also try to reconnect once. If that reconnect also fails, then False is
+    returned. If the queue is connected True is returned.
+    
+    To access the actual beanstalk queue, use beanstalk.queue, which will return
+    the beanstalk connection object directly. Here too the connection is checked,
+    and if there is no connection then it is retried.
+    
+    Todo: Figure out if this is the best way to manage the beanstalk connection,
+    it's a bit improvised but should be adequate for now.
+    """
+    def __init__(self):
+        """
+        Initialize the object.
+        """
+        self.connect()
+
+    def __nonzero__(self):
+        """
+        Return a boolean if the connection is active. This is used when 
+        "if beanstalk: (...)" is used in the code.
+        """
+        return True if self.queue else False
+
+    def connect(self):
+        """
+        Connect to the work queue and checks whether the connection actually
+        works.
+        """
+        try:
+            self._conn = beanstalkc.Connection('localhost', port=11300)
+            self._conn.using()
+        except:
+            return False
+        else:
+            return True
+
+    def reconnect(self):
+        """
+        Attempts to reconnect to the queue.
+        """
+        try: self._conn.reconnect()
+        except: return False
+        else: return self.connected
+        
+    @property
+    def ok(self):
+        return True if self.queue else False
+    
+    @property
+    def workers(self):
+        """
+        Property which uses the connection stats to return the number of
+        workers connected to the queue. This is a bit of a naive implementation
+        but it should be ok for now.
+        """
+        try:
+            stats = self._conn.stats()
+            return stats['current-workers']
+        except:
+            return 0
+
+    @property
+    def queue(self):
+        """
+        Returns the connection object of the queue.
+        """
+        if self.connected:
+            return self._conn
+        else:
+            return self._conn if self.reconnect() else False
+            
+    @property
+    def connected(self):
+        """
+        Uses the connection's using() method to check that the connection is
+        still active.
+        """
+        try: self._conn.using()
+        except: return False
+        else: return True
+
+beanstalk = Beanstalk()       
+    
+
+def gems_system_status():
+    """
+    Returns a global system status.
+    """
+    return {
+        'status':'OK',
+        'beanstalk_connected':beanstalk.connected,
+        'beanstalk_workers':beanstalk.workers
+    }
 
 class Discretization(db.Model):
     """
@@ -587,7 +692,7 @@ class Model(db.Model):
         
         """
         with open(self.mapserver_mapfile,'w') as f:
-            mapserver_template=render_template('mapserver/page.map',model=self)
+            mapserver_template=render_template('mapserver/page.map',model=self,mapserver_postgis_connect=current_app.config.get("MAPSERVER_POSTGIS_CONNECT"))
             f.write(mapserver_template)
         return True
         

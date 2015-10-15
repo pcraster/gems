@@ -81,6 +81,8 @@ def mapserver():
     
     """
 
+    print "serving map..."
+
     cache_key_cleartext="%s:%s:%s:%s"%(request.values.get("BBOX"),request.values.get("CONFIGKEY"),request.values.get("LAYERS"),request.values.get("TIME"))
     cache_key=hashlib.md5(cache_key_cleartext).hexdigest()
     cache_dir=os.path.join(current_app.config["HOME"],"tilecache",cache_key[0:2],cache_key[2:4])
@@ -114,10 +116,13 @@ def mapserver():
     # referred to in the "filename" field of the "Map" table.
     #
     if len(hits)==0:
+        print "No hits found for this map"
         if not os.path.isfile(empty_file):
             im = Image.new("RGBA", (512, 512))
             im.save(empty_file)
         return send_file(empty_file)
+    else:
+        print "Found %d hits"%(len(hits))
 
     #
     # so it looks like we got some hits, compile a list of timestamps
@@ -140,6 +145,7 @@ def mapserver():
         stream=StringIO.StringIO()
         url=current_app.config.get("MAPSERVER_URL")+"?"+request.query_string
         r=requests.get(url, stream=True)
+        print "fetching from backend: %s"%(url)
         if r.ok:
             for chunk in r.iter_content(1024):
                 stream.write(chunk)
@@ -166,15 +172,8 @@ def mapserver():
             im.save(error_file,'PNG')
         
         return send_file(error_file)
-        
-        #def generate():
-        #    f=open(cache_file,'w')
-        #    for chunk in r.iter_content(1024):
-        #        f.write(chunk)
-        #       yield chunk
-        #    f.close()
-        #return Response(generate(),headers=dict(r.headers)) 
     else:
+        print "serving from cache!~"
         return send_file(cache_file)
         
 @data.route('/download')    

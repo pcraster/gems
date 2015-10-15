@@ -1,9 +1,52 @@
 {% extends 'flask_user/public_base.html' %}
 
+{% block headcss %}
+    <style>
+    body {
+        background-image:url("/static/gfx/login-splash-1.jpg");
+        background-repeat:no-repeat;
+        background-position:center center;
+        background-size: 100%;
+    }
+    div#login-panel {
+        background-color: rgba(255, 255, 255, 0.65);
+        padding: 15px 10px;
+        border-radius:10px;
+        display: table-cell;
+        vertical-align: middle;
+    }
+    input.form-control {
+        border:1px solid #777;
+    }
+    </style>
+{% endblock %}
+
+{% block footjs %}
+    <script>
+        function fixPanel() {
+            var offset=(($(window).height()-100-$("div#login-panel").height()-33)/2)
+            $("div#login-panel").css("margin-top",offset+"px")
+        }
+        $(document).on("ready",fixPanel);
+        $(window).on("resize",fixPanel);
+        $(document).on("ready",function(){
+            $("input#username").focus();
+        })
+    </script>
+{% endblock %}
+
+
 {% block content %}
 {% from "flask_user/_macros.html" import render_field, render_submit_field %}
-<h1>{%trans%}Register{%endtrans%}</h1>
 
+    <div class="row" style="height:100%">
+      <div class="col-md-4 col-md-offset-4 col-sm-6 col-sm-offset-3" id="login-panel">
+    <p>
+        <strong><i class="fa fa-pencil"></i> Create a new GEMS account</strong>
+    </p>
+    <!--
+<h1>{%trans%}Register{%endtrans%}</h1>
+-->
 <form action="" method="POST" novalidate formnovalidate class="form" role="form">
     {{ form.hidden_tag() }}
 
@@ -15,12 +58,14 @@
             <div class="col-xs-6">
                 <label for="{{ field.id }}" class="control-label">{{ field.label.text }}</label>
             </div>
+            <!--
             <div class="col-xs-6 text-right">
                 {% if user_manager.enable_register %}
                     <a href="{{ url_for('user.login') }}" tabindex='290'>
                         {%trans%}Already registered? Sign in.{%endtrans%}</a>
                 {% endif %}
             </div>
+            -->
         </div>
         {{ field(class_='form-control', tabindex=210) }}
         {% if field.errors %}
@@ -40,7 +85,31 @@
         {{ render_field(form.retype_password, tabindex=240) }}
     {% endif %}
 
-    {{ render_submit_field(form.submit, tabindex=280) }}
-</form>
 
+        <div class="form-group" style="margin-bottom:0;">
+            <div class="row">
+                 <div class="col-xs-3">
+                    <input type="submit" class="btn btn-primary btn-sm" value="Register" tabindex="280" style="width:100%;">
+                 </div>
+                 <div class="col-xs-9" style="border-left:1px solid #666;">
+                     <p>
+                        Welcome to GEMS. Fill out the form to register an account. For a quick look, you can also use demo/demo as credentials.
+                    </p>
+                    <p>
+                        For more information, or to get in touch with the developers send an e-mail to <a href="mailto:k.alberti@uu.nl">Koko Alberti</a> at Utrecht University.
+                     </p>
+                     <p>
+                     <a href="{{ url_for('user.login') }}" tabindex='290'>
+                        Sign in here</a> if you already have an account.
+                        </p>
+
+                    <small>Background image by <a style="color:#444;text-decoration:underline;" href="http://earthobservatory.nasa.gov/IOTD/view.php?id=85632&eocn=home&eoci=iotd_grid" target="_blank">NASA Earth Observatory</a>.</small>
+                 </div>
+            </div>
+        </div>
+
+    
+</form>
+</div>
+</div>
 {% endblock %}

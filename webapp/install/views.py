@@ -16,7 +16,11 @@ from datetime import datetime, timedelta
 from ..models import *
 
 
-
+class InstallFailure(Exception):
+    """
+    Whenever something critical goes wrong, raise an InstallFailure.
+    """
+    pass
 
 install_log = "";
 
@@ -52,20 +56,26 @@ def install_application():
     else:
         open(install_running_file, 'w')
         installation_steps = ('check_configuration','init_database','create_users','create_discretizations','create_models')
+        #installation_steps = ('check_configuration',)
         try:
             for step in installation_steps:
                 try:
                     yield report("Step '%s' started."%(step))
                     for message in globals()[step]():
                         yield message
-                except Exception as e:
-                    yield report("Step '%s' failed! (%s)"%(step,e),'error')
+                except InstallFailure as e:
+                    yield report("<strong>Step %s failed</strong>"%(step),'error')
+                    raise InstallFailure()
+        except InstallFailure as e:
+            yield report("<strong>Installation failed!</strong>",'error')
         except Exception as e:
-            yield report("Installation failed! (%s)"%(e),'error')
+            yield report("An unexpected error occurred! (%s)"%(e),'error')
+        else:
+            yield report("<strong>Installation completed! Head over to the <a href='/' target='_blank'>homepage</a> to log in to the GEMS webapplication.</strong>")
+            open(install_ok_file,'w')            
         finally:
             os.remove(install_running_file)
-            yield report("Installation completed! Head over to the <a href='/'>home page</a> to log in.")
-            open(install_ok_file,'w')
+
 
 def check_configuration():
 
@@ -73,13 +83,13 @@ def check_configuration():
         yield report("HOME directory <code>%s</code> exists."%(current_app.config["HOME"]))
     else:
         yield report("HOME directory <code>%s</code> does not exist!"%(current_app.config["CODE"]),'error')
-        raise Exception()
+        raise InstallFailure()
     
     if os.path.isdir(current_app.config["CODE"]):
         yield report("CODE directory <code>%s</code> exists."%(current_app.config["CODE"]))
     else:
         yield report("CODE directory <code>%s</code> does not exist!"%(current_app.config["CODE"]),'error')
-        raise Exception()
+        raise InstallFailure()
     
     ###
     ### check that the data directory is writable
@@ -96,20 +106,23 @@ def check_configuration():
         yield report("HOME directory <code>%s</code> is writable."%(current_app.config["HOME"]))
     except Exception as e:
         yield report("HOME directory <code>%s</code> is NOT writable! Can't create files or directories. (%s)"%(current_app.config["HOME"], e),'error')
+        raise InstallFailure()
         
     ###
     ### delete all the files in the data directory
     ###
     try:
         for file_object in os.listdir(current_app.config["HOME"]):
-            file_object_path = os.path.join(current_app.config["HOME"], file_object)
-            if os.path.isfile(file_object_path):
-                os.unlink(file_object_path)
-            else:
-                shutil.rmtree(file_object_path)
+            if not file_object.endswith(".log"):
+                file_object_path = os.path.join(current_app.config["HOME"], file_object)
+                if os.path.isfile(file_object_path):
+                    os.unlink(file_object_path)
+                else:
+                    shutil.rmtree(file_object_path)
         yield report("Deleted all files and subdirectories of <code>%s</code>"%(current_app.config["HOME"]))
     except Exception as e:
         yield report("Could not delete all files and subdirectories of <code>%s</code>. (%s)"%(current_app.config["HOME"],e),'error')
+        raise InstallFailure()
         
     ###
     ###  create subdirectories
@@ -121,6 +134,7 @@ def check_configuration():
         yield report("Created subdirectories <code>%s</code> in HOME directory <code>%s</code>"%("</code>, <code>".join(subdirectories_list),current_app.config["HOME"]))
     except Exception as e:
         yield report("Could not create subdirectories. (%s)"%(e),'error')
+        raise InstallFailure()
         
 
     ###
@@ -133,6 +147,7 @@ def check_configuration():
             yield report("TEMP directory <code>%s</code> does not exist. Created it successfully."%(tempdir))
         except Exception as e:
             yield report("TEMP directory <code>%s</code> does not exist. Creating it failed! (%s)"%(tempdir,e),'error')
+            raise InstallFailure()
     else:
         yield report("TEMP directory found at <code>%s</code."%(tempdir))
             
@@ -147,15 +162,16 @@ def check_configuration():
         yield report("TEMP directory <code>%s</code> is writable."%(current_app.config["TEMP"]))
     except IOError:
         yield report("TEMP directory <code>%s</code> is NOT writable!"%(current_app.config["TEMP"]),'error')
+        raise InstallFailure()
         
     ###
     ### check the data directory is writable
     ###
-    try:
-        beanstalk.stats()
+    if beanstalk.ok:
         yield report("Connected to beanstalk work queue!")
-    except Exception as e:
+    else:
         yield report("Could not connect to beanstalkd work queue. Make sure the service is running and that it is accessible from this machine.",'error')
+        raise InstallFailure()
     
     ###
     ### check that mapserver instance at MAPSERVER_URL returns something sensible
@@ -165,6 +181,38 @@ def check_configuration():
         yield report("Mapserver found at <code>%s</code>"%(current_app.config["MAPSERVER_URL"]))
     else:
         yield report("Mapserver not found at <code>%s</code>"%(current_app.config["MAPSERVER_URL"]),'error')
+        raise InstallFailure()
+        
+    ###
+    ### check that we can import pcraster
+    ###
+    try:
+        import pcraster
+        import pcraster.framework
+        yield report("Imported <code>pcraster</code> and <code>pcraster.framework</code>")
+    except Exception as e:
+        yield report("Python could not import <code>pcraster</code> and <code>pcraster.framework</code> (%s)"%(e),'error')
+        raise InstallFailure()
+        
+    ###
+    ### check that we can import gdal
+    ###
+    try:
+        from osgeo import gdal, ogr, osr
+        yield report("Imported <code>gdal</code>, <code>ogr</code>, and <code>osr</code> from <code>osgeo</code>")
+    except Exception as e:
+        yield report("Python could not import <code>gdal</code>, <code>ogr</code>, and <code>osr</code> from <code>osgeo</code> (%s)"%(e),'error')
+        raise InstallFailure()
+        
+    ###
+    ### check that we can import gems models
+    ###
+    try:
+        import gem.model
+        yield report("Imported <code>gem.model</code>")
+    except Exception as e:
+        yield report("Python could not import <code>gem.model</code> (%s)"%(e),'error')
+        raise InstallFailure()
         
     yield report("Completed!")
     
@@ -174,27 +222,36 @@ def init_database():
         yield report("Dropped database")
     except Exception as e:
         yield report("Dropping database failed! (%s)"%(e),'error')
+        raise InstallFailure()
     try:
         db.create_all()
         yield report("Created database tables")
     except Exception as e:
         yield report("Creating database tables failed. (%s)"%(e),'error')
+        raise InstallFailure()
     yield report("Completed!")
     
 def create_users():
     try:
+        admin_password = random_password()
+        demo_password = "demo"        
+        
         db.session.add(Role(name="admin"))
         db.session.commit()
-        users = []
-        admin_password = random_password()
-        admin = User(username='admin', fullname='Site Administrator', email='', active=True, password=current_app.user_manager.hash_password(admin_password))
+
+        admin = User(username='admin', fullname=current_app.config.get("ADMIN_NAME","GEMS Administrator"), email=current_app.config.get("ADMIN_EMAIL","administrator@example.org"), active=True, password=current_app.user_manager.hash_password(admin_password))
         admin.roles.append(Role.query.filter(Role.name=='admin').first())
-        users.append(admin)
-        db.session.add_all(users)
+
+        demo = User(username='demo', fullname='GEMS Demo Account', email='demo@example.org', active=True, password=current_app.user_manager.hash_password(demo_password))
+        
+        db.session.add_all([admin,demo])
         db.session.commit()
+        
         yield report("<strong>Created default user <code>admin</code>. Password for admin is <code>%s</code>, write this down somewhere safe, this is the only time that the new admin password is shown!</strong>"%(admin_password))
+        yield report("Created default user <code>demo</code>. Password for demo is <code>%s</code>"%(demo_password))
     except Exception as e:
         yield report("Exception occurred while creating default users. (%s)"%(e),'error')
+        raise InstallFailure()
     yield report("Completed!")
 
 def create_discretizations():
