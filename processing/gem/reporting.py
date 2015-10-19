@@ -186,13 +186,13 @@ class ModelReporter(object):
             
             #gdalwarp -overwrite -srcnodata -9999 -dstnodata -9999 -t_srs "epsg:3857" -co "COMPRESS=DEFLATE" -co "ZLEVEL=1" -co "TILED=YES" dem.tif dem.tif
             
-            logger.debug("Warping to web mercator, add tiling, add compression using gdalwarp")
+            logger.debug("Warping to [?], add tiling, add compression using gdalwarp")
             time_start=now()
             c=[
                 "/usr/bin/gdalwarp", "-q", "-overwrite", 
                 "-srcnodata", "-9999",
                 "-dstnodata", "-9999",
-                "-t_srs", "epsg:3857",
+                #"-t_srs", "epsg:4326",
                 "-co", "COMPRESS=DEFLATE",
                 "-co", "ZLEVEL=1",
                 "-co", "TILED=YES",
@@ -226,7 +226,8 @@ class ModelReporter(object):
                     'attribute':name,
                     'timestamp':timestamp,
                     'config_key':config_key,
-                    'chunk_uuid':uuid_chunk
+                    'chunk_uuid':uuid_chunk,
+                    'filesrs':"epsg:%d"%(self._grid["srid"])
                 })
                 #remove temporary files
                 tempfiles=glob.glob(os.path.join(layer_directory)+"/*tmp.tif*")

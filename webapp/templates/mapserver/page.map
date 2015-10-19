@@ -22,6 +22,14 @@
 # Reported output attributes:{% for layer in model.reporting %}
 #   - {{layer}}{% endfor %}
 #
+# Other settings: {% if mapserver['debug'] == 0 %}
+#   - DEBUG is OFF!{% else %}
+#   - DEBUG set to {{mapserver['debug']}} {%endif%}
+#
+# Configuration:
+#   - Configuring for MapServer version {{mapserver['version']}}
+#   
+#
 ###########################################################
 
 #start page.map#
@@ -35,13 +43,20 @@ MAP
     MAXSIZE 4096
 
     {% if mapserver['debug'] > 0 %}
-        #Mapserver Debugging
-        CONFIG "MS_ERRORFILE" "stderr"
-        CONFIG "CPL_DEBUG" "ON"
-        CONFIG "PROJ_DEBUG" "ON"
-        DEBUG {{mapserver['debug']}}
+    #
+    #Mapserver Debugging
+    #
+    CONFIG "MS_ERRORFILE" "stderr" #stderr logs messages to Apache error log
+    CONFIG "CPL_DEBUG" "ON"
+    CONFIG "PROJ_DEBUG" "ON"
+    DEBUG {{mapserver['debug']}}
+    #
+    #End Mapserver Debugging
+    #
     {% else %}
-        #Mapserver debugging is off. Set the MAPSERVER_DEBUG variable in the GEMS config to change it.
+    #
+    #Mapserver debugging is off. Set the MAPSERVER_DEBUG variable in the GEMS config to change it.
+    #
     {% endif %}
 
     {% include "mapserver/web.map" %}

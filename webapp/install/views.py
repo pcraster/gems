@@ -1,6 +1,6 @@
 import os
 import re
-import subprocess
+
 import uuid
 import json
 import inspect
@@ -12,6 +12,8 @@ from . import install
 
 from flask import g, current_app, render_template, request, jsonify, make_response, flash, stream_with_context, Response, redirect
 from datetime import datetime, timedelta
+
+from subprocess import check_output
 
 from ..models import *
 
@@ -172,6 +174,18 @@ def check_configuration():
     else:
         yield report("Could not connect to beanstalkd work queue. Make sure the service is running and that it is accessible from this machine.",'error')
         raise InstallFailure()
+        
+    ###
+    ### check that mapserver is installed on the system
+    ###
+    try: 
+        mapserver_version_output = check_output([current_app.config.get("MAPSERVER_EXECUTABLE"),"-v"])
+    except:
+        yield report("Mapserver executable not found at <code>%s</code>"%(current_app.config["MAPSERVER_EXECUTABLE"]),'error')
+        raise InstallFailure()
+    else:
+        yield report("Mapserver executable found at <code>%s</code>. Version information: <code>%s</code>"%(current_app.config["MAPSERVER_EXECUTABLE"],mapserver_version_output))
+        
     
     ###
     ### check that mapserver instance at MAPSERVER_URL returns something sensible

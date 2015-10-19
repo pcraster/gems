@@ -504,6 +504,7 @@ class Map(db.Model):
     
     datatype = db.Column(db.String(1024), nullable=False, index=False)    
     filename = db.Column(db.String(1024), nullable=False, index=False)
+    filesrs = db.Column(db.String(2048), nullable=True, index=False, default='')
 
     def __repr__(self):
         return "<Map config=%s chunk=%s time=%s filename=%s>"%(self.config_key[0:6],self.chunk.uuid[0:6],self.timestamp.isoformat(),self.filename) 
@@ -519,6 +520,7 @@ class Map(db.Model):
         
         self.attribute=options["attribute"]
         self.filename=os.path.join(current_app.config["HOME"],"maps",options["filename"])
+        self.filesrs=options["filesrs"]
         self.datatype=options["datatype"]
         self.timestamp=datetime.datetime.strptime(options["timestamp"], "%Y%m%d%H%M%S")
     

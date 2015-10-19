@@ -27,13 +27,14 @@
         END
         CONNECTION "{{mapserver['postgis_connect']}}"
         CONNECTIONTYPE postgis
-        DATA "geom_web_mercator from map using srid=3857"
+        #DATA "geom_web_mercator from map using srid=3857"
+        DATA "geom from map using srid=4326"
         {% if mapserver['version'] == 7 %}
-        #Mapserver 7.x
-        FILTER (config_key='%configkey%' and attribute='{{layer}}')
+        #Filter Configuration for Mapserver 7.x
+        PROCESSING "NATIVE_FILTER=attribute='{{layer}}' AND config_key='%configkey%'"
         {% else %}
-        #Mapserver 6.x
-        PROCESSING "NATIVE_FILTER=attribute='{{layer}}' AND config_key='%configkey%'
+        #Filter Configuration for Mapserver 6.x
+        FILTER (config_key='%configkey%' and attribute='{{layer}}')
         {% endif %}
     END
     LAYER
@@ -50,7 +51,7 @@
             "wcs_rangeset_name"   "Range 1"
             "wcs_rangeset_label"  "My Label"
             "wcs_rangeset_nullvalue" "-32768" 
-            "wcs_srs"                   "epsg:3857"
+            "wcs_srs"                   "EPSG:4326 EPSG:3857"
             "ows_extent"                ""
             "wcs_resolution"            "100 100"
             "wcs_bandcount"             "1"
@@ -59,7 +60,7 @@
             "wcs_enable_request"           "*"
 
             "wms_title" "Title for WMS layer..."
-            "wms_srs"   "EPSG:3857" 
+            "wms_srs"   "EPSG:4326 EPSG:3857" 
             #"wms_timeextent" "{{model.mapserver_config_params['wms_timeextent']}}"
             "wms_timeextent" "1970-01-01T00:00:00/2099-12-31T00:00:00"
             "wms_timeitem" "timestamp"
@@ -67,6 +68,7 @@
         END
         TILEINDEX "tileindex_{{layer}}"
         TILEITEM "filename"
+        TILESRS "filesrs"
 
         #
         # Styles
@@ -77,7 +79,7 @@
         #
 
         PROJECTION
-            "init=epsg:3857"
+            "init=epsg:4326"
         END
     END
 	# ===============================================
