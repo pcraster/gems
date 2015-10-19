@@ -21,6 +21,7 @@ ADMIN_EMAIL=                'admininstrator@example.org'
 
 MAPSERVER_URL=              'http://127.0.0.1/cgi-bin/mapserv'
 MAPSERVER_POSTGIS_CONNECT=  'dbname=gemsdb user=gems password= host='
+
 ###############################################################################
 ### End Local Settings
 ###############################################################################
@@ -32,6 +33,15 @@ MAPSERVER_POSTGIS_CONNECT=  'dbname=gemsdb user=gems password= host='
 BEANSTALK_HOST=             'localhost'
 BEANSTALK_PORT=             11300
 
+#Valid values frin 0-5. See mapserver documentation for more info. Any 
+#mapserver debug info is logged to the apache error_log file. Be aware that 
+#setting this to 5 will cause a LOT of log output (for each map tile, this adds 
+#up quicly.
+MAPSERVER_DEBUG=            0
+
+#Mapserver executable is used to check the installed mapserver version using
+#mapserv -v
+MAPSERVER_EXECUTABLE=       '/opt/mapserver/bin/mapserv'
 
 TEMP =                      os.path.join(HOME, "tmp")
 BCRYPT_LEVEL =              12

@@ -31,10 +31,18 @@ MAP
     SIZE 600 400
     EXTENT -180 -90 180 90
     UNITS DD
-    #SHAPEPATH "../data"
     IMAGECOLOR 255 255 255
     MAXSIZE 4096
-    #FONTSET "../etc/fonts.txt"
+
+    {% if mapserver['debug'] > 0 %}
+        #Mapserver Debugging
+        CONFIG "MS_ERRORFILE" "stderr"
+        CONFIG "CPL_DEBUG" "ON"
+        CONFIG "PROJ_DEBUG" "ON"
+        DEBUG {{mapserver['debug']}}
+    {% else %}
+        #Mapserver debugging is off. Set the MAPSERVER_DEBUG variable in the GEMS config to change it.
+    {% endif %}
 
     {% include "mapserver/web.map" %}
     {% include "mapserver/projection.map" %}

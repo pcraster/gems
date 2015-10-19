@@ -1,7 +1,7 @@
 import os
 import uuid
 import pyproj
-import subprocess
+
 import hashlib
 import random
 import re
@@ -38,6 +38,8 @@ from sqlalchemy.dialects.postgresql import UUID, JSON
 from shapely.ops import transform, cascaded_union
 from shapely.geometry import box, mapping, Polygon, Point, MultiPolygon
 from shapely.wkt import loads
+
+from subprocess import check_output
 
 from utils import create_configuration_key, parse_model_time
 
@@ -115,6 +117,11 @@ class Beanstalk(object):
         Property which uses the connection stats to return the number of
         workers connected to the queue. This is a bit of a naive implementation
         but it should be ok for now.
+        
+        Todo: use a specific tube like 'gems' for processing jobs. Then use 
+        stats-tube command to check stats on the tube:
+        current-watching: num of cons watching the tube
+        current-waiting:
         """
         try:
             stats = self._conn.stats()
@@ -689,10 +696,20 @@ class Model(db.Model):
     def update_mapserver_template(self):
         """
         Updates the mapserver .map file for the outputs created by this model.
-        
         """
+        mapserver = {
+            'version': 6,
+            'postgis_connect':current_app.config.get("MAPSERVER_POSTGIS_CONNECT"),
+            'debug':current_app.config.get("MAPSERVER_DEBUG",0)
+        }
+        
+        try: mapserver_version_output = check_output([current_app.config.get("MAPSERVER_EXECUTABLE"),"-v"])
+        except: mapserver_version_output = ""
+        if mapserver_version_output.startswith("MapServer version 7"):
+            mapserver["version"] = 7
+        
         with open(self.mapserver_mapfile,'w') as f:
-            mapserver_template=render_template('mapserver/page.map',model=self,mapserver_postgis_connect=current_app.config.get("MAPSERVER_POSTGIS_CONNECT"))
+            mapserver_template=render_template('mapserver/page.map',model=self, mapserver=mapserver)
             f.write(mapserver_template)
         return True
         

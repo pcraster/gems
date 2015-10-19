@@ -13,7 +13,16 @@ from ..models import *
 
 @status.route('')
 def home():
-    #stats = beanstalk.stats()
+    """
+    
+    Todo:
+    
+    - status of beanstalk queue rather than entire server
+    - mappsever status
+    - databsae status
+    - mapserver connect
+    
+    """
     status = gems_system_status()
     
     

@@ -10,6 +10,7 @@
         STATUS ON
         NAME "tileindex_{{layer}}"
         TYPE POLYGON
+        DEBUG {{mapserver['debug']}}
         METADATA
             "wfs_title"         "Tileindex for layer {{layer}}"
             "wfs_srs"           "EPSG:4326" 
@@ -24,13 +25,22 @@
             'default_configkey' 'd426718ab405d9958c03b6b6c6063f13'
             'configkey' '^[0-9a-f]{32}$'
         END
-        CONNECTION "{{mapserver_postgis_connect}}"
+        CONNECTION "{{mapserver['postgis_connect']}}"
         CONNECTIONTYPE postgis
         DATA "geom_web_mercator from map using srid=3857"
+        {% if mapserver['version'] == 7 %}
+        #Mapserver 7.x
         FILTER (config_key='%configkey%' and attribute='{{layer}}')
+        {% else %}
+        #Mapserver 6.x
+        PROCESSING "NATIVE_FILTER=attribute='{{layer}}' AND config_key='%configkey%'
+        {% endif %}
     END
     LAYER
+        STATUS ON
         NAME "{{layer}}"
+        TYPE RASTER
+        DEBUG {{mapserver['debug']}}
         METADATA
             "wcs_label"           "{{layer}}"
             "wcs_description"     "Description for layer {{layer}}"
@@ -55,8 +65,6 @@
             "wms_timeitem" "timestamp"
             "wms_timedefault" "{{model.mapserver_config_params['wms_timedefault']}}"
         END
-        TYPE RASTER
-        STATUS ON
         TILEINDEX "tileindex_{{layer}}"
         TILEITEM "filename"
 
