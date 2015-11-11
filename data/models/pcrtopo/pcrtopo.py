@@ -45,7 +45,8 @@ class Model(GemModel):
         # the system will then read the map from the correct WCS server.
         #
         'wcs':[
-            'http://turbo.geo.uu.nl/cgi-bin/mapserv?MAP=/data/projectdata/globaldata/globaldata.map'        
+            'http://turbo.geo.uu.nl/cgi-bin/mapserv?MAP=/data/projectdata/globaldata/globaldata.map',
+            'http://geodata.nationaalgeoregister.nl/ahn2/wcs'
         ]
     }
     reporting={
@@ -114,10 +115,13 @@ class Model(GemModel):
         logger.debug("The lapse rate for this run is: %.2f"%(self.readparam("lapserate")))
         self.dem=self.readmap('srtm.elevation')
         self.modis=self.readmap('modis.ndvi.2012.002')
+        self.ahn=self.readmap('ahn2:ahn2_5m')
 
     def dynamic(self):
         logger.debug("Hello dynamic!")
-        self.aspect=aspect(self.dem)
+        #self.aspect=aspect(self.dem)
+        self.report(self.ahn,"elev")
+        self.aspect=aspect(self.ahn)
         self.report(self.aspect,"aspect")
         
         
@@ -126,7 +130,7 @@ class Model(GemModel):
         self.report(self.dem,"dem")
         self.report(self.readmap('globcov.2009'),'globcov')
         
-        self.grade = slope(self.dem)
+        self.grade = slope(self.ahn)
         self.report(self.grade,"grade")
 
     def postdynamic(self):

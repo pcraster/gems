@@ -80,9 +80,6 @@ def mapserver():
 
     
     """
-
-    print "serving map..."
-
     cache_key_cleartext="%s:%s:%s:%s"%(request.values.get("BBOX"),request.values.get("CONFIGKEY"),request.values.get("LAYERS"),request.values.get("TIME"))
     cache_key=hashlib.md5(cache_key_cleartext).hexdigest()
     cache_dir=os.path.join(current_app.config["HOME"],"tilecache",cache_key[0:2],cache_key[2:4])

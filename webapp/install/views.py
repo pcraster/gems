@@ -58,7 +58,6 @@ def install_application():
     else:
         open(install_running_file, 'w')
         installation_steps = ('check_configuration','init_database','create_users','create_discretizations','create_models')
-        #installation_steps = ('check_configuration',)
         try:
             for step in installation_steps:
                 try:
@@ -73,7 +72,7 @@ def install_application():
         except Exception as e:
             yield report("An unexpected error occurred! (%s)"%(e),'error')
         else:
-            yield report("<strong>Installation completed! Head over to the <a href='/' target='_blank'>homepage</a> to log in to the GEMS webapplication.</strong>")
+            yield report("<strong>Installation completed! Head over to the <a href='/' target='_blank'>homepage</a> to log in to the GEMS webapplication. Remember to write down the admin password displayed below!</strong>")
             open(install_ok_file,'w')            
         finally:
             os.remove(install_running_file)
@@ -262,6 +261,7 @@ def create_users():
         db.session.commit()
         
         yield report("<strong>Created default user <code>admin</code>. Password for admin is <code>%s</code>, write this down somewhere safe, this is the only time that the new admin password is shown!</strong>"%(admin_password))
+        yield report("<strong>The API token for the admin user is: <code>%s</code>"%(admin.api_token))
         yield report("Created default user <code>demo</code>. Password for demo is <code>%s</code>"%(demo_password))
     except Exception as e:
         yield report("Exception occurred while creating default users. (%s)"%(e),'error')

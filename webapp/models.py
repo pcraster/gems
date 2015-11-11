@@ -162,6 +162,9 @@ def gems_system_status():
         'beanstalk_workers':beanstalk.workers
     }
 
+def generate_api_token():
+    return ''.join(random.choice("abcdefghjkmnpqrstuvwxyzABCDEFGHJKLMNPQRSTUVWXYZ23456789") for _ in range(32))
+
 class Discretization(db.Model):
     """
     Describes the discretization used to divide the earth up into managable
@@ -343,10 +346,12 @@ class Chunk(db.Model):
         is used to construct a grid and a mask on which the model will be run
         in the end.
         """
-        geom=to_shape(self.geom)
+        geom = to_shape(self.geom)
         return {
             'bounds':geom.bounds,
             'bbox':self.bbox,
+            'bbox_utm':self.bbox_utm,
+            'bbox_latlng':self.bbox_latlng,
             'geotransform':self.geotransform,
             'uuid':str(self.uuid),
             'discretization':self.discretization.name,
@@ -361,16 +366,19 @@ class Chunk(db.Model):
         }
     @property
     def srid(self):
-        epsg=32600
-        geom=to_shape(self.geom)
-        (easting,northing,zone,zone_letter)=utm.from_latlon(geom.centroid.y, geom.centroid.x)
+        """
+        Return the EPSG code for the UTM zone 
+        """
+        epsg = 32600
+        geom = to_shape(self.geom)
+        easting, northing, zone, zone_letter = utm.from_latlon(geom.centroid.y, geom.centroid.x) 
         if zone_letter<'N': #southern zones get +100
             epsg+=100
         return epsg+zone
-        
+
     @property
     def cellsize(self):
-        return 100
+        return self.discretization.cellsize
         
     @property
     def pixelwidth(self):
@@ -384,16 +392,17 @@ class Chunk(db.Model):
         
     @property
     def bbox(self):
-        """
-        Return the chunk bounds in a local utm projection
-        
-        Todo: cache this after generating it, because it's really inefficient
-        calling rows or pixelheight properties now.
-        
-        (minx, miny, maxx, maxy)
-        """
-        project=partial(pyproj.transform, pyproj.Proj(init="epsg:4326"), pyproj.Proj(init="epsg:%d"%(self.srid)))
+        return self.bbox_utm
+    
+    @property
+    def bbox_utm(self):
+        project = partial(pyproj.transform, pyproj.Proj(init="epsg:4326"), pyproj.Proj(init="epsg:%d"%(self.srid)))
         return transform(project,to_shape(self.geom)).bounds
+        
+    @property
+    def bbox_latlng(self):
+        geom = to_shape(self.geom)
+        return geom.bounds
         
     @property
     def mask(self):
@@ -1002,7 +1011,12 @@ class ModelConfiguration(db.Model):
             "timesteps":self.model_timesteps,
             "results":self.results
         }
-    
+    @property
+    def as_text(self):
+        params_as_str = "\n".join(["%s -> %s"%(param,str(self.parameters[param])) for param in sorted(self.parameters)])
+        return """ModelConfiguration '%s' (id=%d)\n\n%s
+        """%(str(self.key),self.id,params_as_str)
+        
     @property
     def results(self):
         """
@@ -1145,6 +1159,7 @@ class Job(db.Model):
         if _failed > 1:
             return "FAILED"
         return "PROCESSING"
+        
     @property
     def is_complete(self):
         if self.status_code!=1:
@@ -1211,8 +1226,39 @@ class Job(db.Model):
             return []
         else:
             return self.modelconfiguration.results
+            
+    @property
+    def as_text(self):
+        """
+        Returns a text/logfile representation of the Job.
         
+        Todo: use a template.
+        """
+        chunk_list = ""
+        for n,jc in enumerate(self.jobchunks.all()):
+            chunk_list+="JobChunk '%s':  %s (%d)"%(jc.shortkey,jc.status,jc.status_code)
+        
+        log = """                               *** JOB LOG ***
+===============================================================================
+Job '%s' (id=%d)
 
+Date:               %s
+UUID:               %s
+Status:             %s
+Number of chunks:   %d (%d completed, %d failed)
+===============================================================================
+%s
+===============================================================================
+%s
+===============================================================================
+"""%(self.shortkey,self.id,self.shortdate,str(self.uuid),self.jobchunks_status,self.jobchunks_total,self.jobchunks_completed,self.jobchunks_failed,chunk_list,self.modelconfiguration.as_text)
+        
+        for n,jc in enumerate(self.jobchunks.all()):
+            log+="""Chunk:              %d/%d"""%(n+1,self.jobchunks_total)
+            log+=jc.as_text
+        
+        return log
+        
 
 class JobChunk(db.Model):
     """
@@ -1251,7 +1297,16 @@ class JobChunk(db.Model):
 
     @property
     def shortkey(self):
-        return str(self.uuid)[0:6]        
+        return str(self.uuid)[0:6]   
+        
+    @property
+    def status(self):
+        if self.status_code == 0:
+            return "PROCESSING"
+        if self.status_code == -1:
+            return "FAILED"
+        if self.status_code == 1:
+            return "COMPLETED"
         
     @property
     def as_dict(self):
@@ -1260,6 +1315,20 @@ class JobChunk(db.Model):
             'status_code':self.status_code,
             'status_message':self.status_message
         }
+        
+    @property
+    def as_text(self):
+        return """
+Id:                 %s
+Status code:        %d
+Status message:     %s
+Log:
+
+%s
+
+
+
+        """%(str(self.uuid),self.status_code,self.status_message,self.status_log)
         
 
     @property
@@ -1292,6 +1361,7 @@ class User(db.Model, UserMixin):
     email = db.Column(db.String(255), nullable=False, unique=True)
     confirmed_at = db.Column(db.DateTime())
     reset_password_token = db.Column(db.String(100), nullable=False, default='')
+    api_token = db.Column(db.String(32), nullable=False, unique=False, default=generate_api_token)
     roles = db.relationship('Role', secondary='user_roles', backref=db.backref('users', lazy='dynamic'))
     
     def __repr__(self):
@@ -1312,6 +1382,14 @@ class User(db.Model, UserMixin):
         Returns True is user has an admin role, False otherwise.
         """
         return self.has_role("admin")
+        
+    def api_token_reset(self):
+        """Resets the users API token and returns the new value.
+        """
+        pass
+        #self.api_token = generate_api_token()
+        #db.session.commit()
+        #return self.api_token
 
 # Define the UserRoles DataModel
 class UserRoles(db.Model):

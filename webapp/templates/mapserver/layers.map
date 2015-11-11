@@ -42,6 +42,19 @@
         NAME "{{layer}}"
         TYPE RASTER
         DEBUG {{mapserver['debug']}}
+
+        #
+        # This PROCESSING directive scales the data to the valid range 
+        # of this output attribute. This is necesarry from extremely high
+        # or low values in the raster from messing up the display of the 
+        # maps.
+        {% if model.reporting[layer].datatype == 'Float32' %}
+            {% if model.reporting[layer]['symbolizer']['values']|length >= 2 %}
+            PROCESSING "SCALE={{model.reporting[layer]['symbolizer']['values'][0]}},{{model.reporting[layer]['symbolizer']['values'][-1]}}"
+            {% endif %}
+        {% else %}
+        # Processing directive omitted because this is not a Float32 attribute.
+        {% endif %}
         METADATA
             "wcs_label"           "{{layer}}"
             "wcs_description"     "Description for layer {{layer}}"

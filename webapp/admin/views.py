@@ -71,8 +71,7 @@ def processing():
     Shows information on processing
     """
     jobs=Job.query.order_by(Job.date_created.desc()).limit(10)
-    stats=beanstalk.stats()
-    return render_template("admin/processing.html",jobs=jobs,stats=stats)
+    return render_template("admin/processing.html",jobs=jobs)
 
 @admin.route('/models/<model_name>/editor',methods=["GET","POST"])
 def model_editor(model_name):

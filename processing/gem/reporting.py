@@ -159,8 +159,8 @@ class ModelReporter(object):
             layer_file=os.path.join(layer_directory,name)
             
             layers=self._report_layers[name]
-            #options=['PHOTOMETRIC=MINISBLACK','COMPRESS=DEFLATE','TILED=YES','ZLEVEL=1']
-            options=[]
+            options=['PHOTOMETRIC=MINISBLACK','COMPRESS=DEFLATE','TILED=YES','ZLEVEL=1']
+            #options=[]
             #datatype=gdal_array.NumericTypeCodeToGDALTypeCode(layers[0][0].dtype)
             
 
@@ -172,13 +172,23 @@ class ModelReporter(object):
             datatype_name=gdal.GetDataTypeName(datatype)
 
             logger.debug("Storing attribute '%s' (%d layers/timesteps) as a %s geotiff"%(name,len(layers),datatype_name))
-                
-            ds=driver.Create(layer_file+".tmp.tif", self._grid['cols'], self._grid['rows'], len(layers), datatype, options)
+            
+            attr_min = min(self.reporting[name]["symbolizer"]["values"])
+            attr_max = max(self.reporting[name]["symbolizer"]["values"])
+            attr_avg = attr_min+(0.5*(attr_max-attr_min))
+            logger.debug("Forcing the following band statistics: min:%s max:%s avg:%s"%(str(attr_min),str(attr_max),str(attr_avg)))
+            
+            ds=driver.Create(layer_file+".tif", self._grid['cols'], self._grid['rows'], len(layers), datatype, options)
             for band_index,(data,timestamp) in enumerate(layers,start=1):
+                logging.debug("Writing band stats")
                 band=ds.GetRasterBand(band_index)
                 band.WriteArray(data)
                 band.SetNoDataValue(-9999)
                 band.SetRasterColorInterpretation(1) #Set ColorInterp to gray on all bands
+                band.SetStatistics(attr_min, attr_max, attr_avg, 0)
+                
+                stats = band.GetStatistics(0,1)
+                logging.debug("band stats: %.3f %.3f"%(stats[0],stats[1]))
                 
             ds.SetGeoTransform(self._grid["geotransform"])
             ds.SetProjection(self._grid["projection"])
@@ -186,21 +196,21 @@ class ModelReporter(object):
             
             #gdalwarp -overwrite -srcnodata -9999 -dstnodata -9999 -t_srs "epsg:3857" -co "COMPRESS=DEFLATE" -co "ZLEVEL=1" -co "TILED=YES" dem.tif dem.tif
             
-            logger.debug("Warping to [?], add tiling, add compression using gdalwarp")
-            time_start=now()
-            c=[
-                "/usr/bin/gdalwarp", "-q", "-overwrite", 
-                "-srcnodata", "-9999",
-                "-dstnodata", "-9999",
-                #"-t_srs", "epsg:4326",
-                "-co", "COMPRESS=DEFLATE",
-                "-co", "ZLEVEL=1",
-                "-co", "TILED=YES",
-                layer_file+".tmp.tif", layer_file+".tif"
-            ]
-            rc=subprocess.call(c)
-            logger.debug("Command: %s"%(" ".join(c)))
-            logger.debug("Returned status code %d. Took %.2fs"%(rc,now()-time_start))
+            logger.debug("SKIP!! Warping to [?], add tiling, add compression using gdalwarp")
+#            time_start=now()
+#            c=[
+#                "/usr/bin/gdalwarp", "-q", "-overwrite", 
+#                "-srcnodata", "-9999",
+#                "-dstnodata", "-9999",
+#                #"-t_srs", "epsg:4326",
+#                "-co", "COMPRESS=DEFLATE",
+#                "-co", "ZLEVEL=1",
+#                "-co", "TILED=YES",
+#                layer_file+".tmp.tif", layer_file+".tif"
+#            ]
+#            rc=subprocess.call(c)
+#            logger.debug("SKIP Command: %s"%(" ".join(c)))
+#            logger.debug("SKIO Returned status code %d. Took %.2fs"%(rc,now()-time_start))
 
             
             logger.debug("Adding overviews using gdaladdo")
@@ -231,8 +241,8 @@ class ModelReporter(object):
                 })
                 #remove temporary files
                 tempfiles=glob.glob(os.path.join(layer_directory)+"/*tmp.tif*")
-                for f in tempfiles:
-                    subprocess.call(["/bin/rm",f])
+                #for f in tempfiles:
+                    #subprocess.call(["/bin/rm",f])
             logger.debug("Creating vrt files took %.2fs"%(now()-time_start))
             logger.debug("Total time taken to report the '%s' attribute: %.2fs"%(name,now()-time_total))
         

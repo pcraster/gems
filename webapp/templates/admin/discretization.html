@@ -75,6 +75,8 @@
 
 						<div class="panel-body">
 						{{d.num_of_chunks}} chunks at {{d.cellsize}}m resolution.<br/><a href="{{url_for('api.discretization_coverage',discretization_name=d.name)}}">View coverage as GeoJSON</a>.
+
+						Bounds: {{d.extent_as_bounds}}
 						</div>
 
 					</div>

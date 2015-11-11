@@ -1,0 +1,701 @@
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>API &mdash; GEMS 0.1 documentation</title>
+  
+
+  
+  
+
+  
+
+  
+  
+    
+
+  
+
+  
+  
+    <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
+  
+
+  
+
+  
+    <link rel="top" title="GEMS 0.1 documentation" href="index.html"/>
+        <link rel="next" title="Vision" href="vision.html"/>
+        <link rel="prev" title="Processing Models" href="processing.html"/> 
+
+  
+  <script src="_static/js/modernizr.min.js"></script>
+
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+  <div class="wy-grid-for-nav">
+
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search">
+          
+
+          
+            <a href="index.html" class="icon icon-home"> GEMS
+          
+
+          
+          </a>
+
+          
+            
+            
+              <div class="version">
+                0.1
+              </div>
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+                <ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="intro.html">Introduction</a></li>
+<li class="toctree-l1"><a class="reference internal" href="prerequisites.html">Prerequisites</a></li>
+<li class="toctree-l1"><a class="reference internal" href="install.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="development.html">Developers Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="overview.html">Overview</a></li>
+<li class="toctree-l1"><a class="reference internal" href="webapplication.html">GEMS Web Application</a></li>
+<li class="toctree-l1"><a class="reference internal" href="webclient.html">GEMS Web Client</a></li>
+<li class="toctree-l1"><a class="reference internal" href="processing.html">Processing Models</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="">API</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#current-version">Current version</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#authentication">Authentication</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#status-codes">Status codes</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#methods">Methods</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#endpoints">Endpoints</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#views">Views</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="vision.html">Vision</a></li>
+<li class="toctree-l1"><a class="reference internal" href="faqs.html">Frequently Asked Questions</a></li>
+</ul>
+
+            
+          
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" role="navigation" aria-label="top navigation">
+        <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+        <a href="index.html">GEMS</a>
+      </nav>
+
+
+      
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+  <ul class="wy-breadcrumbs">
+    <li><a href="index.html">Docs</a> &raquo;</li>
+      
+    <li>API</li>
+      <li class="wy-breadcrumbs-aside">
+        
+          
+            <a href="_sources/api.txt" rel="nofollow"> View page source</a>
+          
+        
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <div class="section" id="api">
+<h1>API<a class="headerlink" href="#api" title="Permalink to this headline">¶</a></h1>
+<p>GEMS uses a RESTful HTTP API. The API allows HTTP clients to request model runs or the status of a model run. Most likely the client will be the GEMS web application itself, but it is also possible to access the API using a command line client like <a class="reference external" href="http://curl.haxx.se/">curl</a> or using the excellent Python <a class="reference external" href="http://docs.python-requests.org/en/latest/">requests</a> HTTP library.</p>
+<div class="contents local topic" id="contents">
+<ul class="simple">
+<li><a class="reference internal" href="#current-version" id="id1">Current version</a></li>
+<li><a class="reference internal" href="#authentication" id="id2">Authentication</a></li>
+<li><a class="reference internal" href="#status-codes" id="id3">Status codes</a></li>
+<li><a class="reference internal" href="#methods" id="id4">Methods</a></li>
+<li><a class="reference internal" href="#endpoints" id="id5">Endpoints</a></li>
+<li><a class="reference internal" href="#views" id="id6">Views</a></li>
+</ul>
+</div>
+<div class="section" id="current-version">
+<h2><a class="toc-backref" href="#id1">Current version</a><a class="headerlink" href="#current-version" title="Permalink to this headline">¶</a></h2>
+<p>The current version of the GEMS API is <code class="docutils literal"><span class="pre">v1</span></code>. The API is available at <code class="docutils literal"><span class="pre">http://&lt;hostname&gt;/api/v1/</span></code>. To test whether you can access the API use a <code class="docutils literal"><span class="pre">curl</span></code> command:</p>
+<div class="highlight-python"><div class="highlight"><pre>$ curl --user &lt;username&gt;:&lt;your_token_here&gt; http://&lt;hostname&gt;/api/v1/
+{
+    &quot;authenticated&quot;: true,
+    &quot;hello&quot;: &quot;world&quot;,
+    &quot;message&quot;: &quot;Welcome to the GEMS API!&quot;,
+    &quot;status&quot;: true
+}
+</pre></div>
+</div>
+<p>If a 200 OK is returned the service is operating normally. Check the <code class="docutils literal"><span class="pre">authenticated</span></code> attribute of the JSON response to see whether your authentication succeeded.</p>
+</div>
+<div class="section" id="authentication">
+<h2><a class="toc-backref" href="#id2">Authentication</a><a class="headerlink" href="#authentication" title="Permalink to this headline">¶</a></h2>
+<p>Current authentication implementation uses <a class="reference external" href="https://en.wikipedia.org/wiki/Basic_access_authentication">HTTP basic access authentication</a> in the form of a username and an API token as a substitute for a password. If the server is not running on SSL this is rather useless, but seeing as GEMS is still very much a project in development we will leave it for the time being. Also, using a token that cannot be used to log in to the application, rather than the user&#8217;s actual password, is a slightly better alternative. Views in the API blueprint can be updated to require token authentication by adding the <code class="docutils literal"><span class="pre">&#64;requires_auth_token</span></code> decorator. This will check the provided token/password against the user&#8217;s <code class="docutils literal"><span class="pre">api_token</span></code> property. If they match, access is granted, otherwise a status 403 Unauthorized is returned. The code for handling the basic authentication is located at the top of the API views.</p>
+<div class="admonition warning">
+<p class="first admonition-title">Warning</p>
+<p class="last">Todo: warning about risks of not using SSL</p>
+</div>
+</div>
+<div class="section" id="status-codes">
+<h2><a class="toc-backref" href="#id3">Status codes</a><a class="headerlink" href="#status-codes" title="Permalink to this headline">¶</a></h2>
+<p>The GEMS API aims to return appropriate <a class="reference external" href="http://en.wikipedia.org/wiki/List_of_HTTP_status_codes">HTTP status codes</a> for every request. Successful requests will be in the 2XX or 3XX range, whereas errors of all sorts will be in the 4XX range for client errors, and 5XX for server errors. When an error does occur it will be accompanied by a JSON message which might give an indication of what went wrong, looking something like:</p>
+<div class="highlight-python"><div class="highlight"><pre>HTTP/1.1 400 Bad Request
+(...)
+Content-Type: application/json
+
+{
+    &#39;message&#39;: &#39;Your job is too big!&#39;
+}
+</pre></div>
+</div>
+<p>Depending on the circumstances there may also be other fields in the JSON object, for example a job id or extra attribute with more information about the exception that occurred. Note that different endpoints can return different status codes, but that all endpoints may return codes like 503 Service Unavailable in case the API service is down or not available, or a 404 Not Found in case the resource is not found.</p>
+<p>Some API requests may also return content types other than JSON, but these are exceptions to the rule. In the cases where this is relevant (for example in <a class="reference internal" href="#webapp.api.views.model_status">webapp.api.views.model_status</a>) it will be mentioned explicitly.</p>
+<p>The following HTTP status codes are used in the GEMS API. Their approximate meaning is explained as well, but can be different depending on the API call you&#8217;re making.</p>
+<p><strong>200 OK</strong></p>
+<p>Your request was successful! Congratulations!</p>
+<p><strong>304 Not Modified</strong></p>
+<p>Nothing new to return. Could also be used for something which is in the cache.</p>
+<p><strong>404 Not Found</strong></p>
+<p>The resource was not found. This can occur when you&#8217;re requesting details of a processing job which does not exist, or when you try to access an endpoint which is not defined.</p>
+</div>
+<div class="section" id="methods">
+<h2><a class="toc-backref" href="#id4">Methods</a><a class="headerlink" href="#methods" title="Permalink to this headline">¶</a></h2>
+<p>Only HTTP POST and GET methods are used in the GEMS API. GET methods are used when requesting information and should generally not change any variables or state on the server side. POST requests are used for updating and creating resources.</p>
+<p>PUT, PATCH, or HEAD methods are not used at this time.</p>
+</div>
+<div class="section" id="endpoints">
+<h2><a class="toc-backref" href="#id5">Endpoints</a><a class="headerlink" href="#endpoints" title="Permalink to this headline">¶</a></h2>
+<p>The API endpoints are coded as view functions in the API blueprint of the Flask application. The views can be found in <code class="docutils literal"><span class="pre">./webapp/api/views.py</span></code>. The routing decorator in Flask is used to specify the URL format and specifies allowed request methods to that specific view. Any URLs described below need to have <code class="docutils literal"><span class="pre">/api/v1</span></code> prepended. The following endpoints are defined and mapped to views:</p>
+<table border="1" class="docutils">
+<colgroup>
+<col width="44%" />
+<col width="23%" />
+<col width="33%" />
+</colgroup>
+<thead valign="bottom">
+<tr class="row-odd"><th class="head">URL</th>
+<th class="head">Methods</th>
+<th class="head">Endpoint</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">/</span></code></td>
+<td>GET</td>
+<td><a class="reference internal" href="#webapp.api.views.home">webapp.api.views.home</a></td>
+</tr>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">/job</span></code></td>
+<td>POST</td>
+<td><a class="reference internal" href="#webapp.api.views.job_create">webapp.api.views.job_create</a></td>
+</tr>
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">/job</span></code></td>
+<td>GET</td>
+<td><a class="reference internal" href="#webapp.api.views.job_prognosis">webapp.api.views.job_prognosis</a></td>
+</tr>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">/job/&lt;job_uuid&gt;</span></code></td>
+<td>GET, POST</td>
+<td><a class="reference internal" href="#webapp.api.views.job_status">webapp.api.views.job_status</a></td>
+</tr>
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">/job/chunk/&lt;jobchunk_uuid&gt;</span></code></td>
+<td>GET, POST</td>
+<td><a class="reference internal" href="#webapp.api.views.jobchunk_status">webapp.api.views.jobchunk_status</a></td>
+</tr>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">/job/chunk/&lt;jobchunk_uuid&gt;/log</span></code></td>
+<td>GET</td>
+<td><a class="reference internal" href="#webapp.api.views.jobchunk_log">webapp.api.views.jobchunk_log</a></td>
+</tr>
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">/job/chunk/&lt;jobchunk_uuid&gt;/maps</span></code></td>
+<td>GET, POST</td>
+<td><a class="reference internal" href="#webapp.api.views.jobchunk_maps">webapp.api.views.jobchunk_maps</a></td>
+</tr>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">/config/&lt;config_key&gt;</span></code></td>
+<td>GET</td>
+<td><a class="reference internal" href="#webapp.api.views.config_status">webapp.api.views.config_status</a></td>
+</tr>
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">/model/&lt;model_name&gt;</span></code></td>
+<td>GET, POST</td>
+<td><a class="reference internal" href="#webapp.api.views.model_status">webapp.api.views.model_status</a></td>
+</tr>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">/discretization/&lt;discr_name&gt;/bounds</span></code></td>
+<td>GET</td>
+<td><a class="reference internal" href="#webapp.api.views.discretization_bounds">webapp.api.views.discretization_bounds</a></td>
+</tr>
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">/discretization/&lt;discr_name&gt;/coverage.json</span></code></td>
+<td>GET</td>
+<td><a class="reference internal" href="#webapp.api.views.discretization_coverage">webapp.api.views.discretization_coverage</a></td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="section" id="views">
+<h2><a class="toc-backref" href="#id6">Views</a><a class="headerlink" href="#views" title="Permalink to this headline">¶</a></h2>
+<dl class="function">
+<dt id="webapp.api.views.home">
+<code class="descclassname">webapp.api.views.</code><code class="descname">home</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#webapp.api.views.home" title="Permalink to this definition">¶</a></dt>
+<dd><p>The home view shows a status message which confirms that the system
+is operating normally, and whether the user is authenticated or not.</p>
+<p><strong>URL Pattern</strong></p>
+<p><code class="docutils literal"><span class="pre">GET</span> <span class="pre">/</span></code></p>
+<p><strong>Parameters</strong></p>
+<p>None.</p>
+<p><strong>Returns</strong></p>
+<dl class="docutils">
+<dt>200 OK (application/json)</dt>
+<dd><p class="first">The system is running normally and you can continue to use it. A JSON
+object is returned:</p>
+<div class="highlight-python"><div class="highlight"><pre>{
+</pre></div>
+</div>
+<blockquote>
+<div>&#8220;authenticated&#8221;: true, 
+&#8220;hello&#8221;: &#8220;world&#8221;, 
+&#8220;message&#8221;: &#8220;Welcome to the GEMS API!&#8221;, 
+&#8220;status&#8221;: true</div></blockquote>
+<p>}</p>
+<p class="last">In which the authenticated attribute is a boolean value showing 
+whether the authentication of the access token went ok or not.</p>
+</dd>
+<dt>503 Service Unavailable (application/json)</dt>
+<dd>An error occurred in the internal checklist. Something is not ok, it
+could be that there are no workers connected to the system, that
+the work queue has been shut down, the database not available, that
+sort of thing. Check the &#8220;message&#8221; attribute of the returned JSON
+object for more information</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="webapp.api.views.job_prognosis">
+<code class="descclassname">webapp.api.views.</code><code class="descname">job_prognosis</code><span class="sig-paren">(</span><em>*args</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="headerlink" href="#webapp.api.views.job_prognosis" title="Permalink to this definition">¶</a></dt>
+<dd><p>Estimates a prognosis for a job you might want to create later. This 
+can be used as a check to see if your job is acceptable before actually 
+submitting it and checks whether there are chunks in the selected area,
+if they have been run already, and if the extent is not too large for a 
+model run. A prognosis request is also used in the web client to disable or
+enable the &#8220;Run Model&#8221; button after you pan to another area or change the
+model parameters.</p>
+<p><strong>URL Pattern</strong></p>
+<p><code class="docutils literal"><span class="pre">GET</span> <span class="pre">/job</span></code></p>
+<p><strong>Parameters</strong></p>
+<p>This endpoint accepts the same parameters as <a class="reference internal" href="#webapp.api.views.job_create">webapp.api.views.job_create</a>.</p>
+<dl class="docutils">
+<dt>model_name (string, required)</dt>
+<dd>Name of the model you want to run.</dd>
+<dt>bbox (string, required)</dt>
+<dd>Comma separated bounding box of the model area in lat-lng coordinates.
+For example <code class="docutils literal"><span class="pre">177.0,-40.0,178.0,-39.0</span></code>.</dd>
+<dt><em>parameter</em> (optional)</dt>
+<dd>Any other parameters can be passed to the model. Whether the model uses
+them is up to the model. When a parameter here matches one of the ones
+predefined in the model (for example &#8216;lapserate&#8217; in the snowmelt model)
+it will be attempted to convert it to the same type as the default
+parameter (int, float, or string) and passed along in the modelling
+job.</dd>
+</dl>
+<p><strong>Returns</strong></p>
+<dl class="docutils">
+<dt>200 OK (application/json)</dt>
+<dd><p class="first">The job prognosis looks acceptable. Feel free to POST the same parameters
+to the <a class="reference internal" href="#webapp.api.views.job_create">webapp.api.views.job_create</a> endpoint to schedule an actual job.
+The JSON response will look like:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="p">{</span>
+    <span class="s">&quot;configkey&quot;</span><span class="p">:</span> <span class="s">&quot;260b90221e570dfe6caa06946a4bd340&quot;</span><span class="p">,</span> 
+    <span class="s">&quot;features&quot;</span><span class="p">:</span> <span class="p">[</span> <span class="o">...</span> <span class="p">],</span>
+    <span class="s">&quot;message&quot;</span><span class="p">:</span> <span class="s">&quot;Job with configuration 260b90 is acceptable. Job covers 1 chunks, of which 1 still need to be processed.&quot;</span><span class="p">,</span> 
+    <span class="s">&quot;num_of_chunks_already_processed&quot;</span><span class="p">:</span> <span class="mi">0</span><span class="p">,</span> 
+    <span class="s">&quot;num_of_chunks_to_be_processed&quot;</span><span class="p">:</span> <span class="mi">1</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+<p class="last">The list of GeoJSON features (representing the outlines of the chunks
+intersecting the target area) is omitted from the example. A new
+configuration key is also created from the model&#8217;s parameter set 
+expanded with the parameters passed in the HTTP request.</p>
+</dd>
+<dt>400 Bad Request (application/json)</dt>
+<dd>The job does not look acceptable. Probably no chunks were found to run the
+model on, the model was already run in this area with the same
+configuration, or the request contains simply too many chunks. Check the 
+JSON content of the error message for more information.</dd>
+</dl>
+<p><strong>To do</strong></p>
+<ul class="simple">
+<li>Includes the matched chunks in geojson format. Used now for creating a 
+red polygon representing the model run area in the interface.</li>
+<li>Refactor so the chunk fetching code at the top is put in a different 
+function. It is the same as in the job_create view.</li>
+</ul>
+</dd></dl>
+
+<dl class="function">
+<dt id="webapp.api.views.job_create">
+<code class="descclassname">webapp.api.views.</code><code class="descname">job_create</code><span class="sig-paren">(</span><em>*args</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="headerlink" href="#webapp.api.views.job_create" title="Permalink to this definition">¶</a></dt>
+<dd><p>Creates a new simulation job for a given model and parameter set.</p>
+<p>Any number of form
+variables can be added to the post, and they will be interpreted as 
+parameter values for the model run if the name matches one of the possible 
+parameters specified in the model code. For example, if the model has a 
+&#8216;lapserate&#8217; parameter which is a float, you can add a POST variable 
+&#8216;lapserate=1.23&#8217;. These will always be strings due to the nature of an 
+HTTP post, but an attempt will be made to cast the variable to the same
+type as the one defined in the &#8216;parameters&#8217; section of the model code.</p>
+<p><strong>URL Pattern</strong></p>
+<p><code class="docutils literal"><span class="pre">POST</span> <span class="pre">/job</span></code></p>
+<p><strong>Parameters</strong></p>
+<p>This endpoint accepts the same parameters as <a class="reference internal" href="#webapp.api.views.job_prognosis">webapp.api.views.job_prognosis</a>.</p>
+<dl class="docutils">
+<dt>model_name (string, required)</dt>
+<dd>Name of the model you want to run.</dd>
+<dt>bbox (string, required)</dt>
+<dd>Comma separated bounding box of the model area in lat-lng coordinates.
+For example <code class="docutils literal"><span class="pre">177.0,-40.0,178.0,-39.0</span></code>.</dd>
+<dt><em>parameter</em> (optional)</dt>
+<dd>Any other parameters can be passed to the model. Whether the model uses
+them is up to the model. When a parameter here matches one of the ones
+predefined in the model (for example &#8216;lapserate&#8217; in the snowmelt model)
+it will be attempted to convert it to the same type as the default
+parameter (int, float, or string) and passed along in the modelling
+job.</dd>
+</dl>
+<p><strong>Returns</strong></p>
+<dl class="docutils">
+<dt>202 Accepted (application/json)</dt>
+<dd><p class="first">The job has been accepted for processing. The following response 
+content will be returned:</p>
+<div class="last highlight-python"><div class="highlight"><pre>{
+    &quot;job&quot;: &lt;job_uuid&gt;, 
+    &quot;message&quot;: &quot;Job accepted.&quot;
+}
+</pre></div>
+</div>
+</dd>
+<dt>503 Service Unavailable (application/json)</dt>
+<dd>The service is not available. No beanstalk connection found or there are
+no workers watching the work queue.</dd>
+<dt>500 Internal Server Error (application/json)</dt>
+<dd>Some other exception occurred. See the JSON response content for more
+information.</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="webapp.api.views.job_status">
+<code class="descclassname">webapp.api.views.</code><code class="descname">job_status</code><span class="sig-paren">(</span><em>*args</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="headerlink" href="#webapp.api.views.job_status" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns a JSON object of a job which describes the current job status.</p>
+<p><strong>URL Pattern</strong></p>
+<p><code class="docutils literal"><span class="pre">GET</span> <span class="pre">/job/&lt;uuid:job_uuid&gt;</span></code></p>
+<p><strong>Parameters</strong></p>
+<p>None.</p>
+<p><strong>Returns</strong></p>
+<dl class="docutils">
+<dt>200 OK (application/json)</dt>
+<dd><p class="first">The job was found and has been completed. A JSON object is returned:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="p">{</span>
+    <span class="s">&quot;job&quot;</span><span class="p">:</span> <span class="s">&quot;f7ed869d-b52e-4dd2-b72b-d71f9fb65014&quot;</span><span class="p">,</span> 
+    <span class="s">&quot;percent_complete&quot;</span><span class="p">:</span> <span class="mi">100</span><span class="p">,</span> 
+    <span class="s">&quot;results&quot;</span><span class="p">:</span> <span class="p">{</span>
+        <span class="s">&quot;attributes&quot;</span><span class="p">:</span> <span class="p">[],</span> 
+        <span class="s">&quot;config_key&quot;</span><span class="p">:</span> <span class="s">&quot;260b90221e570dfe6caa06946a4bd340&quot;</span><span class="p">,</span> 
+        <span class="s">&quot;timesteps&quot;</span><span class="p">:</span> <span class="p">[</span> <span class="o">...</span> <span class="p">]</span>
+    <span class="p">},</span> 
+    <span class="s">&quot;status_code&quot;</span><span class="p">:</span> <span class="mi">1</span><span class="p">,</span> 
+    <span class="s">&quot;status_message&quot;</span><span class="p">:</span> <span class="s">&quot;&quot;</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+<p class="last">The results element contains the modelling results (attributes and 
+timesteps for a particular configuration.) The results element is empty 
+when the model is not yet finished processing.</p>
+</dd>
+<dt>202 Accepted (application/json)</dt>
+<dd><p class="first">The job has been accepted and is being processed, but is not yet
+completed. A JSON object is returned:</p>
+<div class="last highlight-python"><div class="highlight"><pre><span class="p">{</span>
+    <span class="s">&quot;job&quot;</span><span class="p">:</span> <span class="s">&quot;f7ed869d-b52e-4dd2-b72b-d71f9fb65014&quot;</span><span class="p">,</span> 
+    <span class="s">&quot;percent_complete&quot;</span><span class="p">:</span> <span class="mi">0</span><span class="p">,</span> 
+    <span class="s">&quot;results&quot;</span><span class="p">:</span> <span class="p">[],</span> 
+    <span class="s">&quot;status_code&quot;</span><span class="p">:</span> <span class="mi">0</span><span class="p">,</span> 
+    <span class="s">&quot;status_message&quot;</span><span class="p">:</span> <span class="s">&quot;&quot;</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+</dd>
+<dt>404 Not Found (application/json)</dt>
+<dd>No job with this id exists.</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="webapp.api.views.jobchunk_status">
+<code class="descclassname">webapp.api.views.</code><code class="descname">jobchunk_status</code><span class="sig-paren">(</span><em>jobchunk_uuid</em><span class="sig-paren">)</span><a class="headerlink" href="#webapp.api.views.jobchunk_status" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns (in case of a GET request) or updates (in case of a POST 
+request) the status of a particular Job chunk. This functionality is used
+mostly by the backend, as the processing script working on the model will
+send intermittent POST requests to this API endpoint, telling it how far
+along the model run of this chunk is.</p>
+<p>When the processing of the chunk is completed and the model is unloaded, 
+another POST request will be made to this endpoint to upload the logfile 
+of the model run. This is stored in the database so that it can be viewed
+in the web app.</p>
+<p><strong>URL Pattern</strong></p>
+<p><code class="docutils literal"><span class="pre">GET</span> <span class="pre">/job/chunk/&lt;uuid:jobchunk_uuid&gt;</span></code></p>
+<p><code class="docutils literal"><span class="pre">POST</span> <span class="pre">/job/chunk/&lt;uuid:jobchunk_uuid&gt;</span></code></p>
+<p><strong>Parameters</strong></p>
+<dl class="docutils">
+<dt>status_code (int, optional)</dt>
+<dd>A status code to signify the status of this JobChunk. Negative values
+are errors, 1 is complete, and 0 is still processing.</dd>
+<dt>status_message (string, optional)</dt>
+<dd>A message accompanying the status update. Only one status message is
+stored, so it is overwritten every time a new one is posted.</dd>
+<dt>status_percentdone (int, optional)</dt>
+<dd>An approximation of how much percent complete this Job Chunk is.</dd>
+<dt>log (string, optional)</dt>
+<dd>Contents of the logfile.</dd>
+</dl>
+<p><strong>Returns</strong></p>
+<dl class="docutils">
+<dt>200 OK (application/json)</dt>
+<dd>The request was fulfilled successfully. In a GET request a summary of
+the jobchunk it returned (a jsonified``as_dict`` property) and in case
+of a POST request it means the update succeeded.</dd>
+<dt>404 Not Found (application/json)</dt>
+<dd>No jobchunk with the specified id could be found.</dd>
+<dt>500 Internal Server Error (application/json)</dt>
+<dd>An error occurred while trying to update the resource. Check the JSON
+response for more information.</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="webapp.api.views.jobchunk_log">
+<code class="descclassname">webapp.api.views.</code><code class="descname">jobchunk_log</code><span class="sig-paren">(</span><em>jobchunk_uuid</em><span class="sig-paren">)</span><a class="headerlink" href="#webapp.api.views.jobchunk_log" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns a plaintext log file of the model run of this job chunk.</p>
+<p><strong>URL Pattern</strong></p>
+<p><code class="docutils literal"><span class="pre">GET</span> <span class="pre">/job/chunk/&lt;uuid:jobchunk_uuid&gt;/log</span></code></p>
+<p><strong>Parameters</strong></p>
+<p>None.</p>
+<p><strong>Returns</strong></p>
+<dl class="docutils">
+<dt>200 OK (text/plain)</dt>
+<dd>The request was fulfilled successfully. In a GET request a summary of
+the jobchunk it returned (a jsonified``as_dict`` property) and in case
+of a POST request it means the update succeeded.</dd>
+<dt>404 Not Found (application/json)</dt>
+<dd>No jobchunk with the specified id could be found.</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="webapp.api.views.jobchunk_maps">
+<code class="descclassname">webapp.api.views.</code><code class="descname">jobchunk_maps</code><span class="sig-paren">(</span><em>jobchunk_uuid</em><span class="sig-paren">)</span><a class="headerlink" href="#webapp.api.views.jobchunk_maps" title="Permalink to this definition">¶</a></dt>
+<dd><p>This API endpoint is a deaddrop of sorts for maps. When a chunk has been
+processed with a specific configuration by a worker, the worker will 
+assemble a maps package, which is essentially a tar file containing:</p>
+<blockquote>
+<div><ul class="simple">
+<li>One optimized tif file for each output attribute</li>
+<li>Many .vrt files for each timestep pointing to the right band of the
+original tif file.</li>
+<li>a manifest file in json format specifying what maps are present in 
+the package. This manifest will be imported in the Map table.</li>
+<li>a runlog which contains the logfile of that particular run, for 
+debugging purposes.</li>
+</ul>
+</div></blockquote>
+<p>This tar file is submitted to this endpoint with HTTP POST request, 
+thereby also signaling that the model run is complete. Then:</p>
+<blockquote>
+<div><ul class="simple">
+<li>The tar file is extracted.</li>
+<li>The map files are stored in the right place on disk.</li>
+<li>The manifest is read and for each entry, a corresponding entry is 
+made in the Map table.</li>
+</ul>
+</div></blockquote>
+<p>A GET request to this endpoint will let the user download the maps package
+as it was submitted by the processing script. This is mainly for debugging
+purposes but could prove useful later on as well. For example if you want
+to view the original model outputs of a chunk before they have been 
+reprojected or reassembled into a web map.</p>
+<p><strong>URL Pattern</strong></p>
+<p><code class="docutils literal"><span class="pre">POST</span> <span class="pre">/job/chunk/&lt;uuid:jobchunk_uuid&gt;/maps</span></code></p>
+<p><code class="docutils literal"><span class="pre">GET</span> <span class="pre">/job/chunk/&lt;uuid:jobchunk_uuid&gt;/maps</span></code></p>
+<p><strong>Parameters</strong></p>
+<dl class="docutils">
+<dt>package (file, required when using POST)</dt>
+<dd>Contains the tar-ed maps package.</dd>
+</dl>
+<p><strong>Returns</strong></p>
+<dl class="docutils">
+<dt>200 OK (download)</dt>
+<dd>When downloading the maps package status 200 is returned.</dd>
+<dt>201 Created (application/json)</dt>
+<dd>The maps package was processed successfully, and the new resources
+(all the maps) were created successfully in the database.</dd>
+<dt>404 Not Found (application/json)</dt>
+<dd>No jobchunk with the specified id could be found.</dd>
+</dl>
+<p><strong>To do</strong></p>
+<ul class="simple">
+<li>Implement the GET method functionality</li>
+<li>Add authentication, admin access only.</li>
+<li>Add some more error checking and better exception handling here, for example
+when no file is added, file is corrupt, missing data, or if it can&#8217;t be 
+saved locally, or when the maps can&#8217;t be created in the database.</li>
+</ul>
+</dd></dl>
+
+<dl class="function">
+<dt id="webapp.api.views.config_status">
+<code class="descclassname">webapp.api.views.</code><code class="descname">config_status</code><span class="sig-paren">(</span><em>*args</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="headerlink" href="#webapp.api.views.config_status" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns a JSON representation of a modelconfiguration instance. This 
+contains metadata about the model, reporting information (i.e. output 
+attributes), and time information about the model. The set of parameters 
+which are used for the model run are also included.</p>
+<p><strong>URL Pattern</strong></p>
+<p><code class="docutils literal"><span class="pre">GET</span> <span class="pre">/config/&lt;config_key&gt;</span></code></p>
+<p><strong>Parameters</strong></p>
+<p>None.</p>
+<p><strong>Returns</strong></p>
+<dl class="docutils">
+<dt>200 OK (application/json)</dt>
+<dd>Returns a JSON document of the model configuration.</dd>
+<dt>404 Not Found (application/json)</dt>
+<dd>This configuration key does not exist.</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="webapp.api.views.model_status">
+<code class="descclassname">webapp.api.views.</code><code class="descname">model_status</code><span class="sig-paren">(</span><em>model_name</em><span class="sig-paren">)</span><a class="headerlink" href="#webapp.api.views.model_status" title="Permalink to this definition">¶</a></dt>
+<dd><p>REturn or update model code</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="webapp.api.views.discretization_bounds">
+<code class="descclassname">webapp.api.views.</code><code class="descname">discretization_bounds</code><span class="sig-paren">(</span><em>discretization_name</em><span class="sig-paren">)</span><a class="headerlink" href="#webapp.api.views.discretization_bounds" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns a bounding box of the discretization</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="webapp.api.views.discretization_coverage">
+<code class="descclassname">webapp.api.views.</code><code class="descname">discretization_coverage</code><span class="sig-paren">(</span><em>discretization_name</em><span class="sig-paren">)</span><a class="headerlink" href="#webapp.api.views.discretization_coverage" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns a geojson coverage of the discretization</p>
+</dd></dl>
+
+</div>
+</div>
+
+
+           </div>
+          </div>
+          <footer>
+  
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+      
+        <a href="vision.html" class="btn btn-neutral float-right" title="Vision" accesskey="n">Next <span class="fa fa-arrow-circle-right"></span></a>
+      
+      
+        <a href="processing.html" class="btn btn-neutral" title="Processing Models" accesskey="p"><span class="fa fa-arrow-circle-left"></span> Previous</a>
+      
+    </div>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright 2015, Department of Physical Geography, Utrecht University..
+
+    </p>
+  </div>
+  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/snide/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  
+
+    <script type="text/javascript">
+        var DOCUMENTATION_OPTIONS = {
+            URL_ROOT:'./',
+            VERSION:'0.1',
+            COLLAPSE_INDEX:false,
+            FILE_SUFFIX:'.html',
+            HAS_SOURCE:  true
+        };
+    </script>
+      <script type="text/javascript" src="_static/jquery.js"></script>
+      <script type="text/javascript" src="_static/underscore.js"></script>
+      <script type="text/javascript" src="_static/doctools.js"></script>
+
+  
+
+  
+  
+    <script type="text/javascript" src="_static/js/theme.js"></script>
+  
+
+  
+  
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.StickyNav.enable();
+      });
+  </script>
+   
+
+</body>
+</html>

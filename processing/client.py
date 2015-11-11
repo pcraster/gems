@@ -17,10 +17,9 @@ import cPickle
 import logging
 import signal 
 
+
 from osgeo import gdal, ogr, osr, gdalconst
-
 from StringIO import StringIO
-
 from gem.model import GemModel
 from gem.framework import GemFramework
 
@@ -28,7 +27,7 @@ class JobParseFailure(Exception): pass
 class JobProcessingFailure(Exception): pass
 class JobReportingFailure(Exception): pass
 
-def process(num, args, gems_api, gems_beanstalk):
+def process(num, args, gems_api, gems_beanstalk, gems_auth):
     #
     # Set up logging
     #
@@ -111,8 +110,8 @@ def process(num, args, gems_api, gems_beanstalk):
                     files = {'package': open(model._mapspackage,'rb') }
                     data = {'jobchunk': job["uuid_jobchunk"], 'token':'-' }
                     status_code = 1                                    
-                    url = gems_api + "/job/chunk/"+job["uuid_jobchunk"]+"/package"
-                    r = requests.post(url, data=data, files=files)
+                    url = gems_api + "/job/chunk/"+job["uuid_jobchunk"]+"/maps"
+                    r = requests.post(url, auth=gems_auth, data=data, files=files)
                     r.raise_for_status() # Raises an exception when the status is not ok.
 
                 except Exception as e:
@@ -157,9 +156,9 @@ def process(num, args, gems_api, gems_beanstalk):
                 # Flush the log stream of this model run and try to post it to the
                 # API, that way we can view the logs of model runs in the browser.
                 try:
-                    url = gems_api +"/job/chunk/"+job["uuid_jobchunk"]+"/status"
+                    url = gems_api +"/job/chunk/"+job["uuid_jobchunk"]
                     streamhandler.flush()
-                    r = requests.post(url,data={'log':stream.getvalue(),'status_code':status_code,'status_percentdone':100})
+                    r = requests.post(url, auth=gems_auth, data={'log':stream.getvalue(),'status_code':status_code,'status_percentdone':100})
                     r.raise_for_status()
                 except:
                     logger.debug("[Worker %s] Failed to post the final log file to the server."%(num))
@@ -191,10 +190,12 @@ if __name__ == "__main__":
     parser.add_argument("-v","--verbose",   help="Log level", action='store_true',  default=False)
     parser.add_argument("-d","--directory", help="Working directory", default="/tmp/gems")
     parser.add_argument("-a","--api",       help="Host name of the GEMS server where the work queue and API are running", default="localhost")
+    parser.add_argument("-k","--apikey",    help="API username and key (admin:<key>)")
     parser.add_argument("-q","--queue",     help="Host name of the beanstalk work queue", default="localhost")
     args = parser.parse_args()
 
     gems_api = "http://%s/api/v1"%(args.api)
+    gems_auth = tuple(args.apikey.split(":"))
     gems_beanstalk = args.queue
 
     #
@@ -231,15 +232,16 @@ if __name__ == "__main__":
     # Check connection to API
     #
     try:
-        r = requests.get(gems_api)
+        r = requests.get(gems_api, auth=gems_auth)
         r.raise_for_status()
-        if "hello" not in r.text:
-            raise Exception("Received bad content from API, should contain the string 'hello'")
+        response = r.json()
+        if not response["authenticated"]:
+            raise Exception("API could be contacted but authentication failed! Check your API username and access token.")
     except Exception as e:
-        print "Connection to API at %s failed! Exiting!"%(gems_api)
+        print "Connection to API at %s failed! Hint:%s"%(gems_api, e)
         sys.exit(1)
     else:
-        print "GEMS API found at %s"%(gems_api)
+        print "GEMS API found and successfully authenticated at %s"%(gems_api)
 
     try: 
         num_processes = int(args.processes)
@@ -254,7 +256,7 @@ if __name__ == "__main__":
     print ""
     jobs=[]
     for i in range(num_processes):
-        p = multiprocessing.Process(target=process, args=(i, args, gems_api, gems_beanstalk))
+        p = multiprocessing.Process(target=process, args=(i, args, gems_api, gems_beanstalk, gems_auth))
         jobs.append(p)
         p.start()
 

@@ -6,6 +6,8 @@ import logging
 from osgeo import gdal, gdalconst
 from pcraster import readmap
 
+from shapely.wkt import loads
+
 logger = logging.getLogger()
 
 class Provider(object):
@@ -43,6 +45,12 @@ class Provider(object):
         #self._clone.SetProjection(self._grid["projection"])
         
         
+        try:
+            self._geom = loads(self._grid["mask"])
+        except:
+            self._geom = None
+                
+        
         # Create a caching directory which is unique for this provider and 
         # this chunk uuid. The provider can use this directory to do extra
         # computations in and to store cached files which have been requested
@@ -58,19 +66,6 @@ class Provider(object):
             raise Exception("Creating cache directory %s for provider %s failed!"%(self._cache, self._name))
         else:
             logger.debug(" - Cache directory for %s provider: %s"%(self._name, self._cache))
-
-    
-    # def layers(self):
-    #     """
-    #     Returns a list of layer names that this provider offers.
-    #     """
-    #     return []
-        
-    # def readmap(self):
-    #     """
-    #     Reads a map from this provider
-    #     """
-    #     return "This is a map"
         
     def provide(self, name, options={}):
         """
@@ -83,10 +78,11 @@ class Provider(object):
     
     def create_clone(self, datatype=gdalconst.GDT_Float32, nodatavalue=None, initvalue=None):
         """
-        Returns an in memory raster map which matches the projection and cell
-        size required for this particular chunk/run. The provider can then 
+        Return an in memory one band dataset which matches the projection and 
+        cellsize required for this particular chunk/run. The provider can then 
         do its thing on this blank canvas, whether it is rasterizing shapes,
-        reprojecting other data, or drawing something else.
+        reprojecting other data, downloading some figures, or drawing something 
+        else.
         """
         clone = gdal.GetDriverByName('MEM').Create('', self._grid['cols'], self._grid['rows'], 1, datatype)
         clone.SetGeoTransform(self._grid["geotransform"])
@@ -100,27 +96,21 @@ class Provider(object):
         
         return clone
     
-    def warp_to_grid(self, dataset):
+    def warp_to_grid(self, dataset, resample=gdalconst.GRA_NearestNeighbour):
         """
-        Takes any georeferenced geotiff input file (or gdal dataset) and uses GDAL to reproject
-        it onto the grid of the model run, matching the target pixel size, 
-        resolution, etc. This method can be used by providers which somehow
-        get their data in a different projection (for example the gfs 
-        provider which obtains a geotiff in latlng and needs to provide the
-        data to the model on the correct utm grid.)
-        
-        Dataset may be either a string pointing to a file on the disk, or a 
-        gdal dataset object.
+        Return the provided GDAL dataset, but reprojected onto a model grid,
+        matching the target pixel size, resolution, etc. This method can be 
+        used by all providers that obtain their data in a different projection
+        (for exampe the GFS provier which obtains a geotiff in lat-lng and
+        needs to provide data to the model in a UTM projection).
         """
-        src = gdal.Open(dataset, gdalconst.GA_ReadOnly)
-        
-#        dst = gdal.GetDriverByName('GTiff').Create('MEM', self._grid['cols'], self._grid['rows'], 1, gdalconst.GDT_Float32)
-#        dst.SetGeoTransform(self._grid["geotransform"])
-#        dst.SetProjection(self._grid["projection"])
-        
         dst = self.create_clone()
         
-        gdal.ReprojectImage(src, dst, src.GetProjection(), dst.GetProjection(), gdalconst.GRA_NearestNeighbour)
+        logger.debug("Warping a dataset to the model grid")
+        logger.debug("Input: %s"%(dataset.GetProjection()))        
+        logger.debug("To: %s"%(dst.GetProjection()))
+        
+        gdal.ReprojectImage(dataset, dst, dataset.GetProjection(), dst.GetProjection(), resample)
         band = dst.GetRasterBand(1)
         
         dt = np.dtype(np.float32)
@@ -128,9 +118,9 @@ class Provider(object):
             dt = np.dtype(np.int32)
 
         data = np.array(band.ReadAsArray(), dtype=dt)
-        src = None        
+        dataset = None
         dst = None
-        
+
         return data
 
     def burn_to_grid(self, dataset, options):

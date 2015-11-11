@@ -1,3 +1,4 @@
+
 <nav class="navbar navbar-default navbar-inverse " role="navigation">
   <div class="container-fluid">
       <ul class="nav navbar-nav navbar-left" id="navbar-main">
@@ -19,6 +20,7 @@
       {% if not current_user.is_anonymous() %}
         <li><a href="{{url_for('user.logout')}}" style="color:#888;"><i class="fa fa-caret-right"></i> Log out</a></li>
       {% endif %}
+
     </ul>
     <!--
       	<p class="navbar-text pull-right" style="color:#aaa;">

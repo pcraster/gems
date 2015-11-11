@@ -29,7 +29,7 @@ MAPSERVER_EXECUTABLE=       '/opt/mapserver/bin/mapserv'
 #mapserver debug info is logged to the apache error_log file. Be aware that 
 #setting this to 5 will cause a LOT of log output (for each map tile, this adds 
 #up quicly.
-MAPSERVER_DEBUG=            0
+MAPSERVER_DEBUG=            5
 
 ###############################################################################
 ### End Local Settings
@@ -41,10 +41,6 @@ MAPSERVER_DEBUG=            0
 ###############################################################################
 BEANSTALK_HOST=             'localhost'
 BEANSTALK_PORT=             11300
-
-
-
-
 
 
 TEMP =                      os.path.join(HOME, "tmp")

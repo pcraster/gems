@@ -2,15 +2,26 @@ import os
 import sys
 import logging
 import provider
+import pyproj
 import numpy as np
 
 from owslib.wcs import WebCoverageService
 from urlparse import urlparse, parse_qs
 from osgeo import gdal, gdalconst
+from functools import partial
+
+
+from shapely.wkt import loads
+from shapely.ops import transform
+
 
 logger=logging.getLogger()
 
 class WcsProvider(provider.Provider):
+    """Documentation WCS provider.
+    
+    
+    """
     def __init__(self, config, grid):
         """
         Initialization code for this specific provider. First initialize the
@@ -38,7 +49,7 @@ class WcsProvider(provider.Provider):
         except:
             logger.debug(" - %s provider couldn't find any layers to make available.")
 
-    def provide(self,name,options={}):
+    def provide(self, name, options={}):
         """
         The providers' provide() method returns a numpy with the
         correct data type and propotions given the layer name and
@@ -46,84 +57,63 @@ class WcsProvider(provider.Provider):
         will convert the numpy array to a pcraster map when it is 
         requested.
         """
+        logging.debug("WCS: provide request for layer '%s'"%(name))
         target_file = os.path.join(self._cache,"%s"%(name))
-        
-        
-        url=urlparse(self._layers[name])
-        qs=parse_qs(url.query)
+        crs = None
+        srid = None
+        dataset = None
+        logging.debug("WCS: geometry: %s"%(self._geom.wkt))
+        url = urlparse(self._layers[name])
+        qs = parse_qs(url.query)
         query_params={}
         for p in list(qs):
             query_params.update({p:qs[p][0]})
 
-        print "Creating a coverage url:"
-        print url.geturl()
-        wcs=WebCoverageService(url.geturl(), version='1.0.0')
-        meta=wcs.contents[name]
+        wcs = WebCoverageService(url.geturl(), version='1.0.0')
+        meta = wcs.contents[name]
+        mapformat = meta.supportedFormats[0]
+        supported_crses = [crs_.code for crs_ in meta.supportedCRS]
+        logging.debug("WCS: Service supports the following crs: %s"%(", ".join(map(str,supported_crses))))
 
-        mapformat=meta.supportedFormats[0]
+        if self._grid['srid'] in supported_crses:
+            crs = meta.supportedCRS[supported_crses.index(self._grid['srid'])]
+            srid = self._grid['srid']
+        elif 4326 in supported_crses:
+            crs = meta.supportedCRS[supported_crses.index(4326)]
+            srid = 4326
+        else:
+            crs = meta.supportedCRS[supported_crses.index(supported_crses[0])]
+            srid = supported_crses[0]
+            
+        if crs is not None and srid is not None:
+            logging.debug("WCS: using %s (epsg:%d) to fetch the file from the wcs server"%(crs,srid))
+        else:
+            logging.debug("WCS: could not agree upon a projection format to fetch data with")
+            raise Exception("WCS: no valid projections found")
         
-        supported_crses=[crs.code for crs in meta.supportedCRS]            
+        logging.debug("WCS: reprojecting the chunk mask to the required projection")
+        
+        project = partial(pyproj.transform, pyproj.Proj(init="epsg:%d"%(self._grid['srid'])), pyproj.Proj(init="epsg:%d"%(srid)))
+        
+        #Add a small buffer to the request so we fetch an area slightly larger
+        #than what we really need. This will prevent some edge effects due
+        #to the reprojection.
+        projected_geom = transform(project,self._geom.buffer(200))
+        
+        logging.debug("WCS: original geom: %s"%(self._geom.wkt))
+        logging.debug("WCS: reprojected geom: %s"%(projected_geom.wkt))
         
         try:
-            crs=meta.supportedCRS[supported_crses.index(self._grid['srid'])]
-        except ValueError:
-            raise Exception("WCS provider could not retrieve layer '%s' because it is not available in the UTM grid that the model needs to run at. We need a raster in epsg %d, available are only epsg %s. The wcs provider does not do reprojection/warping itself."%(name,self._grid['srid']," ".join(map(str,supported_crses))))
-
-        resx=self._grid['cellsize']
-        resy=self._grid['cellsize']
-        bbox=self._grid['bbox']
-        cov=wcs.getCoverage(identifier=name,crs=crs,bbox=bbox,format=mapformat,resx=resx,resy=resy,**query_params)
-        
-        #Dict used for converting geotiffs to pcraster format. Any data
-        #types not set explicitly will become Float32/VS_SCALARS
-        #pcraster_valuescale = defaultdict(lambda: ('Float32','VS_SCALAR'))
-        #pcraster_valuescale.update({
-        #    'Float32':  ('Float32','VS_SCALAR'),
-        #    'Int32':    ('Int32','VS_NOMINAL'),
-        #    'Int16':    ('Int32','VS_NOMINAL'), 
-        #    'Byte':     ('Int32','VS_NOMINAL')
-        #})
-        #logger.debug( " * Downloading %s"%(cov.url))
-        
-        with open(target_file+".tif",'w') as f:
-            f.write(cov.read())
-
-        dataset = gdal.Open(target_file+".tif",gdalconst.GA_ReadOnly)
-        band = dataset.GetRasterBand(1)
+            logging.debug("WCS: fetching wcs data in %s"%(crs))
+            logging.debug("WCS: saving to: %s"%(target_file+".tif"))
+            cov = wcs.getCoverage(identifier=name, crs=crs, bbox=projected_geom.bounds, format=mapformat, width=self._grid['cols'], height=self._grid['rows'], **query_params)            
+            with open(target_file+".tif",'w') as f:
+                f.write(cov.read())
+            dataset = gdal.Open(target_file+".tif",gdalconst.GA_ReadOnly)
+        except Exception as e:
+            logger.error("WCS: failure: %s"%(e))
 
         
-        dt=np.dtype(np.float32)
-        if gdal.GetDataTypeName(band.DataType) in ('Int32','Int16','Byte'):
-            dt=np.dtype(np.int32)
-
-        data = np.array(band.ReadAsArray(),dtype=dt)
-        band = None        
+        utm_data = self.warp_to_grid(dataset)
         dataset = None
-        return data
-        
-#        try:
-#            #-of PCRaster -co "PCRASTER_VALUESCALE=VS_SCALAR" -ot Float32 -a_nodata 500.1
-#            c=[
-#                '/usr/bin/gdal_translate','-q',
-#                '-ot',pcraster_type[0],
-#                '-of','PCRaster',
-#                '-co','PCRASTER_VALUESCALE=%s'%(pcraster_type[1]),
-#                target_file+".tif",target_file+".map"
-#            ]
-#            print "Conversion command: "
-#            print " ".join(c)
-#            rc=subprocess.call(c)
-#        except Exception as e:
-#            print " * Conversion to pcraster format failed!!! Hint: %s"%(e)
-#        print " * Completed!"
-
-
-#    @property
-#    def layers(self):
-#        """
-#        For external use when we just want a list of layres from
-#        this provider. The provider is responsible for fetching
-#        the right one when .request() is called, so the outside
-#        world doesnt care about the actual urls.
-#        """
-#        return list(self._layers)
+        return utm_data

@@ -136,9 +136,6 @@ class GemFramework(DynamicFramework):
             Run the model.
         """
         try:
-            
-            
-            
             time_start=now()
             self._userModel().status(force=True)
             self._preRun()
@@ -171,7 +168,10 @@ class GemFramework(DynamicFramework):
             self._timings["total"]=now()-self.time_total
                 
         except Exception as e:
-            logger.error("An exception occurred during this run! Hint: %s"%(e))
+            logger.critical("An exception occurred during this run!")
+            logger.critical(e)
+        else:
+            logger.debug("Model run completed without raising any exceptions")
         finally:
             self._unloadModel()
 

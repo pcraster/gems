@@ -16,7 +16,11 @@ def show_modeller(model_name):
     m = Model.query.filter_by(name=model_name).first_or_404()
     
     discretization_name = m.preferred_discretization_name
+    
+    
     d = Discretization.query.filter_by(name=discretization_name).first()
+    if d is None:
+        flash("Discretization <code>%s</code> not found!"%(m.preferred_discretization_name),"error")
         
-    return render_template('modeller/modeller.html', model=m, discretization=d)
+    return render_template('modeller/modeller.html', model=m, discretization=d, u=current_user)
 

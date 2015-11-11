@@ -5,6 +5,8 @@ from flask.ext.uuid import FlaskUUID
 from flask.ext.user import UserManager, UserMixin, SQLAlchemyAdapter
 from flask.ext.user import current_user, login_required, roles_required, UserMixin
 
+
+
 from .api import api
 from .data import data
 from .modeller import modeller
@@ -30,6 +32,7 @@ db.init_app(app)
 
 db_adapter = SQLAlchemyAdapter(db,  User)
 user_manager = UserManager(db_adapter, app)
+
 
 app.register_blueprint(modeller,    url_prefix='/modeller')
 app.register_blueprint(data,        url_prefix='/data')

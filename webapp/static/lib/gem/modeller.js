@@ -1,8 +1,16 @@
 var M=$.extend(M || {},{
+	/* 
+	Default configuration values. Overwritten by those passed to M.init()
+	*/
 	config: {
 		version:'0.1',
-		api:'/api/v1'
+		api:'/api/v1/',
+		debug:true
 	},
+	/*
+	Default state variables. Will be updated as soon as a certain config
+	is loaded.
+	*/
 	state: {
 		time:undefined,
 		layers:undefined,
@@ -10,45 +18,57 @@ var M=$.extend(M || {},{
 		hash:undefined,
 		results:undefined
 	},
+	criticalerror: function(message) {
+		alert("Critical Error!\n\n"+message)
+	},
 	init: function(config) {
 		/*
 		First of all extent M.config with the variables passed in to
 		the init() function. These will include things like the model
 		name, mapserver url, and others.
 		*/
-		$.extend(M.config,config)
+		$.extend(M.config, config)
+
+		/*
+		Create the M.config["api_auth"] variable which will use the 
+		api_auth_username and api_auth_password config variable to 
+		create the HTTP Authentication header which will be sent along
+		with every API call.
+		*/
+		M.config["api_auth"] = "Basic " + btoa(M.config["api_auth_username"] + ":" + M.config["api_auth_token"])
+
+		/*
+		Parse the hash part (after #) of the url and look for a config
+		key that we can use for initializing the model. If no such key
+		is found, the hash init function falls back to the valie in the
+		M.config["default_config_key"] variable. The config key returned
+		from M.hash.init() is later used to request the configuration 
+		details from the API.
+		*/
 		var _config_key=M.hash.init()
+
+		/*
+		Overwrite the common console methods depending on the debug
+		config variable. If debug is set to false, console.log() will
+		do nothing.
+		*/
+		if(! M.config["debug"]){
+		    if(!window.console) window.console = {};
+		    var methods = ["log", "debug", "warn", "info"];
+		    for(var i=0;i<methods.length;i++){
+		    	console[methods[i]] = function(){};
+		    }
+		}
 
 		/*
 		Then fetch the model configuration with the config key for
 		this model run. If no key was supplied in the URL hash, the 
 		default key for this model will be used. After fetching the
 		model configuration from the API, the "parameters" form 
-		will be populated with the correct input params.
+		will be populated with the correct input params returned by
+		this call.
 		*/
-		$.ajax({
-			type:"GET",
-			url:"/api/v1/config/"+_config_key,
-			dataType:'json',
-			success: function(data) {
-				console.log("Retrieved configuration data for config '"+_config_key.substr(0,6)+"':")
-				console.log(data)
-				M.state["results"]=data.results
-				M.state["parameters"]=data.parameters
-				M.state["timesteps"]=data.timesteps
-
-				M.menu.run.init()
-				M.map.init()
-
-				M.map.processresults(M.state["results"])
-
-				M.panels.init(M.state["parameters"])
-				M.places.init()
-			},
-			error: function(){
-				alert("An unexpected error occurred while fetching the configuration! Without a model configuration there isn't much we can do!")
-			}
-		});
+		M.api.config_status(_config_key)
 
 		/*
 		The server side python script added a <canvas> element for each
@@ -63,84 +83,14 @@ var M=$.extend(M || {},{
 
 		*/
 		M.legends.init()
+		
 		M.charts.init()
+
 		M.chart.init()
 		/*
-		Initialize the keybinding we want to use.
+		Initialize the graphical user interface.
 		*/
-		M.gui.keybindings()
-	},
-	gui:{
-		busy:function(key) {
-			if(M.gui.list.indexOf(key)==-1) {
-				M.gui.list.push(key)
-			}
-			M.gui.disable("")
-		},
-		done:function(key) {
-			var index=M.gui.list.indexOf(key)
-			if(index!=-1) {
-				M.gui.list.splice(index,1)
-			}
-			if(M.gui.list.length==0) {
-				/*
-				Good news, the gui is no longer 'busy' doing stuff. This
-				means we can enable stuff again.
-				*/
-				M.gui.enable()
-			}
-		},
-		enable:function() {
-			/* 
-			We are enabling the gui, but the run button may only be active
-			when the last prognosis request yielded a positive result. 
-			*/
-			if(M.state['prognosis']==true) {
-				M.menu.run.enable()
-			} else {
-				M.menu.run.disable(M.state['prognosis_message'])
-			}
-		},
-		disable:function(message) {
-			M.menu.run.disable(message)
-		},
-		notification:function(notification) {
-			$('p#notification-message').html(notification)
-		},
-		keybindings:function() {
-			$(window).bind('keydown', function(event) {
-				if (event.ctrlKey || event.metaKey) {
-					switch (event.which) {
-						case 70:
-							event.preventDefault();
-							M.panels.findplaces();
-							break;
-						case 69:
-							event.preventDefault();
-							M.panels.editparams();
-							break;
-						case 13:
-							event.preventDefault();
-							alert("Call the run function!")
-					}
-				}
-				if (event.which == 32) {
-					if (M.map.datalayer != undefined) {
-						M.map.datalayer.setOpacity(0.0)
-					}
-				}
-			});
-			$(window).bind('keyup', function(event) {
-				if (event.which == 32) {
-					if (M.map.datalayer != undefined) {
-						M.map.datalayer.setOpacity(1.0)
-					}
-					//event.preventDefault();
-				}
-			});
-		},
-		thinking:false,
-		list:[]
+		M.gui.init()
 	},
 	hash: {
 		values:{
@@ -153,7 +103,7 @@ var M=$.extend(M || {},{
 			time:undefined
 		},
 		init:function() {
-			console.log("initializing hash: "+window.location.hash)
+			console.log("Initializing the hash: "+window.location.hash)
 			var hash=window.location.hash.substring(1).split(":") //remove leading '#' and split by ':'
 			if (hash[0] == "") {
 				console.log("Hash is empty! Instead use the one provided as a default for this model:"+M.config.default_config_key)
@@ -244,30 +194,24 @@ var M=$.extend(M || {},{
 				if(M.menu.run.el.hasClass("disabled")) {
 					console.log("Your clicking is futile.")
 				} else {
-					M.api.run()
+					M.api.job_create()
 				}
 			}
 		}
 	},
 	map: {
-		obj:{}, //M.map.obj will hold the Leaflet map object
-		marker:{},
-		bbox: function() {
-			return M.map.obj.getBounds().toBBoxString()
-		},
-		datalayer: undefined,
-		geojsonlayer: undefined,
 		init:function(data) {
 			/*
-			Initialize the leaflet map object.
+			Initialize the leaflet map object. It is stored in M.map.obj.
 			*/
-			M.map.obj=L.map('map',{
+			M.map.obj = L.map('map',{
 				'scrollWheelZoom':true,
 				'zoomControl':false,
 				'minZoom':4,
 				'maxZoom':20,
 				'attributionControl':false,
 			});
+
 			/*
 			Add the background tile layer to the map.
 			*/
@@ -287,14 +231,9 @@ var M=$.extend(M || {},{
 				onEachFeature: function(feature, layer) {
 					layer.on('click', function(e) {
 						M.map.obj.fitBounds(layer.getBounds(),{'padding':[20,20]})
-						//console.log("Clickity on:")
-						//console.log(feature)
-
 					})
 				}
 			}).addTo(M.map.obj);
-
-
 
 			L.control.scale({position:'bottomleft'}).addTo(M.map.obj);
 			/*
@@ -314,31 +253,15 @@ var M=$.extend(M || {},{
 				M.map.obj.setView(M.hash.values['center'], M.hash.values['zoom']);
 			}
 
-
 			var LeafIcon = L.icon({
 			        iconUrl: '/static/lib/gem/target_icon_border.png',
 			        iconSize:     [33, 33],
-			        //shadowSize:   [50, 64],
 			        iconAnchor:   [16, 16]
-			        //shadowAnchor: [4, 62],
-			        //popupAnchor:  [-3, -76]
-			    
 			});
 
 			//M.map.obj.on('mousemove',$.debounce(M.map.pointInfo,250));
 			M.map.marker = L.marker([51.5, -0.09],{icon:LeafIcon}).addTo(M.map.obj);
 
-
-			// var grid = L.grid({
-			// 	redraw: 'moveend',
-			// 	coordStyle: 'MinDec',
-			// 	lineStyle: {
-			// 		stroke: true,
-			// 		color: '#111',
-			// 		opacity: 0.4,
-			// 		weight: 0.6
-			// 	}
-			// }).addTo(M.map.obj);
 			/*
 			Bind a resize event to the window which resizes the div which
 			contains the map. This div needs to have an absolute size.
@@ -346,13 +269,18 @@ var M=$.extend(M || {},{
 			$(window).on("resize",$.debounce(M.map.updateSize,250));
 			//$(window).resize(M.map.updateSize);
 		},
+		bbox: function() {
+			return M.map.obj.getBounds().toBBoxString()
+		},
+		datalayer: undefined,
+		geojsonlayer: undefined,
 		moveend:function(){
 			/*
 			Triggered on a leaflet moveend event. Call the api
 			and get info back on the extent. Enable the run button
 			if the extend isnt too large
 			*/
-			M.api.prognosis()
+			M.api.job_prognosis()
 			M.map.updatestate()
 			M.gui.done('map-moving')
 		},
@@ -374,8 +302,8 @@ var M=$.extend(M || {},{
 				var timestepIndex=$('select#selected-timestamp')[0].selectedIndex;
 
 				if (timestepIndex == -1) {
-				alert('trying to update the attribute list, but no timestep is selected!')
-			}
+					alert('trying to update the attribute list, but no timestep is selected!')
+				}
 				console.log("Looking for timestep ix:"+timestepIndex)
 				$('form#attribute-form input[type=radio][name=selected-attribute]').each(function(){
 					var radio=$(this)
@@ -408,6 +336,12 @@ var M=$.extend(M || {},{
 			})
 		},
 		update:function(params){
+			/*
+				Update function updates the map's data layer. The first time update
+				is called (when M.map.datalayer is still undefined) the datalayer
+				is created. Subsequent calls use the data layer setParams() method
+				to update the parameters.
+			*/
 			if(M.map.datalayer==undefined) { 
 				if('layers' in params && 'time' in params && 'configkey' in params && 'map' in params && 'mapserver' in params) {
 					console.log("Initial loading of the data map layer!")
@@ -420,7 +354,8 @@ var M=$.extend(M || {},{
 						transparent: true,
 						//attribution: "FG-VG",
 						subdomains: '1234',
-						configkey:params['configkey']
+						configkey:params['configkey'],
+						random:Math.random()
 					})
 					dataLayer.on('loading',function(){
 						console.log("Start loading data")
@@ -475,7 +410,8 @@ var M=$.extend(M || {},{
 			} else {
 				console.log("Datalayer is defined, so we can update it with the passed info:")
 				console.log(params)
-				M.map.datalayer.setParams(params)
+				M.map.datalayer.setParams(params, true)
+				M.map.datalayer.redraw()
 			}
 			M.map.updatestate()
 		},
@@ -495,30 +431,32 @@ var M=$.extend(M || {},{
 		},
 		updateSize:function() {
 			/* 
-			Fixes the map size relative to other elements in the page. Call this when the 
-			window or map size changes.
+			Updates the map size to match the space from the bottom of the navbar to the
+			bottom of the document.
 			*/
 			var windowHeight=$(window).height();
 			var navbarHeight=$("body nav").height();
-			$('div#map').height(windowHeight-navbarHeight)
+			var navbarOffset=$("body nav").offset();
+			$('div#map').height(windowHeight-navbarHeight-navbarOffset.top)
 			M.map.obj.invalidateSize()
 		},
-		fetchresults:function(job_id) {
-			$.ajax({
-				type:"GET",
-				url:"/api/v1/job/"+job_id,
-				success: function(data) {
-					if ( (data["status_code"]==1) && (data["results"]) ) {
-						M.map.processresults(data.results)
-					} else {
-						alert("Eh.. job not done?")
-					}
-				},
-				error: function(){
-					console.log("Error fetching status!")
-				}
-			})
-		},
+		// fetchresults:function(job_id) {
+		// 	alert("fetchresults")
+		// 	$.ajax({
+		// 		type:"GET",
+		// 		url:"/api/v1/job/"+job_id,
+		// 		success: function(data) {
+		// 			if ( (data["status_code"]==1) && (data["results"]) ) {
+		// 				M.map.processresults(data.results)
+		// 			} else {
+		// 				alert("Eh.. job not done?")
+		// 			}
+		// 		},
+		// 		error: function(){
+		// 			console.log("Error fetching status!")
+		// 		}
+		// 	})
+		// },
 		processresults:function(results) {
 			console.log("processresults()")
 			M.state['results'] = results
@@ -582,12 +520,21 @@ var M=$.extend(M || {},{
 					*/
 					$("div#panel-timesteps").hide()
 				}
+
+				/*
+				Only when loading in new results, for example after a model run, we set a 
+				new random number. This will *force* the map tiles to do a hard reload from
+				the server. The random parameter is ignored in the server caching mechanisms.
+				*/
+				var newRandomValue = Math.random()
+
 				M.map.update({
 					configkey:results['config_key'],
 					mapserver:M.config["mapserver"],
 					map:M.config['mapfile'],
 					layers:(M.state['layers']==undefined)?defaultLayers:M.state['layers'],
-					time:(M.state['time']==undefined)?defaultTime:M.state['time']
+					time:(M.state['time']==undefined)?defaultTime:M.state['time'],
+					random:newRandomValue
 				})
 
 
@@ -748,7 +695,7 @@ var M=$.extend(M || {},{
 			$("form#model-parameters input").on("change",function(){
 				var input=$(this)
 				//console.log("Input "+input.prop("id")+" has changed!!")
-				M.api.prognosis()
+				M.api.job_prognosis()
 			})
 
 			/*
@@ -774,7 +721,7 @@ var M=$.extend(M || {},{
 			values, fire off a prognosis API call to see whether the model can
 			be run given the current map location.
 			*/
-			M.api.prognosis()
+			M.api.job_prognosis()
 		},
 		findplaces:function(){
 			M.panels.toggle("panel-findplaces")
@@ -858,136 +805,6 @@ var M=$.extend(M || {},{
 					});
 				}
 			},250));
-		}
-	},
-	api: {
-		run:function(){
-			M.gui.busy('running-model')
-			M.gui.notification("0% complete")
-			$.ajax({
-				type:"POST",
-				url:"/api/v1/job",
-				data:M.params.serialize(),
-				dataType:'json',
-				success: function(data) {
-					M.state['job_id']=data["job"]
-					M.panels.showonly('panel-notifications')
-					/*
-					jobstatus() starts a loop of requesting job statuses and 
-					percent done to see how far along the model run is.
-					*/
-					M.api.jobstatus()
-				},
-				error: function(xhr){
-					alert("Job not created. API Returned ("+xhr.status+") "+xhr.responseJSON['message'])
-					M.gui.done('running-model')
-				}
-			})
-		},
-		prognosis:function() {
-			/*
-			Todo: throttle this call somehow, maybe with jquery debounce. When the 
-			window is resized by dragging the browser edge it triggers 100s of calls
-			to the prognosis because the mapmove event is triggered the whole time.
-			Either fix it here, or ensure that the window resize doesnt trigger so
-			many mapmove events.
-			*/
-			M.gui.busy('api-prognosis')
-			M.state['prognosis']=false
-
-			/*
-			Add a debounce because sometimes one request per map move is too much,
-			especially if the user is panning the map and a JSON file with the closest
-			chunk needs to be loaded on every move event.
-			*/
-				$.ajax({
-					type:"GET",
-					url:"/api/v1/job",
-					data:M.params.serialize(),
-					dataType:'json',
-					success:function(data) {
-						console.log("Prognosis for config '"+data["configkey"].substr(0,6)+"': "+data["message"])
-						M.map.geojsonlayer.clearLayers()
-						M.map.geojsonlayer.addData(data.features)
-						M.map.geojsonlayer.bringToFront()
-						M.state['prognosis']=true
-						M.state['prognosis_message']=data["message"]
-						M.gui.done('api-prognosis')
-					},
-					error:function(xhr){
-						M.map.geojsonlayer.clearLayers()
-						var data=xhr.responseJSON
-						console.log("Prognosis for config '"+data["configkey"].substr(0,6)+"': "+data["message"])
-						M.state['prognosis']=false
-						M.state['prognosis_message']=data["message"]
-						M.gui.done('api-prognosis')
-					}
-				});
-		},
-		jobstatus:function() {
-			/*
-			percent_list is an array which stores the last 5 percentage complete
-			that were returned from a status request. As long as these values are
-			not all the same, keep requesting a new status <interval> seconds from
-			now. When the model has stalled or crashed, the percentage complete 
-			will no longer change, then after 5 times we can stop requesting status
-			updates and show an error message to the user.
-
-			Todo: check the status_code field. If it's -1 an error has occurred during
-			this run.
-
-			Todo: Rather than use this polling method, implement a solution using
-			EventStream, that's much more efficient. The API should eventstream from
-			some job status endpoint like /job/<jobid>/eventstream. When the run is
-			complete or an error occurs, cancel the eventstream and reset the gui
-			as usual.
-			*/
-			var percent_list = [];
-			var identical_timeouts = 25;
-			(function updater() {
-				$.ajax({
-					type:"GET",
-					url:"/api/v1/job/"+M.state['job_id'], 
-					success: function(data) {
-						percent_list.unshift(data["percent_complete"])
-						percent_list.splice(identical_timeouts,percent_list.length-identical_timeouts)
-						var stopRequestingUpdates=false
-						if( (percent_list.length==identical_timeouts) && (M.util.identicalarray(percent_list)) ) {
-							stopRequestingUpdates=true
-						}
-
-						if( (stopRequestingUpdates==false) && (data["status_code"]==0) ) {
-							/* 
-							Not complete yet. Schedule another status request. 
-
-							Todo: maybe slowly increase the time of status updates. The longer it 
-							takes, the less point there is in updating the status every 2sec.
-							*/
-							$('div.progress-bar').width(data["percent_complete"]+"%")
-							M.gui.notification("Processing: "+data["percent_complete"]+"% complete")
-							setTimeout(updater, 2000);
-						} 
-						else if ( (data["status_code"] == 1) && (data["results"]) ) {
-							$('div.progress-bar').width(data["percent_complete"]+"%")
-							M.gui.notification("Processing: "+data["percent_complete"]+"% complete")
-							M.map.processresults(data.results)
-							M.gui.done('running-model')
-						}
-						else if ( data["status_code"] == -1) {
-							M.gui.notification("An error occurred during the model run. <a target='_blank' href='/status/job/"+data["job"]+"'>View the job logfile</a> (new tab) for more information.")
-							M.gui.done('running-model')
-						}
-						else {
-							M.gui.notification("Model run reached the timeout at "+data["percent_complete"]+"% complete. <a target='_blank' href='/status/job/"+data["job"]+"'>View the job logfile</a> (new tab) for more information or reload the page at a later time.")
-							M.gui.done('running-model')
-						}
-					},
-					error: function(){
-						alert("Fetching the job status returned an error. Something went wrong trying to run your model.")
-						M.gui.done('running-model')
-					}
-				})
-			})();
 		}
 	},
 	defaults:{

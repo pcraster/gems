@@ -135,7 +135,7 @@ class GemModel(DynamicModel, ModelReporter):
             if (time_since_last_update > 2.0) or (force==True):
                 logger.debug("Status update accepted: %d percent complete."%(percent_done))
                 self._last_status_update = now
-                url = self._api+"/job/chunk/"+self._job["uuid_jobchunk"]+"/status"
+                url = self._api+"/job/chunk/"+self._job["uuid_jobchunk"]
                 r = requests.post(url,data={'status_percentdone':percent_done})
                 r.raise_for_status()
         except:
@@ -188,8 +188,9 @@ class GemModel(DynamicModel, ModelReporter):
         logger.debug("Creating the modelling grid on a UTM projection:")
         logger.debug(" - Rows: %d"%(grid['rows']))
         logger.debug(" - Columns: %d"%(grid['cols']))
-        logger.debug(" - Bounding box (projected): %s"%(str(grid['bbox'])))
-        logger.debug(" - Bounding box (lat-lng): %s"%(str(grid['bounds'])))
+        logger.debug(" - Bounding box (utm): %s"%(str(grid['bbox_utm'])))
+        logger.debug(" - Bounding box (latlng): %s"%(str(grid['bbox_latlng'])))
+        
         if len(grid['mask']) > 1024:
             logger.debug(" - Geojson mask: %s"%(str(grid['mask'])))
         else:

@@ -1,0 +1,602 @@
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>Installation &mdash; GEMS 0.1 documentation</title>
+  
+
+  
+  
+
+  
+
+  
+  
+    
+
+  
+
+  
+  
+    <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
+  
+
+  
+
+  
+    <link rel="top" title="GEMS 0.1 documentation" href="index.html"/>
+        <link rel="next" title="Developers Guide" href="development.html"/>
+        <link rel="prev" title="Prerequisites" href="prerequisites.html"/> 
+
+  
+  <script src="_static/js/modernizr.min.js"></script>
+
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+  <div class="wy-grid-for-nav">
+
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search">
+          
+
+          
+            <a href="index.html" class="icon icon-home"> GEMS
+          
+
+          
+          </a>
+
+          
+            
+            
+              <div class="version">
+                0.1
+              </div>
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+                <ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="intro.html">Introduction</a></li>
+<li class="toctree-l1"><a class="reference internal" href="prerequisites.html">Prerequisites</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="">Installation</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#introduction">Introduction</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#system">System</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#apache">Apache</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#postgresql-and-postgis">PostgreSQL and PostGIS</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#mapserver">Mapserver</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#beanstalkd">Beanstalkd</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#pcraster">PCRaster</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#gems-web-application">GEMS Web Application</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#getting-started">Getting started</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#clone-the-application">Clone the application</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#database-setup">Database setup</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#configuration">Configuration</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#webserver">Webserver</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#initialization">Initialization</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#gems-workers">GEMS Workers</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#testing">Testing</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#troubleshooting">Troubleshooting</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="development.html">Developers Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="overview.html">Overview</a></li>
+<li class="toctree-l1"><a class="reference internal" href="webapplication.html">GEMS Web Application</a></li>
+<li class="toctree-l1"><a class="reference internal" href="webclient.html">GEMS Web Client</a></li>
+<li class="toctree-l1"><a class="reference internal" href="processing.html">Processing Models</a></li>
+<li class="toctree-l1"><a class="reference internal" href="api.html">API</a></li>
+<li class="toctree-l1"><a class="reference internal" href="vision.html">Vision</a></li>
+<li class="toctree-l1"><a class="reference internal" href="faqs.html">Frequently Asked Questions</a></li>
+</ul>
+
+            
+          
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" role="navigation" aria-label="top navigation">
+        <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+        <a href="index.html">GEMS</a>
+      </nav>
+
+
+      
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+  <ul class="wy-breadcrumbs">
+    <li><a href="index.html">Docs</a> &raquo;</li>
+      
+    <li>Installation</li>
+      <li class="wy-breadcrumbs-aside">
+        
+          
+            <a href="_sources/install.txt" rel="nofollow"> View page source</a>
+          
+        
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <div class="section" id="installation">
+<h1>Installation<a class="headerlink" href="#installation" title="Permalink to this headline">¶</a></h1>
+<p>This is the installation manual which describes installing GEMS on CentOS 7.1.</p>
+<div class="section" id="introduction">
+<h2>Introduction<a class="headerlink" href="#introduction" title="Permalink to this headline">¶</a></h2>
+<p>This section describes the installation of the GEMS web application on a vanilla out of the box CentOS 7.1 server. Most commands will require root access, so using sudo is recommended. We use CentOS 7.1 because 6.x uses an old Python version 2.6.x, which gives a lot of problems further down the line. Unfortunately the ELGIS repository does not provide packages for CentOS 7, but between the EPEL and PostgreSQL repositories for Centos 7 we have relatively recent versions of many geospatial tools. The only things we need to compile manually are mapserver and beanstalkd, but compiling these is relatively effortless once all the prerequisite development packages have been installed.</p>
+<p>This installation manual is quite detailed, and you may be able to skip some steps if certain things are already installed on your target machine. Unfortunately it is quite a long install procedure because GEMS uses a lot of other software (GDAL, Mapserver, PostGIS, Beanstalkd, etc.) and it is therefore not as easy as copying everything over and clicking install.</p>
+</div>
+<div class="section" id="system">
+<h2>System<a class="headerlink" href="#system" title="Permalink to this headline">¶</a></h2>
+<p>First update the system:</p>
+<div class="highlight-none"><div class="highlight"><pre>yum update
+</pre></div>
+</div>
+<p>Install development tools:</p>
+<div class="highlight-none"><div class="highlight"><pre>yum groupinstall development
+</pre></div>
+</div>
+<p>Install the EPEL repository:</p>
+<div class="highlight-none"><div class="highlight"><pre>yum install epel-release
+</pre></div>
+</div>
+<p>Install some Python necessities:</p>
+<div class="highlight-python"><div class="highlight"><pre>yum install python-devel python-crypto py-bcrypt python-pip python-requests PyYAML pyOpenSSL
+</pre></div>
+</div>
+<p>Install geospatial tools and a bunch of other packages we want to use:</p>
+<div class="highlight-python"><div class="highlight"><pre>yum install gdal gdal-devel gdal-libs gdal-python geos geos-devel proj proj-devel proj-epsg proj-nad freetype freetype-devel libpng libpng-devel gd gd-devel zlib-devel openssl openssl-devel bzip2-devel python-psycopg2 giflib giflib-devel libxml2 libxml2-devel fgci fcgi-devel curl libcurl libcurl-devel net-tools wget cmake httpd httpd-devel mod_wsgi htop sqlite sqlite-devel python-sqlite3dbm nmap
+</pre></div>
+</div>
+<p>Disable Security Enhanced Linux by editing <code class="docutils literal"><span class="pre">/etc/sysconfig/selinux</span></code> and setting:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="n">SELINUX</span><span class="o">=</span><span class="n">disabled</span>
+</pre></div>
+</div>
+<div class="admonition warning">
+<p class="first admonition-title">Warning</p>
+<p class="last">Disabling SELinux makes the system more permissive (at the expense of security) but saves a lot of time debugging why certain things in a webapp aren&#8217;t working, such as strange memory errors in Shapely (for more info see <a class="reference external" href="http://stackoverflow.com/questions/27045407/python-2-7-rhel-6-5-shapely-1-4-4-memoryerror">this link</a>) or certain permissions that may be denied to the webapp.</p>
+</div>
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p class="last">Reboot the machine after disabling SELinux.</p>
+</div>
+<p>Create a user on the system which will own the Apache, Beanstalk, and worker processes later:</p>
+<div class="highlight-python"><div class="highlight"><pre>adduser gems -s /sbin/nologin
+</pre></div>
+</div>
+</div>
+<div class="section" id="apache">
+<h2>Apache<a class="headerlink" href="#apache" title="Permalink to this headline">¶</a></h2>
+<p>Apache should have been installed in the above steps in the <code class="docutils literal"><span class="pre">httpd</span></code> and <code class="docutils literal"><span class="pre">httpd-devel</span></code> packages. Enable (so it starts at boot) and start the service:</p>
+<div class="highlight-python"><div class="highlight"><pre>systemctl enable httpd
+systemctl start httpd
+</pre></div>
+</div>
+<p>And open the firewall to allow connections on port 80:</p>
+<div class="highlight-python"><div class="highlight"><pre>sudo firewall-cmd --permanent –add-port=80/tcp
+sudo firewall-cmd --reload
+</pre></div>
+</div>
+</div>
+<div class="section" id="postgresql-and-postgis">
+<h2>PostgreSQL and PostGIS<a class="headerlink" href="#postgresql-and-postgis" title="Permalink to this headline">¶</a></h2>
+<p>Check out the <a class="reference external" href="https://wiki.postgresql.org/wiki/YUM_Installation">YUM installation of PostgreSQL</a> for more information.</p>
+<p>Configure the yum repository by editing the file <code class="docutils literal"><span class="pre">/etc/yum.repos.d/CentOS-Base.repo</span></code> and adding <code class="docutils literal"><span class="pre">exclude=postgresql*</span></code> to the <code class="docutils literal"><span class="pre">[base]</span></code> and <code class="docutils literal"><span class="pre">[updates]</span></code> sections of the file.</p>
+<p>Install the RPM file containing PostgreSQL and PostGIS:</p>
+<div class="highlight-python"><div class="highlight"><pre>yum localinstall http://yum.postgresql.org/9.4/redhat/rhel-7-x86_64/pgdg-centos94-9.4-1.noarch.rpm
+</pre></div>
+</div>
+<p>Install the PostgreSQL packages:</p>
+<div class="highlight-python"><div class="highlight"><pre>yum install postgresql94-server postgresql94-contrib postgresql94-python
+</pre></div>
+</div>
+<p>Initialize the database in <code class="docutils literal"><span class="pre">/var/lib/pgsql/9.4/data</span></code> by initializing the service:</p>
+<div class="highlight-python"><div class="highlight"><pre>/usr/pgsql-9.4/bin/postgresql94-setup initdb
+</pre></div>
+</div>
+<p>Install PostGIS:</p>
+<div class="highlight-python"><div class="highlight"><pre>yum install postgis2_94 postgis2_94-devel
+</pre></div>
+</div>
+<p>And start the service. It runs on port <code class="docutils literal"><span class="pre">5432</span></code> by default. We don&#8217;t need to open this port in the firewall because we only connect to it locally:</p>
+<div class="highlight-python"><div class="highlight"><pre>systemctl enable postgresql-9.4
+systemctl start postgresql-9.4
+</pre></div>
+</div>
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p>If you&#8217;d like to connect to this database remotely, for example using a graphical SQL client, you will need to open port 5432 as well as set the appropriate permissions in <code class="docutils literal"><span class="pre">/var/lib/pgsql/9.4/data/pg_hba.conf</span></code>.</p>
+<p class="last">Todo: Add a short description of how to do this. Open the port and enable passwd authentication on remote hosts.</p>
+</div>
+</div>
+<div class="section" id="mapserver">
+<h2>Mapserver<a class="headerlink" href="#mapserver" title="Permalink to this headline">¶</a></h2>
+<p>Unfortunately there are no mapserver packages available for Centos 7, so we will compile this ourselves and install it in <code class="docutils literal"><span class="pre">/opt/mapserver</span></code>. Download and extract the sources:</p>
+<div class="highlight-python"><div class="highlight"><pre>wget http://download.osgeo.org/mapserver/mapserver-7.0.0.tar.gz
+tar -zxvf mapserver-7.0.0.tar.gz
+cd mapserver-7.0.0
+mkdir build
+cd build
+</pre></div>
+</div>
+<p>Use <code class="docutils literal"><span class="pre">cmake</span></code> to configure the build:</p>
+<div class="highlight-python"><div class="highlight"><pre>cmake -DCMAKE_INSTALL_PREFIX=/opt/mapserver -D&quot;CMAKE_PREFIX_PATH=/usr/pgsql-9.4;/usr;/usr/bin;/opt&quot; -DWITH_POSTGIS=ON -DWITH_CLIENT_WFS=ON -DWITH_CLIENT_WMS=ON -DWITH_CURL=ON -DWITH_SOS=ON -DWITH_PHP=OFF -DWITH_PYTHON=OFF -DWITH_HARFBUZZ=OFF -DWITH_CAIRO=OFF -DWITH_FRIBIDI=OFF -DWITH_SVGCAIRO=OFF -DWITH_ORACLESPATIAL=OFF -DWITH_MSSQL2008=OFF -DWITH_SDE=OFF ..
+</pre></div>
+</div>
+<p>Compile and install into <code class="docutils literal"><span class="pre">/opt/mapserver</span></code>:</p>
+<div class="highlight-python"><div class="highlight"><pre>make
+make install
+</pre></div>
+</div>
+<p>Verify that everything works by running <code class="docutils literal"><span class="pre">/opt/mapserver/bin/mapserv</span> <span class="pre">-v</span></code>, which should return something along the lines of:</p>
+<div class="highlight-python"><div class="highlight"><pre>MapServer version 7.0.0 OUTPUT=PNG OUTPUT=JPEG SUPPORTS=PROJ SUPPORTS=AGG SUPPORTS=FREETYPE SUPPORTS=ICONV SUPPORTS=WMS_SERVER SUPPORTS=WMS_CLIENT SUPPORTS=WFS_SERVER SUPPORTS=WFS_CLIENT SUPPORTS=WCS_SERVER SUPPORTS=SOS_SERVER SUPPORTS=FASTCGI SUPPORTS=GEOS INPUT=JPEG INPUT=POSTGIS INPUT=OGR INPUT=GDAL INPUT=SHAPEFILE
+</pre></div>
+</div>
+<div class="admonition warning">
+<p class="first admonition-title">Warning</p>
+<p>Make sure WMS_SERVER and WCS_SERVER are supported, and that inputs POSTGIS, OGR, SHAPEFILE, and GDAL are present.</p>
+<p class="last">If PostGIS can&#8217;t be found, check that the CMAKE_PREFIX_PATH in the cmake command is correct.</p>
+</div>
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p class="last">GEMS uses Mapserver version 7.0. Some of the directives for filtering maps changed from Mapserver 6.4 to 7.0 (it now uses <code class="docutils literal"><span class="pre">PROCESSING</span></code> instead of <code class="docutils literal"><span class="pre">FILTER</span></code>, see the <a class="reference external" href="http://mapserver.org/MIGRATION_GUIDE.html#migration">Mapserver migration guide</a> for more info). GEMS uses these filters for filtering on particular config keys and attribute names in tile indexes, so this is crucial in serving or displaying the correct maps. The templates do try and correct this when you user Mapserver 6.x, but it&#8217;s better just to stick with 7.0.</p>
+</div>
+</div>
+<div class="section" id="beanstalkd">
+<h2>Beanstalkd<a class="headerlink" href="#beanstalkd" title="Permalink to this headline">¶</a></h2>
+<p>Download and extract the tarball:</p>
+<div class="highlight-python"><div class="highlight"><pre>wget https://github.com/kr/beanstalkd/archive/v1.10.tar.gz
+tar -zxvf v1.10.tar.gz
+cd beanstalkd-1.10
+</pre></div>
+</div>
+<p>Compile and install:</p>
+<div class="highlight-python"><div class="highlight"><pre>make
+make install PREFIX=/opt/beanstalkd
+</pre></div>
+</div>
+<p>We want to use systemd to run the beanstalkd service. There is a service file already in the GEMS repository, so just link that file from the systemd services directory:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="n">ln</span> <span class="o">-</span><span class="n">s</span> <span class="o">/</span><span class="n">var</span><span class="o">/</span><span class="n">www</span><span class="o">/</span><span class="n">gems</span><span class="o">/</span><span class="n">data</span><span class="o">/</span><span class="n">systemd</span><span class="o">/</span><span class="n">beanstalk</span><span class="o">.</span><span class="n">service</span> <span class="o">/</span><span class="n">etc</span><span class="o">/</span><span class="n">systemd</span><span class="o">/</span><span class="n">system</span><span class="o">/</span><span class="n">beanstalk</span><span class="o">.</span><span class="n">service</span>
+</pre></div>
+</div>
+<p>Verify that the contents of the file don&#8217;t need to be changed (for example the user to run the installation as). Use the <code class="docutils literal"><span class="pre">systemctl</span></code> command to enable, start, and status the service:</p>
+<div class="highlight-python"><div class="highlight"><pre>systemctl enable beanstalk
+systemctl start beanstalk
+systemctl status beanstalk
+</pre></div>
+</div>
+</div>
+<div class="section" id="pcraster">
+<h2>PCRaster<a class="headerlink" href="#pcraster" title="Permalink to this headline">¶</a></h2>
+<p>Download:</p>
+<div class="highlight-python"><div class="highlight"><pre>wget http://downloads.sourceforge.net/project/pcraster/PCRaster/4.1.0/pcraster-4.1.0_x86-64.tar.gz
+</pre></div>
+</div>
+<p>Extract into <code class="docutils literal"><span class="pre">/opt/pcraster-4.1.0_x86-64</span></code>:</p>
+<div class="highlight-python"><div class="highlight"><pre>tar -zxvf pcraster-4.1.0_x86-64.tar.gz -C /opt
+</pre></div>
+</div>
+<p>Create a link so that PCRaster is accessible via <code class="docutils literal"><span class="pre">/opt/pcraster</span></code>:</p>
+<div class="highlight-python"><div class="highlight"><pre>ln -s /opt/pcraster-4.1.0_x86-64 /opt/pcraster
+</pre></div>
+</div>
+<p>Create the file <code class="docutils literal"><span class="pre">/usr/lib/python2.7/site-packages/pcraster.pth</span></code> and add the PCRaster Python path:</p>
+<div class="highlight-python"><div class="highlight"><pre>/opt/pcraster/python
+</pre></div>
+</div>
+<p>And check that it can be imported without problems:</p>
+<div class="highlight-python"><div class="highlight"><pre>python
+Python 2.7.5 (default, Jun 24 2015, 00:41:19)
+(...)
+&gt;&gt;&gt; from pcraster.framework import *
+&gt;&gt;&gt;
+</pre></div>
+</div>
+</div>
+<div class="section" id="gems-web-application">
+<h2>GEMS Web Application<a class="headerlink" href="#gems-web-application" title="Permalink to this headline">¶</a></h2>
+<p>Now that the server environment and software is set up, we can install the web application and get everything up and running. We will use the following directories:</p>
+<ul class="simple">
+<li>The <strong>application directory</strong> will be <code class="docutils literal"><span class="pre">/var/www/gems</span></code></li>
+<li>The <strong>data directory</strong> will be <code class="docutils literal"><span class="pre">/var/wwwdata/gems</span></code></li>
+</ul>
+<p>You can use different ones if you want, but remember to update any paths you need to set to the correct locations.</p>
+<div class="admonition warning">
+<p class="first admonition-title">Warning</p>
+<p class="last">These two directories must be different! The application directory stores all the web application code, and the data directory stores all the data. The installation script that you will run later will delete everything in the data directory, so choose it carefully.</p>
+</div>
+<div class="section" id="getting-started">
+<h3>Getting started<a class="headerlink" href="#getting-started" title="Permalink to this headline">¶</a></h3>
+<p>Create the data and application directories:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="n">mkdir</span> <span class="o">-</span><span class="n">p</span> <span class="o">/</span><span class="n">var</span><span class="o">/</span><span class="n">wwwdata</span><span class="o">/</span><span class="n">gems</span>
+<span class="n">mkdir</span> <span class="o">-</span><span class="n">p</span> <span class="o">/</span><span class="n">var</span><span class="o">/</span><span class="n">www</span><span class="o">/</span><span class="n">gems</span>
+</pre></div>
+</div>
+<p>And change the ownership to the <code class="docutils literal"><span class="pre">gems</span></code> user:</p>
+<div class="highlight-python"><div class="highlight"><pre>chown -R gems:users /var/wwwdata/gems
+chown -R gems:users /var/www/gems
+</pre></div>
+</div>
+</div>
+<div class="section" id="clone-the-application">
+<h3>Clone the application<a class="headerlink" href="#clone-the-application" title="Permalink to this headline">¶</a></h3>
+<p>Clone the repository into the the application directory:</p>
+<div class="highlight-python"><div class="highlight"><pre>Todo.
+</pre></div>
+</div>
+<p>Install the required python modules:</p>
+<div class="highlight-python"><div class="highlight"><pre>pip install -r /var/www/gems/requirements.txt
+</pre></div>
+</div>
+<p>Create the file <code class="docutils literal"><span class="pre">/usr/lib/python2.7/site-packages/gems.pth</span></code> and add the path to the GEMS processing modules:</p>
+<div class="highlight-python"><div class="highlight"><pre>/var/www/gems/processing
+</pre></div>
+</div>
+<p>And check that they can be imported without any problems:</p>
+<div class="highlight-python"><div class="highlight"><pre>python
+Python 2.7.5 (default, Jun 24 2015, 00:41:19)
+(...)
+&gt;&gt;&gt; from gem.model import *
+&gt;&gt;&gt;
+</pre></div>
+</div>
+</div>
+<div class="section" id="database-setup">
+<h3>Database setup<a class="headerlink" href="#database-setup" title="Permalink to this headline">¶</a></h3>
+<p>While the database server is installed, we still need to set up a database that GEMS can use as well as enable PostGIS. First switch to the <code class="docutils literal"><span class="pre">postgres</span></code> user for superuser access to the database:</p>
+<div class="highlight-python"><div class="highlight"><pre>sudo -u postgres -iH
+</pre></div>
+</div>
+<p>Create a database user <code class="docutils literal"><span class="pre">gems</span></code> and press ENTER twice for no password:</p>
+<div class="highlight-python"><div class="highlight"><pre>createuser -SdRP gems
+</pre></div>
+</div>
+<p>Create a database <code class="docutils literal"><span class="pre">gemsdb</span></code> of which the user <code class="docutils literal"><span class="pre">gems</span></code> is the owner:</p>
+<div class="highlight-python"><div class="highlight"><pre>createdb -E UTF8 -O gems gemsdb
+</pre></div>
+</div>
+<p>Enable the PostGIS extension on the database:</p>
+<div class="highlight-python"><div class="highlight"><pre>/usr/pgsql-9.4/bin/psql gemsdb -c &quot;CREATE extension postgis;&quot;
+</pre></div>
+</div>
+<p>Verify that it works and that geos, proj, and GDAL are found:</p>
+<div class="highlight-python"><div class="highlight"><pre>/usr/pgsql-9.4/bin/psql gemsdb -c &quot;SELECT PostGIS_full_version();&quot;
+(...)
+POSTGIS=&quot;2.1.8 r13780&quot; GEOS=&quot;3.4.2-CAPI-1.8.2 r3921&quot; PROJ=&quot;Rel. 4.8.0, 6 March 2012&quot; GDAL=&quot;GDAL 1.11.1, released 2014/09/24&quot; LIBXML=&quot;2.7.6&quot; LIBJSON=&quot;UNKNOWN&quot; RASTER
+</pre></div>
+</div>
+<p>And exit the postgres user shell:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="nb">exit</span>
+</pre></div>
+</div>
+<p>Configure the database so that it trusts local UNIX domain socket connections by editing the PostgreSQL config file <code class="docutils literal"><span class="pre">/var/lib/pgsql/9.4/data/pg_hba.conf</span></code>, and change the following lines:</p>
+<div class="highlight-python"><div class="highlight"><pre># &quot;local&quot; is for Unix domain socket connections only
+local   all             all                      peer
+</pre></div>
+</div>
+<p>To:</p>
+<div class="highlight-python"><div class="highlight"><pre># &quot;local&quot; is for Unix domain socket connections only
+local   all             all                      trust
+</pre></div>
+</div>
+<div class="admonition warning">
+<p class="first admonition-title">Warning</p>
+<p>Be aware that this now trusts <strong>all</strong> socket connections coming from the local machine, giving them full access to the database. Nothing from the outside should be able to connect to our database directly anyway, so it&#8217;s good to disable connections from the outside alltogether at the firewall level.</p>
+<p class="last">Todo: enable trust authent only on gemsdb and add a password.</p>
+</div>
+<p>Restart the PostgreSQL service:</p>
+<div class="highlight-python"><div class="highlight"><pre>systemctl restart postgresql-9.4
+</pre></div>
+</div>
+<p>You should now be able to connect to the database on a local socket:</p>
+<div class="highlight-python"><div class="highlight"><pre>/usr/pgsql-9.4/bin/psql &#39;postgresql://gems@/gemsdb&#39;
+psql (9.4.4)
+Type &quot;help&quot; for help.
+
+Gemsdb=&gt; \q #to quit
+</pre></div>
+</div>
+</div>
+<div class="section" id="configuration">
+<h3>Configuration<a class="headerlink" href="#configuration" title="Permalink to this headline">¶</a></h3>
+<p>Open the <code class="docutils literal"><span class="pre">/var/www/gems/webapp/settings.py</span></code> file and copy the configuration section at the top to a local settings file <code class="docutils literal"><span class="pre">/var/www/gems/webapp/local_settings.py</span></code>. This local settings file is not included in the repository and allows you to override any settings specific to a local machine.</p>
+<p>Generate a secret random key using openssl (or if you prefer another method that should also work fine with the command <code class="docutils literal"><span class="pre">openssl</span> <span class="pre">rand</span> <span class="pre">-base64</span> <span class="pre">32</span></code>. Copy the random string into the <code class="docutils literal"><span class="pre">SECRET_KEY</span></code> parameter in the <code class="docutils literal"><span class="pre">local_settings.py</span></code> file.</p>
+<p>Correct the other entries in the <code class="docutils literal"><span class="pre">local_settings.py</span></code> file like your e-mail address or database login, if that uses a different database location.</p>
+<p>Flask includes a development server which you can use to quickly test if the application loads ok and there are no modules missing before you get it set up on a proper webserver:</p>
+<div class="highlight-python"><div class="highlight"><pre>    cd /var/www/gems
+./manage.py runserver
+(...)
+* Running on http://127.0.0.1:5000/
+</pre></div>
+</div>
+</div>
+<div class="section" id="webserver">
+<h3>Webserver<a class="headerlink" href="#webserver" title="Permalink to this headline">¶</a></h3>
+<p>Now that the application is set up, we need to make it accessible to the web using a proper webserver. GEMS uses the WSGI standard to serve the application via a web server, in this case Apache. It also possible to use other web servers such as nginx, but we&#8217;ll stick to Apache for now. We will host GEMS in an Apache virtual host.</p>
+<p>First verify that the paths in the WSGI file <code class="docutils literal"><span class="pre">/var/www/gems/gems.wsgi</span></code> are correct.</p>
+<p>There is a virtual host include file in <code class="docutils literal"><span class="pre">~/data/apache/gems.conf</span></code>. Link this to the
+Apache configuration directory so that it will be loaded automatically when Apache starts:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="n">todo</span>
+</pre></div>
+</div>
+<p>Verify that the application and data directories are owned by the Apache user:</p>
+<div class="highlight-python"><div class="highlight"><pre>chown -R gems:users /var/www/gems
+chown -R gems:users /var/wwwdata/gems
+</pre></div>
+</div>
+<p>Open the configuration file <code class="docutils literal"><span class="pre">/etc/httpd/conf.d/gems.conf</span></code> and correct the <code class="docutils literal"><span class="pre">ServerName</span></code> directive to match your server name, as well as the user and group items of the <code class="docutils literal"><span class="pre">WSGIDaemonProcess</span></code> directive. The user and group must match the user and group owners of the <code class="docutils literal"><span class="pre">/var/www/gems</span></code> and <code class="docutils literal"><span class="pre">/var/wwwdata/gems</span></code> directories. In our case the user is <code class="docutils literal"><span class="pre">gems</span></code> and the group is <code class="docutils literal"><span class="pre">users</span></code>.</p>
+<p>Restart Apache:</p>
+<div class="highlight-python"><div class="highlight"><pre>systemctl restart httpd
+</pre></div>
+</div>
+<p>To get Apache to reload the application (without restarting the whole server) after you&#8217;ve made some changes or deployed a new version, just <code class="docutils literal"><span class="pre">touch``ing</span> <span class="pre">the</span> <span class="pre">``gems.wsgi</span></code> file will also work:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="n">touch</span> <span class="o">/</span><span class="n">var</span><span class="o">/</span><span class="n">www</span><span class="o">/</span><span class="n">gems</span><span class="o">/</span><span class="n">gems</span><span class="o">.</span><span class="n">wsgi</span>
+</pre></div>
+</div>
+<p>You should now see a login screen when you browse to your server. There is a status page that will give some additional information about the status of the application. It can be found at <code class="docutils literal"><span class="pre">http://&lt;ServerName&gt;/status</span></code>.</p>
+<p>Verify that the mapserver CGI script can be executed by pointing your browser at <code class="docutils literal"><span class="pre">http://&lt;ServerName&gt;/cgi-bin/mapserv</span></code>. It should return an error about <code class="docutils literal"><span class="pre">QUERY_STRING</span></code> being empty.</p>
+</div>
+<div class="section" id="initialization">
+<h3>Initialization<a class="headerlink" href="#initialization" title="Permalink to this headline">¶</a></h3>
+<p>The web application is now up and running, but it does not have users of any data yet. This initialization takes place via a web interface. This will create the necessary data folders, create the tables in the database, add some users, add chunkschemes, and upload some default models you can play with. Point a modern browser at <code class="docutils literal"><span class="pre">http://geowebfg01.geo.uu.nl/install</span></code> and click the install button. Please be patient as it may take a while to initialize everything. If an error occurs it will generally give some debug information about what went wrong. Fix it, reload the page, and click the button again.</p>
+<p>Once the application has been installed, the install link described above will be invalidated so that you can&#8217;t do a new installation while there is still another one present. If you want to do a reinstall anyway (reset to factory settings as it were) then manually remove the <a href="#id1"><span class="problematic" id="id2">``</span></a>./install/install-ok.txt``file in the data directory. Once this file has been removed you can visit the install link again.</p>
+<div class="admonition warning">
+<p class="first admonition-title">Warning</p>
+<p class="last">Removing the <code class="docutils literal"><span class="pre">./install/install-ok.txt</span></code> file in the data directory and running the reinstalling script <strong>WILL DELETE ALL DATA IN THE WEB APPLICATION!</strong></p>
+</div>
+</div>
+</div>
+<div class="section" id="gems-workers">
+<h2>GEMS Workers<a class="headerlink" href="#gems-workers" title="Permalink to this headline">¶</a></h2>
+<p>Processing of model runs in the GEMS architecture is done by workers which need to be started separately from the web application. Technically speaking, workers are pretty basic scripts that process any jobs which are posted to the beanstalk work queue, and send the model outputs back to the web application. Workers can be started on the same machine as the web application, but also on multiple other machines which are connected by network to the web application, that way the machine running the web application will not suffer from the load of having to process all these PCRaster models. The worker nodes monitor the work queue for messages (on port 11300) and post results via HTTP to the GEMS API (on port 80). Make sure there is solid network connectivity between worker nodes and the GEMS web application. The client application for the workers is located in the GEMS application in the subdirectory <code class="docutils literal"><span class="pre">processing</span></code>.</p>
+<p>We first do a test run of the worker script to verify that everything works properly:</p>
+<div class="highlight-python"><div class="highlight"><pre>cd /var/www/gems/processing
+./client.py --directory /tmp/.gemstest --api localhost --queue localhost
+Working directory is /tmp/.gemstest
+Beanstalk work queue found at localhost:11300
+GEMS API found at http://localhost/api/v1
+Starting 1 worker process(es)...
+
+2015-10-12 12:31:11,677 INFO [Worker 0] Connected to beanstalk message queue.
+2015-10-12 12:31:12,678 INFO [Worker 0] Waiting for a job!
+</pre></div>
+</div>
+<p>Press <code class="docutils literal"><span class="pre">CTRL-C</span></code> to kill it and fix any errors that may occur.</p>
+<p>We use systemd to launch these workers as a processing service, much in the same way that we created a service for beanstalkd. Link the service file in the application directory to the systemd service directory:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="n">ln</span> <span class="o">-</span><span class="n">s</span> <span class="o">/</span><span class="n">var</span><span class="o">/</span><span class="n">www</span><span class="o">/</span><span class="n">gems</span><span class="o">/</span><span class="n">data</span><span class="o">/</span><span class="n">systemd</span><span class="o">/</span><span class="n">gemsworker</span><span class="o">.</span><span class="n">service</span> <span class="o">/</span><span class="n">etc</span><span class="o">/</span><span class="n">systemd</span><span class="o">/</span><span class="n">system</span><span class="o">/</span><span class="n">gemsworker</span><span class="o">.</span><span class="n">service</span>
+</pre></div>
+</div>
+<p>Open the service file and make sure that the <code class="docutils literal"><span class="pre">ExecStart</span></code> command uses the same arguments as in the test case before. In case your workers are on a difference machine you will need to update the arguments to the <code class="docutils literal"><span class="pre">client.py</span></code> script so that the client is able to find and access the work queue and the API:</p>
+<div class="highlight-python"><div class="highlight"><pre>ExecStart=/var/www/gems/processing/client.py --api localhost --queue localhost --directory /tmp/.gemsrundir
+</pre></div>
+</div>
+<p>Enable the service so it starts after reboot:</p>
+<div class="highlight-python"><div class="highlight"><pre>systemctl enable gemsworker
+</pre></div>
+</div>
+<p>Start the service:</p>
+<div class="highlight-python"><div class="highlight"><pre>systemctl start gemsworker
+</pre></div>
+</div>
+<p>Check that the service is running properly:</p>
+<div class="highlight-python"><div class="highlight"><pre>systemctl status gemsworker
+</pre></div>
+</div>
+</div>
+<div class="section" id="testing">
+<h2>Testing<a class="headerlink" href="#testing" title="Permalink to this headline">¶</a></h2>
+</div>
+<div class="section" id="troubleshooting">
+<h2>Troubleshooting<a class="headerlink" href="#troubleshooting" title="Permalink to this headline">¶</a></h2>
+</div>
+</div>
+
+
+           </div>
+          </div>
+          <footer>
+  
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+      
+        <a href="development.html" class="btn btn-neutral float-right" title="Developers Guide" accesskey="n">Next <span class="fa fa-arrow-circle-right"></span></a>
+      
+      
+        <a href="prerequisites.html" class="btn btn-neutral" title="Prerequisites" accesskey="p"><span class="fa fa-arrow-circle-left"></span> Previous</a>
+      
+    </div>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright 2015, Department of Physical Geography, Utrecht University..
+
+    </p>
+  </div>
+  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/snide/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  
+
+    <script type="text/javascript">
+        var DOCUMENTATION_OPTIONS = {
+            URL_ROOT:'./',
+            VERSION:'0.1',
+            COLLAPSE_INDEX:false,
+            FILE_SUFFIX:'.html',
+            HAS_SOURCE:  true
+        };
+    </script>
+      <script type="text/javascript" src="_static/jquery.js"></script>
+      <script type="text/javascript" src="_static/underscore.js"></script>
+      <script type="text/javascript" src="_static/doctools.js"></script>
+
+  
+
+  
+  
+    <script type="text/javascript" src="_static/js/theme.js"></script>
+  
+
+  
+  
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.StickyNav.enable();
+      });
+  </script>
+   
+
+</body>
+</html>

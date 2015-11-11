@@ -8,13 +8,15 @@
 	<script src="/static/lib/leaflet-plugins/grid/L.Grid.js"></script>
 
 
-	<script src="/static/lib/chart/Chart.min.js"></script>
+	<!-- script src="/static/lib/chart/Chart.min.js"></script -->
 
 	<script src="/static/lib/flot/jquery.flot.min.js"></script>
 	<script src="/static/lib/flot/jquery.flot.time.min.js"></script>
 	<script src="/static/lib/flot/jquery.flot.selection.min.js"></script>
 
 	<script src="/static/lib/gem/modeller.js"></script>
+	<script src="/static/lib/gem/modeller-gui.js"></script>
+	<script src="/static/lib/gem/modeller-api.js"></script>
 	<script src="/static/lib/gem/modeller-legends.js"></script>
 	<script src="/static/lib/gem/modeller-charts.js"></script>
 	<script src="/static/lib/gem/geohash.js"></script>
@@ -67,6 +69,8 @@
 				mapfile:'{{model.mapserver_mapfile}}',
 				mapserver:'{{url_for("data.mapserver")}}',
 				api:'{{url_for("api.home")}}',
+				api_auth_username:'{{current_user.username}}',
+				api_auth_token:'{{current_user.api_token}}',
 				default_config_key:'{{model.default_config_key}}',
 				default_view_extent:'{{discretization.extent_as_bounds}}',
 				hash:'{{model.default_modeller_hash}}',
@@ -307,5 +311,19 @@ opacity:0.8;
 			</p>
 			-->
 		</div>
-	
+<div id="log-modal" class="modal">
+  <div class="modal-dialog modal-lg">
+    <div class="modal-content">
+    <!--
+      <div class="modal-header">
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+        <h4 class="modal-title">Log file</h4>
+      </div>-->
+      <div class="modal-body" id="log-modal-content" style="white-space:pre;display:block;unicode-bidi:embed;font-family:'Courier New',monospace;font-size:8pt;height:400px;overflow-y:scroll;overflow-x:hidden"></div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-default" data-dismiss="modal"><i class="fa fa-close"></i> Close</button>
+      </div>
+    </div><!-- /.modal-content -->
+  </div><!-- /.modal-dialog -->
+</div><!-- /.modal -->
 {% endblock %}
