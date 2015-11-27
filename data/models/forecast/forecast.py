@@ -14,7 +14,7 @@ class Model(GemModel):
         'abstract':             'Cellular automata model which uses GFS forecasts',
         'license':              'All Rights Reserved',
         'tags':			 ['demo','fire','forest fire','forecast','cellular automata'],
-        'discretizations':      ['world_onedegree_100m','frankrijk_veldwerkgebied_100m','newzealand_randompolygons_100m']
+        'discretization':       'world_onedegree_100m'
     }
     parameters={
         #

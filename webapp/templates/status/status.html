@@ -6,14 +6,14 @@
 	<div class="col-md-4 col-sm-4">
 		<div class="panel panel-default" style="padding-bottom:0">
 			<table class="table">
-				<tr><td><strong>Beanstalk Work Queue</strong></td><td>{{status['beanstalk_connected']}}</strong></td></tr>
-				<tr><td><strong>Connected Workers</strong></td><td>{{status['beanstalk_workers']}}</strong></td></tr>
+				<tr><td><strong>Beanstalk Work Queue Ok</strong></td><td>{{beanstalk.ok}}</strong></td></tr>
+				<tr><td><strong>Connected Workers</strong></td><td>{{beanstalk.workers}}</strong></td></tr>
 			</table>
 			
 		</div>
 	</div>
 </div>
-
 <code>
-{{stats}}
+{{beanstalk.status}}
+</code>
 {% endblock %}

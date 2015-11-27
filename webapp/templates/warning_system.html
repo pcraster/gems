@@ -1,0 +1,8 @@
+{% if system_status.beanstalk_workers > 0 %}
+  
+{% else %}
+  <div class="warning-bar">
+    <strong>Processing warning!</strong> 
+    It seems like there are no GEMS workers connected to the work queue. Please start some workers. Without any workers models cannot be processed.
+  </div>
+{% endif %}

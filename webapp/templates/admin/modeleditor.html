@@ -1,70 +1,43 @@
 {% extends "base.html" %}
 
 {% block headjs %}
+	<!-- use codemirror for python code highlighting -->
 	<script src="/static/lib/codemirror/codemirror-compressed.js"></script>
 {% endblock %}
 
 {% block headcss %}
+	<!-- some additional css for this page -->
 	<link href="/static/lib/codemirror/codemirror.css" rel="stylesheet">
-{% endblock %}
-
-{% block editor %}
-<!--
-<div class="container-fluid">
-<div class="row">
-<div class="col-md-12 col-sm-12">
--->
-<div style="background-color:#fff;top:51px;position:fixed;border-bottom:1px solid #ddd;width:100%">
-      <ul class="nav navbar-nav" id="navbar-secondary">
-        <li class="active"><a href="editor"><i class="fa fa-pencil"></i> Code Editor</span></a></li>
-        <li><a href="parameters"><i class="fa fa-wrench"></i> Parameter Form</a></li>
-      </ul>
-</div>
-  <!-- Nav tabs 
-  <ul class="nav nav-tabs" role="tablist" style="margin-top:10px;">
-    <li role="presentation" class="active"><a href="#tab-code-editor" aria-controls="home" role="tab" data-toggle="tab"><i class="fa fa-pencil"></i> Code Editor</a></li>
-    <li role="presentation"><a href="#profile" aria-controls="profile" role="tab" data-toggle="tab"> Parameter Form Schema</a></li>
-  </ul>-->
-
-  <!-- Tab panes -->
-		<div id="editor">
-			<form id="codeform">
-				<textarea name="code" id="ta" name="ta" style="height:auto;">{{model.code|safe}}</textarea>
-			</form>
-		</div>
-
-<!--
-</div>
-</div>
-</div>
--->
-
-
 	<style type="text/css">
 		.CodeMirror {
 			border: 1px solid #eee;
 			border:none;
 			width: 100%;
 			font-size:0.85em;
+			height:100%;
 		}
 		ul.nav li a.disabled:hover,
 		ul.nav li a.disabled {
 		    color: #888;
 		}
+		#codeform {
+			height:100%;
+		}
 		div#editor {
 			width:100%;
 			position:fixed;
-			top:102px;
+			top:103px;
+			height:400px;
 		}
 	</style>
-	<script>
-
-
-	</script>
 {% endblock %}
 
 {% block footjs %}
+	<!-- Inline code for saving changes -->
 	<script>
+		/*
+			Bind a keydown event so you can press CTRL-S to save code.
+		*/
 		$(window).bind('keydown', function(event) {
 			if (event.ctrlKey || event.metaKey) {
 				switch (String.fromCharCode(event.which).toLowerCase()) {
@@ -77,50 +50,110 @@
 		});
 
 		function saveChanges(){
+			var navbarNotifications = $('#navbar-notifications')
+			navbarNotifications.html("Saving... Please wait...")
 			$.ajax({
 				url: '/api/v1/model/{{model.name}}',
 				type: 'POST',
+				headers: {
+					"Authorization": "Basic " + btoa("{{current_user.username}}:{{current_user.api_token}}")
+				},
 				data: {
 					'code':editor.getValue()
 				},
 				success: function(data) {
-					alert("Code saved!")
+					navbarNotifications.html(data["message"])
 				},
-				error: function() {
-					alert("An error occurred while saving your code.")
+				error: function(xhr) {
+					if("responseJSON" in xhr) {
+						navbarNotifications.html(xhr.responseJSON['message'])
+					}
 				}
 			});
-
 			return false;
 		}
 
-		$(document).ready(function(){
-			$("nav").addClass("navbar-fixed-top")
+		function resizeEditor(){
+			var offset = $("div#editor").offset()
+			var windowHeight = $(window).height()
+			var newHeight = windowHeight-offset.top;
+			if (newHeight < 200) {
+				newHeight=200;
+			}
+			$("#editor").height(newHeight)
+		}
 
-			$("ul#navbar-secondary").append('<li><a href="#" id="menu-savechanges"><i class="fa fa-check"></i> Save Changes</a></li>')
-		
+		$(document).ready(function(){
+			/*
+			Initialize the CodeMirror input when the page is loaded.
+			*/
+			$("nav").addClass("navbar-fixed-top")
+			$(window).resize(function(){
+				resizeEditor()
+			});
+			$(window).resize()
+			//$("ul#navbar-secondary").prepend('<li><a href="#" id="menu-savechanges"><i class="fa fa-check"></i> Save Changes</a></li>')
+	
 			$("a#menu-savechanges").click(function(evt){
 				evt.preventDefault()
 				saveChanges()
 				$(this).blur()
 			})
+			$("a#menu-reload").click(function(evt){
+				location.reload()
+			})
 
 
-		window.editor = CodeMirror.fromTextArea(document.getElementById("ta"),{
-		        mode: {
-					name: "python",
-					version: 3,
-					singleLineStringErrors: false},
-					lineNumbers: true,
-					smartIndent: false,
-					indentUnit: 4,
-					matchBrackets: true,
-					viewportMargin: Infinity
-		    	}
-		    );
-
-		});
+			window.editor = CodeMirror.fromTextArea(document.getElementById("ta"),{
+			        mode: {
+						name: "python",
+						version: 3,
+						singleLineStringErrors: false},
+						lineNumbers: true,
+						smartIndent: false,
+						indentUnit: 4,
+						matchBrackets: true,
+						viewportMargin: Infinity
+			    	}
+			    );
+			});
 
 		
 	</script>
 {% endblock %}
+
+{% block editor %}
+<div style="background-color:#eee;top:51px;position:fixed;border-bottom:1px solid #ddd;width:100%">
+      <ul class="nav navbar-nav" id="navbar-secondary">
+
+        <!--<li class="active"><a href="editor"><i class="fa fa-pencil"></i> Code Editor</span></a></li>-->
+        <!--<li><a href="parameters"><i class="fa fa-wrench"></i> Parameter Form</a></li>-->
+        <li><a href="{{url_for('site.home')}}"><i class="fa fa-close"></i> Cancel</a></li>
+        <li><a href="{{url_for('modeller.show_modeller',model_name=model.name)}}"><i class="fa fa-play"></i> Modeller</a></li>
+        <li><a href="#" id="menu-reload"><i class="fa fa-refresh"></i> Reload</a></li>
+        {% if current_user.is_admin %}
+		<li><a href="#" id="menu-savechanges"><i class="fa fa-check"></i> Save Changes</a></li>
+		{% endif %}
+      </ul>
+      {% if current_user.is_admin %}
+      	<p class="navbar-text" id="navbar-notifications">Editing model code. Current revision: {{model.version}}</p>
+      {% else %}
+      	<p class="navbar-text" id="navbar-notifications">Only admin users can edit model code</p>
+      {% endif %}
+      <ul class="nav navbar-nav navbar-right">
+        {% if current_user.is_admin %}
+      	<li><p class="navbar-text" style="padding-right:15px;">Editing code for model <strong>{{model.name}}</strong></p></li>
+      	{% else %}
+		<li><p class="navbar-text" style="padding-right:15px;">Viewing code for model <strong>{{model.name}}</strong> (rev. {{model.version}})</p></li>
+      	{% endif %}
+      </ul>
+</div>
+
+<div id="editor">
+	<form id="codeform">
+		<textarea name="code" id="ta" name="ta" style="height:auto;">{{model.code|safe}}</textarea>
+	</form>
+</div>
+{% endblock %}
+
+

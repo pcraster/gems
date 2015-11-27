@@ -18,7 +18,24 @@ def home():
     if current_user.is_anonymous():
         return redirect(url_for('user.login'))
     else:
-        return render_template("site/home.html",models=Model.query.all())
+        #The highlighted models which are available to all users
+        models = Model.query.order_by(Model.name).filter(Model.highlighted==True, Model.disabled==False).all()
+        
+        #The other (test) models which are not on the homepage.
+        other_models = Model.query.order_by(Model.disabled, Model.name).filter(Model.highlighted==False).all()
+        return render_template("site/home.html", models=models, other_models=other_models)
+        
+@site.route('/myaccount')
+@login_required
+def myaccount():
+    return render_template("site/myaccount.html")
+    
+@site.route('/myaccount/reset-api-token')
+@login_required
+def myaccount_reset_api_token():
+    current_user.reset_api_token()
+    return redirect(url_for('site.home'))
+    
 
 @site.route('/models')
 def models():

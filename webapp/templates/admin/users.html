@@ -1,0 +1,62 @@
+{% extends "base.html" %}
+
+{% block content %}
+<br />
+
+<div class="panel panel-default" style="padding-bottom:0">
+	<div class="panel-heading">
+		<i class="fa fa-user"></i> <strong>User overview</strong>
+	</div>
+	{% if not users %}
+		<div class="panel-body">
+		<p>No users found.</p>
+		</div>
+	{% else %}
+		<table class="table">
+		<tbody>
+			<tr>
+				<th style="padding-left:15px;">ID</th>
+				<th>Username</th>
+				<th style="text-align:center;">Admin</th>
+				<th>Email</th>
+				<th>Password</th>
+				<th>API Token</th>
+			</tr>
+		{% for user in users %}
+			<tr>
+				<td style="padding-left:15px;">
+					{{user.id}}
+				</td>
+				<td>
+					<code>{{user.username}}</code>
+				</td>
+				<td style="text-align:center;">
+				 {% if user.username != 'admin' %}				
+					{% if not user.is_admin %}
+						<a href="{{url_for('admin.users_make_admin',uid=user.id,role='admin')}}" class="btn btn-default btn-xs">No</a>
+					{% else %}
+						<a href="{{url_for('admin.users_make_admin',uid=user.id,role='admin')}}" class="btn btn-default btn-xs">Yes</a>
+					{% endif %}
+				 {% else %}
+				 	<!-- cannot change admin priveleges -->
+				 	<a href="#" class="btn btn-default btn-xs disabled">Yes</a>
+				 {% endif %}
+				</td>
+				<td>
+					<code>{{user.email}}</code>
+				</td>
+				<td>
+					<code>(encrypted)</code> <a href="{{url_for('admin.users_reset_password',uid=user.id)}}" class="btn btn-xs btn-default" style="color:#888;"><i class="fa fa-refresh"></i> Reset</a>
+				</td>
+				<td>
+					<code>{{user.api_token}}</code> <a href="{{url_for('admin.users_reset_api_token',uid=user.id)}}" class="btn btn-xs btn-default"><i class="fa fa-refresh" style="color:#888;"></i></a>
+				</td>
+			</tr>
+		{% endfor %}
+		</tbody>
+		</table>
+	{% endif %}
+	
+</div>
+
+{% endblock %}

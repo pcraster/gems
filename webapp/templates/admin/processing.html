@@ -16,21 +16,18 @@
 		<tbody>
 			<tr>
 				<td style="padding-left:15px;">Submitted</td>
+				<td>Config Key</td>
 				<td>Job</td>
-				<td>Configuration</td>
 				<td>Job Chunks</td>
-				
-				<td class="text-center">Configuration</td>
-				<td class="text-center">Chunks</td>
-				<td class="text-center">Bbox</td>
 			</tr>
 		{% for j in jobs %}
 			<tr>
 				<td style="padding-left:15px;">
-					{{j.shortdate}}
+					{{j.shortdate}} {{j.user_id}}
 				</td>
-				<td><i class="fa fa-fw fa-sitemap"></i> <code><a href="/api/v1/job/{{j.uuid}}"> {{j.shortkey}}</a></code></td>
 				<td><i class="fa fa-fw fa-wrench"></i> <code><a href="/api/v1/config/{{j.modelconfiguration.key}}">{{j.modelconfiguration.shortkey}}</a></code></td>
+				<td><i class="fa fa-fw fa-sitemap"></i> <code>{{j.shortkey}} <a href="/api/v1/job/{{j.uuid}}/log">[Log]</a></code></td>
+				
 				<td>
 				{% for c in j.jobchunks %}
 					<p style="margin-bottom:3px;">
@@ -43,22 +40,13 @@
 					{% if c.status_code == 1 %}
 					<i class="fa fa-circle" style="color:#15b01a;"></i>
 					{% endif %}
-					<code>{{loop.index}}/{{j.jobchunks_total}}</code><i class="fa fa-fw fa-angle-right" style="color:#666;"></i><code><a href="{{url_for('api.jobchunk_get_log',jobchunk_uuid=c.uuid)}}">{{c.shortkey}}</a></code> <!--<a href="{{url_for('api.jobchunk_get_log',jobchunk_uuid=c.uuid)}}">View run log</a> or <a href="{{url_for('api.jobchunk_get_package',jobchunk_uuid=c.uuid)}}">download maps package</a>.-->
+					<code>{{loop.index}}/{{j.jobchunks_total}}</code><i class="fa fa-fw fa-angle-right" style="color:#666;"></i><code>{{c.shortkey}} <a href="{{url_for('api.jobchunk_log',jobchunk_uuid=c.uuid)}}">[Log]</a> </code> 
 					</p>
 				{% endfor %}
-				</td>
-				<td style="vertical-align:middle;">
-					<code><a href="/api/v1/job/{{j.uuid}}"> {{j.shortkey}}</a></code>
- 				</td>
-				<td style="vertical-align:middle;" class="text-center">
 
 				
-				</td>
-				<td style="vertical-align:middle;" class="text-center">
-					{{j.jobchunks_total}}
 
 				</td>
-				<td style="vertical-align:middle;" class="text-center"></td>
 			</tr>
 		{% endfor %}
 		</tbody>

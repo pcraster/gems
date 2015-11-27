@@ -12,6 +12,7 @@ import utm
 import cPickle
 import datetime
 import time 
+import shutil
 import numpy as np
 
 from osgeo import gdal, gdalconst, ogr, osr
@@ -55,7 +56,7 @@ class Beanstalk(object):
     """
     Wrapper to manage the beanstalk connection and prevent socket errors from
     occurring in the web app. You can check if the beanstalk connection is
-    still active:
+    still active, this will check the __nonzero__ method:
     
     if beanstalk:
         #active
@@ -77,6 +78,7 @@ class Beanstalk(object):
         """
         Initialize the object.
         """
+        self.tubename = 'gemsjobs'
         self.connect()
 
     def __nonzero__(self):
@@ -93,7 +95,9 @@ class Beanstalk(object):
         """
         try:
             self._conn = beanstalkc.Connection('localhost', port=11300)
-            self._conn.using()
+            self._conn.use(self.tubename)
+            if self._conn.using() != self.tubename:
+                return False
         except:
             return False
         else:
@@ -103,29 +107,31 @@ class Beanstalk(object):
         """
         Attempts to reconnect to the queue.
         """
-        try: self._conn.reconnect()
-        except: return False
-        else: return self.connected
+        try: 
+            self._conn.reconnect()
+            self._conn.use(self.tubename)
+        except: 
+            return False
+        else: 
+            return self.connected
         
     @property
     def ok(self):
-        return True if self.queue else False
+        return True if self.workers else False
     
     @property
     def workers(self):
         """
-        Property which uses the connection stats to return the number of
-        workers connected to the queue. This is a bit of a naive implementation
-        but it should be ok for now.
-        
-        Todo: use a specific tube like 'gems' for processing jobs. Then use 
-        stats-tube command to check stats on the tube:
-        current-watching: num of cons watching the tube
-        current-waiting:
+        Property which uses the connection stats of the gems jobs tube and
+        returns the 'current-watching' stats element to check how many workers
+        are currently watching the tube for new jobs.
         """
         try:
-            stats = self._conn.stats()
-            return stats['current-workers']
+            stats = self._conn.stats_tube(self.tubename)
+            if 'current-watching' in stats:    
+                return stats['current-watching']
+            else:
+                return 0
         except:
             return 0
 
@@ -145,25 +151,31 @@ class Beanstalk(object):
         Uses the connection's using() method to check that the connection is
         still active.
         """
-        try: self._conn.using()
-        except: return False
-        else: return True
+        try: 
+            tube = self._conn.using()
+            if tube != self.tubename:
+                return False
+        except: 
+            return False
+        else: 
+            return True
+            
+    @property
+    def status(self):
+        try:
+            status = self._conn.stats_tube(self.tubename)
+        except:
+            return None
+        else:
+            return status
 
-beanstalk = Beanstalk()       
-    
-
-def gems_system_status():
-    """
-    Returns a global system status.
-    """
-    return {
-        'status':'OK',
-        'beanstalk_connected':beanstalk.connected,
-        'beanstalk_workers':beanstalk.workers
-    }
+beanstalk = Beanstalk()
 
 def generate_api_token():
     return ''.join(random.choice("abcdefghjkmnpqrstuvwxyzABCDEFGHJKLMNPQRSTUVWXYZ23456789") for _ in range(32))
+    
+def random_password():
+    return ''.join(random.choice("abcdefghjkmnpqrstuvwxyzABCDEFGHJKLMNPQRSTUVWXYZ23456789") for _ in range(8))
 
 class Discretization(db.Model):
     """
@@ -539,12 +551,9 @@ class Model(db.Model):
 
     Todo:
         - add owner
-        - add 'public' boolean
-        - add 'nocache' boolean
         - add last updated
         - use a getter and setter for the code attribute
         - use templates for generating mapserver config
-        
         - clean up and refactor code
 
     """
@@ -556,11 +565,16 @@ class Model(db.Model):
     contact = db.Column(db.String(512), unique=False, nullable=True)
 
     #jobs = db.relationship('Job', backref='model', lazy='dynamic')
+
+    disabled = db.Column(db.Boolean(), nullable=False, default=False)    
+    highlighted = db.Column(db.Boolean(), nullable=False, default=True)
+    validated = db.Column(db.Boolean(), nullable=False, default=False)
     
     modified = db.Column(db.DateTime(),nullable=True)
     discretization_id = db.Column(db.Integer(), db.ForeignKey('discretization.id'))
-    version = db.Column(db.Integer(),default=1)
-
+    discretization = db.relationship('Discretization', backref='models')
+    
+    version = db.Column(db.Integer(), default=1)
     modelcode = db.Column(db.Text(), nullable=True, unique=False)
 
     meta = db.Column(JSON(), nullable=True)
@@ -571,12 +585,13 @@ class Model(db.Model):
     def __repr__(self):
         return "<Model: name=%s id=%d>"%(self.name,self.id)
         
-    def __init__(self,name="",code=""):
-        name=re.sub(r'\W+',' ',name).lower()
-        name="_".join(map(str,name.split()))
-        self.name=name
-        self.version=1
-        self.updatecode(code)        
+    def __init__(self, name=None, code=""):
+        if name is None:
+            raise Exception("You need to specify a valid name.")
+            
+        self.name = name
+        self.version = 0
+        self.updatecode(code)
         
     @property
     def as_dict(self):
@@ -589,6 +604,10 @@ class Model(db.Model):
     @property
     def filename(self):
         return os.path.join(self.filedir,"modelcode.py")
+        
+    @property
+    def filenametest(self):
+        return os.path.join(self.filedir,"modeltest.py")
 
     @property
     def filedir(self):
@@ -649,60 +668,99 @@ class Model(db.Model):
             self.version=1
         else:
             self.version=self.version+1
-
-    def updatecode(self,code):
-        #
-        # Todo:
-        # save the code to a temporary directory where we can try and load it.
-        # if that succeeds, do the rest of the handling and copy it to the main
-        # directory. this way the code is only overwritten if it loads properly
-        # and does not produce any parsing errors. currently the code is saved
-        # to file first, then if there are any errors they persist in the file,
-        # which is not what we want to have happen.
-        #
-
-        if os.path.exists(self.filename):
-            os.remove(self.filename)
             
-        if os.path.exists(self.filename+"c"):
-            os.remove(self.filename+"c")
+    def toggle_disable(self):
+        self.disabled = False if self.disabled else True
+        db.session.commit()
+        return self.disabled   
+        
+    def toggle_pin(self):
+        self.highlighted = False if self.highlighted else True
+        db.session.commit()
+        return self.highlighted
+
+    def updatecode(self, code=""):
+        """
+        Attempts to update the model code. Returns True if successful and will
+        raise an exception when something goes wrong.
+        """
             
-        print " * Update code, writing to: %s"%(self.filename)
-        with open(self.filename,'w') as f:
+        if code == "":
+            with open(self.filename,'w') as f:
+                f.write(code)
+            return True
+
+        #write the provided code to a test file first.
+        with open(self.filenametest,'w') as f:
             f.write(code)
-        
-        sys.path.append(self.filedir)
-        code_path = os.path.join(current_app.config["CODE"],"processing")
-        sys.path.append(code_path)
-        module=__import__("modelcode")
-        model=getattr(module,"Model")
-        m=model()
-        
-        print "meta:"
-        print m.meta
-        print "params:"
-        print m.parameters
-        
-        self.parameters=m.parameters
-        self.time=m.time
-        self.meta=m.meta
-        self.reporting=m.reporting
-        
+            
+        try:
+            #try and load the model code
+            sys.path.append(self.filedir)
+            code_path = os.path.join(current_app.config["CODE"],"processing")
+            sys.path.append(code_path)
+            module = __import__("modeltest")
+            model = getattr(module, "Model")
+            m = model()
+                    
+#            print "meta:"
+#            print m.meta
+#            print "params:"
+#            print m.parameters
+        except Exception as e:
+            raise Exception(e)
+        else:
+            #We loaded the model, now try and update the database           
+            try:        
+                #loaded model. update the code and the database model fields.
+            
+                #
+                #check that the discretization used actually exists
+                #
+                if 'discretization' in m.meta:
+                    d = Discretization.query.filter(Discretization.name==m.meta['discretization']).first()
+                    if d is None:
+                        raise Exception("The discretization '%s' which you defined in the 'meta' section does not exist."%(m.meta["discretization"]))
+                    else:
+                        self.discretization = d
+                else:
+                    raise Exception("No discretization defined in the 'meta' section.")
+                    
+                #todo: more error checking here on model parameters, time, or
+                #datasources. 
+                self.parameters=m.parameters
+                self.time=m.time
+                self.meta=m.meta
+                self.reporting=m.reporting
                 
+                self.updateversion()
+                self.validated=True
+                db.session.commit()
+            except Exception as e:
+                db.session.rollback()
+                raise Exception(e)
+            else:
+                shutil.copy2(self.filenametest,self.filename)
+                self.update_mapserver_template() #this step cannot be undone, so do it last.
+            finally:
+                del module
+                del sys.modules["modeltest"]
+                del m
+                
+        finally:
+            #remove system paths
+            sys.path.remove(self.filedir)
+            sys.path.remove(code_path)
+            
+            #remove the intermediate testing files
+            print "Removing intermediate files"
+            if os.path.exists(self.filename+"c"):
+                os.remove(self.filename+"c")
+            if os.path.exists(self.filenametest):
+                os.remove(self.filenametest)
+            if os.path.exists(self.filenametest+"c"):
+                os.remove(self.filenametest+"c")
         
-        db.session.commit()
-        print " * Update version"
-        self.updateversion()
-        self.update_mapserver_template()
-        print " * saving templates"
-        db.session.commit()
-        
-        print " *unloading model"
-        del module
-        del sys.modules["modelcode"]
-        del m
-        sys.path.remove(self.filedir)
-        sys.path.remove(code_path)
         
     def update_mapserver_template(self):
         """
@@ -779,7 +837,7 @@ class Model(db.Model):
         modelparams.update({
             '__start__':            self.start.isoformat(),
             '__timesteps__':        self.time['timesteps'],
-            '__discretization__':   self.preferred_discretization_name,
+            '__discretization__':   self.discretization.name,
             '__model__':            self.name,
             '__version__':          self.version
         })
@@ -828,15 +886,6 @@ class Model(db.Model):
         modelconfig=self.configure()
         return modelconfig.key
         
-        
-    @property
-    def preferred_discretization_name(self):
-        try:
-            discretization_name = self.meta.get('discretizations')[0]
-        except:
-            discretization_name = "world_onedegree_100m"
-        return discretization_name
-
     @property
     def parameters_as_pretty_json(self):
         return json.dumps(self.parameters, sort_keys=True, indent=4)
@@ -858,6 +907,17 @@ class Model(db.Model):
         location depending on the model.
         """
         return "%s,%.6f,%.6f,%d"%(self.default_config_key,-40.6139,176.4830,9)
+        
+    @property
+    def maxchunks(self):
+        """
+        Returns the max number of chunks allowed in a model run.
+        """
+        try:
+            maxchunks = int(self.meta["maxchunks"])
+        except:
+            maxchunks = 1
+        return maxchunks
         
     @property
     def styles(self):
@@ -1099,7 +1159,7 @@ class Job(db.Model):
     status_code = db.Column(db.Integer(), nullable=False, default=0)
     status_message = db.Column(db.String(512), nullable=True)
     status_log = db.Column(db.Text(), nullable=True)
-    def __init__(self,modelconfig,chunks,geom):
+    def __init__(self,modelconfig,chunks,geom,user):
         """
         Create this job. Fetch and assign the required 'chunks automatically
         upon creation and store in database. Synopsis:
@@ -1115,6 +1175,7 @@ class Job(db.Model):
         self.uuid=str(uuid.uuid4())
         self.status_message="yay for this job!"
         self.geom=geom
+        self.user_id=user.id
         print "Creating new job instance"
         for chunk_id in chunks:
             print " Add chunk %d to job..."%(chunk_id)
@@ -1367,7 +1428,7 @@ class User(db.Model, UserMixin):
     def __repr__(self):
         return "<User: %s>"%(self.username)
         
-    def has_role(self,role_name):
+    def has_role(self, role_name):
         """
         Returns True if a user has a role with name <role_name>, False otherwise
         """
@@ -1376,6 +1437,29 @@ class User(db.Model, UserMixin):
                 return True
         return False
         
+    def toggle_role(self, role_name):
+        """
+        Toggle a user role
+        """
+        role = Role.query.filter(Role.name==role_name).first()
+        if not self.has_role(role_name):
+            self.roles.append(role)
+            db.session.commit()
+            return True
+        else:
+            self.roles.remove(role)
+            db.session.commit()
+            return False
+        
+    def add_role(self, role_name):
+        if not self.has_role(role_name):
+            role = Role.query.filter(Role.name==role_name).first()
+            self.roles.append(role)
+            db.session.commit()
+            return True
+        else:
+            return False
+        
     @property
     def is_admin(self):
         """
@@ -1383,13 +1467,20 @@ class User(db.Model, UserMixin):
         """
         return self.has_role("admin")
         
-    def api_token_reset(self):
+    def reset_api_token(self):
         """Resets the users API token and returns the new value.
         """
-        pass
-        #self.api_token = generate_api_token()
-        #db.session.commit()
-        #return self.api_token
+        self.api_token = generate_api_token()
+        db.session.commit()
+        return self.api_token
+        
+    def reset_password(self):
+        """Resets the user password. Returns new value.
+        """
+        new_password = random_password()
+        self.password = current_app.user_manager.hash_password(new_password)
+        db.session.commit()
+        return new_password
 
 # Define the UserRoles DataModel
 class UserRoles(db.Model):

@@ -1,8 +1,8 @@
-GEMS Web Client
-===============
+GEMS Modeller
+=============
+
+Architecture
+------------
 
 External Libraries
 ------------------
-
-Structure
----------

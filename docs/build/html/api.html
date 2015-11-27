@@ -31,8 +31,8 @@
 
   
     <link rel="top" title="GEMS 0.1 documentation" href="index.html"/>
-        <link rel="next" title="Vision" href="vision.html"/>
-        <link rel="prev" title="Processing Models" href="processing.html"/> 
+        <link rel="next" title="Developers Guide" href="development.html"/>
+        <link rel="prev" title="GEMS Processing" href="processing.html"/> 
 
   
   <script src="_static/js/modernizr.min.js"></script>
@@ -85,11 +85,10 @@
 <li class="toctree-l1"><a class="reference internal" href="intro.html">Introduction</a></li>
 <li class="toctree-l1"><a class="reference internal" href="prerequisites.html">Prerequisites</a></li>
 <li class="toctree-l1"><a class="reference internal" href="install.html">Installation</a></li>
-<li class="toctree-l1"><a class="reference internal" href="development.html">Developers Guide</a></li>
 <li class="toctree-l1"><a class="reference internal" href="overview.html">Overview</a></li>
 <li class="toctree-l1"><a class="reference internal" href="webapplication.html">GEMS Web Application</a></li>
-<li class="toctree-l1"><a class="reference internal" href="webclient.html">GEMS Web Client</a></li>
-<li class="toctree-l1"><a class="reference internal" href="processing.html">Processing Models</a></li>
+<li class="toctree-l1"><a class="reference internal" href="webclient.html">GEMS Modeller</a></li>
+<li class="toctree-l1"><a class="reference internal" href="processing.html">GEMS Processing</a></li>
 <li class="toctree-l1 current"><a class="current reference internal" href="">API</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="#current-version">Current version</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#authentication">Authentication</a></li>
@@ -99,6 +98,8 @@
 <li class="toctree-l2"><a class="reference internal" href="#views">Views</a></li>
 </ul>
 </li>
+<li class="toctree-l1"><a class="reference internal" href="development.html">Developers Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="modelling.html">Modelling</a></li>
 <li class="toctree-l1"><a class="reference internal" href="vision.html">Vision</a></li>
 <li class="toctree-l1"><a class="reference internal" href="faqs.html">Frequently Asked Questions</a></li>
 </ul>
@@ -404,11 +405,11 @@ job.</dd>
 <dl class="docutils">
 <dt>202 Accepted (application/json)</dt>
 <dd><p class="first">The job has been accepted for processing. The following response 
-content will be returned:</p>
-<div class="last highlight-python"><div class="highlight"><pre>{
-    &quot;job&quot;: &lt;job_uuid&gt;, 
-    &quot;message&quot;: &quot;Job accepted.&quot;
-}
+content will be returned with your job id substituted:</p>
+<div class="last highlight-python"><div class="highlight"><pre><span class="p">{</span>
+    <span class="s">&quot;job&quot;</span><span class="p">:</span> <span class="s">&quot;c2fb283c-559c-41d2-8772-691233619499&quot;</span><span class="p">,</span> 
+    <span class="s">&quot;message&quot;</span><span class="p">:</span> <span class="s">&quot;Job accepted. You can check the completion status of this job at: http://127.0.0.1:5000/api/v1/job/c2fb283c-559c-41d2-8772-691233619499&quot;</span>
+<span class="p">}</span>
 </pre></div>
 </div>
 </dd>
@@ -637,10 +638,10 @@ which are used for the model run are also included.</p>
   
     <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
       
-        <a href="vision.html" class="btn btn-neutral float-right" title="Vision" accesskey="n">Next <span class="fa fa-arrow-circle-right"></span></a>
+        <a href="development.html" class="btn btn-neutral float-right" title="Developers Guide" accesskey="n">Next <span class="fa fa-arrow-circle-right"></span></a>
       
       
-        <a href="processing.html" class="btn btn-neutral" title="Processing Models" accesskey="p"><span class="fa fa-arrow-circle-left"></span> Previous</a>
+        <a href="processing.html" class="btn btn-neutral" title="GEMS Processing" accesskey="p"><span class="fa fa-arrow-circle-left"></span> Previous</a>
       
     </div>
   

@@ -1,0 +1,27 @@
+			body {
+				padding-top: 0px;
+			}
+			.navbar {
+				margin-bottom:0px;
+				border-radius:0px;
+			}
+			.navbar .container-fluid, .navbar-collapse {
+			    padding-left:0;
+			}
+			.navbar-collapse.in {
+			    padding-left:30px;
+			}
+			.navbar-inverse .navbar-nav>li>a {
+				color:#61BDFF;
+			}
+			label {
+				font-weight:normal;
+			}
+
+div.warning-bar {
+    background-color:red; 
+    color:white;
+    font-size:9pt;
+    text-align:center;
+    padding:3px;
+  }

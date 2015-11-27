@@ -1,5 +1,7 @@
 Introduction
 ============
 
-This is the introduction
+**About GEMS**
+
+**Reading the documentation**
 

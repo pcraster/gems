@@ -23,21 +23,21 @@
 	<script src="/static/lib/gem/util.js"></script>
 
 	<script type="text/javascript">
-		$('form#jobform').on("submit",function(evt){
-			evt.preventDefault();
-			$(this).find("input[name='bbox']").val(map.getBounds().toBBoxString())
-			$.ajax({
-				type: "POST",
-				url:$(this).attr('action'),
-				data:$(this).serialize(),
-				success: function(data) {
-					console.log("SUCCESS!")
-				},
-				error: function(){
-					console.log("FAILURE!!")
-				}
-			})
-		})
+		// $('form#jobform').on("submit",function(evt){
+		// 	evt.preventDefault();
+		// 	$(this).find("input[name='bbox']").val(map.getBounds().toBBoxString())
+		// 	$.ajax({
+		// 		type: "POST",
+		// 		url:$(this).attr('action'),
+		// 		data:$(this).serialize(),
+		// 		success: function(data) {
+		// 			console.log("SUCCESS!")
+		// 		},
+		// 		error: function(){
+		// 			console.log("FAILURE!!")
+		// 		}
+		// 	})
+		// })
 
 		$('#menu-editcode').tooltip({
 			html:true,
@@ -87,20 +87,22 @@
   <div id="waiting">&nbsp;</div>
   <div class="container-fluid">
       <ul class="nav navbar-nav navbar-left">
-        <li><a href="{{ url_for('site.home')}}" id="menu-switch"><i class="fa fa-arrow-left"></i> Home</a></li>
+      <li><a href="{{ url_for('site.home')}}" style="padding:0;padding-left:15px;padding-top:10px;padding-bottom:10px;padding-right:15px;"><img src="/static/gfx/gems-logo-cube.png" style="border:0;height:30px;"></a></li>
+        <!--<li><a href="{{ url_for('site.home')}}" id="menu-switch"><i class="fa fa-arrow-left"></i> Home</a></li>-->
         <li><a href="#" id="menu-run"><i class="fa fa-play"></i> Run</a></li>
         <li><a href="#" id="menu-editparameters"><i class="fa fa-wrench"></i> <u>E</u>dit parameters</a></li>
         <!--<li><a href="#" id="menu-editcode"><i class="fa fa-pencil"></i> Edit code</a></li>-->
         <li><a href="#" id="menu-findplaces"><i class="fa fa-search"></i> <u>F</u>ind places</a></li>
         <!--<li><a href="/admin/datasets"><i class="fa fa-star"></i> Favorites</a></li>-->
       </ul>
+    {% if not current_user.is_anonymous() %}
+      <a href="{{url_for('user.logout')}}" class="btn btn-default navbar-btn pull-right" style="background-color:#111;border-color:#555;color:#aaa;margin-left:15px;"><i class="fa fa-close"></i> Log Out</a>
+      <a href="{{url_for('site.myaccount')}}" class="btn btn-default navbar-btn pull-right" style="background-color:#111;border-color:#555;color:#aaa;margin-left:15px;"><i class="fa fa-user"></i> My Account</a>
+    {% endif %}
 		<ul class="nav navbar-nav navbar-right">
 			<li><a href="{{url_for('site.datasources')}}" style="color:#888;"><i class="fa fa-caret-right"></i> Data sources and attribution</a></li>
 			<li><a href="{{url_for('site.about')}}" style="color:#888;"><i class="fa fa-caret-right"></i> About this project</a></li>
 			<li><a href="{{url_for('status.home')}}" style="color:#888;" target="_blank"><i class="fa fa-caret-right"></i> System status</a></li>
-        {% if not current_user.is_anonymous() %}
-      <li><a href="{{url_for('user.logout')}}" style="color:#888;"><i class="fa fa-caret-right"></i> Log out</a></li>
-        {% endif %}
 		</ul>
 
 

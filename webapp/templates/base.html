@@ -7,33 +7,13 @@
 		<title>Digital Earth</title>
 		<link href="/static/lib/bootstrap/bootstrap.min.css" rel="stylesheet">
 		<link href="/static/lib/fontawesome/font-awesome.min.css" rel="stylesheet">
-
+		<link href="/static/lib/gem/gems.css" rel="stylesheet">
 		{% block headcss %}{% endblock %}
 		{% block headjs %}{% endblock %}
-		<style>
-			body {
-				padding-top: 0px;
-			}
-			.navbar {
-				margin-bottom:0px;
-				border-radius:0px;
-			}
-			.navbar .container-fluid, .navbar-collapse {
-			    padding-left:0;
-			}
-			.navbar-collapse.in {
-			    padding-left:30px;
-			}
-			.navbar-inverse .navbar-nav>li>a {
-				color:#61BDFF;
-			}
-			label {
-				font-weight:normal;
-			}
-		</style>
 	</head>
 	<body>
-	{% include "debugbar.html" %}
+		{% include "warning_debug.html" %}
+		{% include "warning_system.html" %}
 
 		{% block header %}
 				{% include "header.html" %}

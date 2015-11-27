@@ -27,7 +27,7 @@ class JobParseFailure(Exception): pass
 class JobProcessingFailure(Exception): pass
 class JobReportingFailure(Exception): pass
 
-def process(num, args, gems_api, gems_beanstalk, gems_auth):
+def process(num, args, gems_api, gems_beanstalk, gems_auth, gems_tube):
     #
     # Set up logging
     #
@@ -53,7 +53,8 @@ def process(num, args, gems_api, gems_beanstalk, gems_auth):
 
     try:
         beanstalk = beanstalkc.Connection(host=gems_beanstalk, port=11300)
-        logger.info("[Worker %d] Connected to beanstalk message queue."%(num))
+        beanstalk.watch(gems_tube)
+        logger.info("[Worker %d] Connected to beanstalk message queue on tube '%s'."%(num,beanstalk.using()))
     except Exception as e:
         logger.critical("[Worker %d] Could not connect to beanstalk work queue."%(num))
         sys.exit(1)
@@ -190,13 +191,15 @@ if __name__ == "__main__":
     parser.add_argument("-v","--verbose",   help="Log level", action='store_true',  default=False)
     parser.add_argument("-d","--directory", help="Working directory", default="/tmp/gems")
     parser.add_argument("-a","--api",       help="Host name of the GEMS server where the work queue and API are running", default="localhost")
-    parser.add_argument("-k","--apikey",    help="API username and key (admin:<key>)")
+    parser.add_argument("-k","--apikey",    help="API username and key (admin:<key>)", required=True)
     parser.add_argument("-q","--queue",     help="Host name of the beanstalk work queue", default="localhost")
+    parser.add_argument("-t","--tube",      help="Name of the beanstalk tube to use", default="gemsjobs")
     args = parser.parse_args()
 
     gems_api = "http://%s/api/v1"%(args.api)
     gems_auth = tuple(args.apikey.split(":"))
     gems_beanstalk = args.queue
+    gems_tube = args.tube
 
     #
     # Check that the working directory exists and we can write to it.
@@ -256,7 +259,7 @@ if __name__ == "__main__":
     print ""
     jobs=[]
     for i in range(num_processes):
-        p = multiprocessing.Process(target=process, args=(i, args, gems_api, gems_beanstalk, gems_auth))
+        p = multiprocessing.Process(target=process, args=(i, args, gems_api, gems_beanstalk, gems_auth, gems_tube))
         jobs.append(p)
         p.start()
 

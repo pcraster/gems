@@ -24,7 +24,7 @@ def auth_check(auth):
     if user is None:
         return False
     return auth.username == user.username and auth.password == user.api_token
-
+    
 def requires_auth_token(f):
     @wraps(f)
     def decorated(*args, **kwargs):
@@ -109,16 +109,6 @@ def home():
     else:
         raise APIException("The work queue is unavailable", status_code=503)
     
-#@api.route('/authenticate', methods=["GET"])
-#def authenticate():
-#    """Quick authentication endpoint which can be used to check whether
-#    your authentication token is valid.
-#    """
-#    authenticated = auth_check(request.authorization)
-#    if authenticated is True:
-#        return jsonify(authenticated=True), 200
-#    else:
-#        raise APIException("Authentication failed!", status_code=403, authenticated=False)
 
 @api.route('/job', methods=["GET"])
 @requires_auth_token
@@ -189,11 +179,16 @@ def job_prognosis():
       function. It is the same as in the job_create view.    
     
     """
-    max_chunks = 1
     model = Model.query.filter_by(name=request.values.get("model_name")).first()
+
     if model is None:
         raise APIException("Model could not be found.", status_code=404)
-    
+    if not model.validated:
+        raise APIException("Model is not valid, there is probably something wrong with the code.", status_code=500)
+    if model.disabled:
+        raise APIException("Model has been deleted.", status=404)
+
+    max_chunks = model.maxchunks    
     modelconfig = model.configure(request.values)    
     
     discretization = Discretization.query.filter_by(name=modelconfig.parameters.get("__discretization__")).first()
@@ -244,10 +239,13 @@ def job_prognosis():
     #print geom_json
     if num_of_chunks_to_be_processed == 0:
         return jsonify(features=features,configkey=modelconfig.key,num_of_chunks_already_processed=num_of_chunks_already_processed,num_of_chunks_to_be_processed=num_of_chunks_to_be_processed,message="Job with configuration %s cannot be run. No new chunks were found within the map extent. Change either the model configuration or pan to a different area."%(modelconfig.key[0:6])),400
-    if num_of_chunks_to_be_processed <= 8 and num_of_chunks_to_be_processed >= 1:
+    if num_of_chunks_to_be_processed >= 1:
         return jsonify(features=features,configkey=modelconfig.key,num_of_chunks_already_processed=num_of_chunks_already_processed,num_of_chunks_to_be_processed=num_of_chunks_to_be_processed,message="Job with configuration %s is acceptable. Job covers %d chunks, of which %d still need to be processed."%(modelconfig.key[0:6],(num_of_chunks_already_processed+num_of_chunks_to_be_processed),num_of_chunks_to_be_processed)),200
-    else:
-        return jsonify(features=features,configkey=modelconfig.key,num_of_chunks_already_processed=num_of_chunks_already_processed,num_of_chunks_to_be_processed=num_of_chunks_to_be_processed,message="Job with configuration %s cannot be run. The map extent contains %d chunks which can be processed (of %d total) which is too many. Try zooming in a little further."%(modelconfig.key[0:6],num_of_chunks_to_be_processed,(num_of_chunks_already_processed+num_of_chunks_to_be_processed))),400
+        
+    #if num_of_chunks_to_be_processed <= 8 and num_of_chunks_to_be_processed >= 1:
+    #    return jsonify(features=features,configkey=modelconfig.key,num_of_chunks_already_processed=num_of_chunks_already_processed,num_of_chunks_to_be_processed=num_of_chunks_to_be_processed,message="Job with configuration %s is acceptable. Job covers %d chunks, of which %d still need to be processed."%(modelconfig.key[0:6],(num_of_chunks_already_processed+num_of_chunks_to_be_processed),num_of_chunks_to_be_processed)),200
+    #else:
+    #    return jsonify(features=features,configkey=modelconfig.key,num_of_chunks_already_processed=num_of_chunks_already_processed,num_of_chunks_to_be_processed=num_of_chunks_to_be_processed,message="Job with configuration %s cannot be run. The map extent contains %d chunks which can be processed (of %d total) which is too many. Try zooming in a little further."%(modelconfig.key[0:6],num_of_chunks_to_be_processed,(num_of_chunks_already_processed+num_of_chunks_to_be_processed))),400
     
 @api.route('/job', methods=["POST"])
 @requires_auth_token
@@ -306,11 +304,17 @@ def job_create():
         information.
 
     """
-    max_chunks = 1
     model = Model.query.filter_by(name=request.values.get("model_name")).first()
-    if model is None:
-        raise Exception("Model could not be found.")        
     
+    if model is None:
+        raise APIException("Model could not be found.", status_code=404)
+    if not model.validated:
+        raise APIException("Model is not valid, there is probably something wrong with the code.", status_code=500)
+    if model.disabled:
+        raise APIException("Model has been deleted.", status=404)
+    
+    max_chunks = model.maxchunks    
+    user = User.query.filter_by(username=request.authorization.username).first()    
     modelconfig = model.configure(request.values)    
     
     discretization = Discretization.query.filter_by(name=modelconfig.parameters.get("__discretization__")).first()
@@ -349,7 +353,10 @@ def job_create():
             if beanstalk.workers == 0:
                 raise BeanstalkWorkersFailure("No workers connected to work queue.")
                 
-            job=Job(modelconfig,chunks_to_be_processed,geom)
+            
+                
+            
+            job=Job(modelconfig,chunks_to_be_processed,geom,user)
             db.session.add(job)
             db.session.commit()     
             for jobchunk in job.jobchunks:
@@ -437,7 +444,6 @@ def job_status(job_uuid):
     
 
 @api.route('/job/<uuid:job_uuid>/log', methods=["GET"])
-@requires_auth_token
 def job_log(job_uuid):
     """Returns a plaintext logfile of the specified model run.
 
@@ -479,7 +485,6 @@ def job_log(job_uuid):
 #    ),http_status
 
 @api.route('/config/<config_key>',methods=["GET"])
-@requires_auth_token
 def config_status(config_key):
     """Returns a JSON representation of a modelconfiguration instance. This 
     contains metadata about the model, reporting information (i.e. output 
@@ -509,21 +514,30 @@ def config_status(config_key):
     else:
         return jsonify(config.as_dict),200
 
-@api.route('/model/<model_name>',methods=["GET","POST"])
-def model_status(model_name):
+@api.route('/model/<model_name>',methods=["GET"])
+def model_code_view(model_name):
     """
-    REturn or update model code 
+    View model code.
     """
     m = Model.query.filter_by(name=model_name).first_or_404()
-    if request.method=="GET":
-        return Response(m.code,mimetype="text/plain")
-    if request.method=="POST":
-        try:
-            m.updatecode(request.form.get("code"))
-            db.session.commit()
-            return jsonify(model=m.name,message="Model code updated."),200
-        except Exception as e:
-            return jsonify(model=m.name,message="Code update failed! Hint: %s"%(e)),400
+    return Response(m.code, mimetype="text/plain")
+
+@api.route('/model/<model_name>',methods=["POST"])
+@requires_auth_token
+def model_status(model_name):
+    """
+    Update model code
+    """
+    m = Model.query.filter_by(name=model_name).first_or_404()
+    user = User.query.filter_by(username=request.authorization.username).first()
+    if not user.is_admin:
+        raise APIException("Code update failed! Your token was ok, but only admin users can update code. Sorry!", status_code=401)
+    try:
+        m.updatecode(request.form.get("code"))
+        return jsonify(model=m.name,message="Code for model %s updated! Current revision: %d"%(m.name, m.version)),200
+    except Exception as e:
+        raise APIException("Code update failed! Hint: %s"%(e), status_code=400)
+        #return jsonify(model=m.name,message="Code update failed! Hint: %s"%(e)),400
             
 @api.route('/discretization/<discretization_name>/bounds', methods=["GET"])
 def discretization_bounds(discretization_name):

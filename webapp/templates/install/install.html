@@ -48,9 +48,7 @@ table#eventstream-table tr:first-child td {
 
 		{% if not already_installed %}
 			<p>
-			This installer will attempt to set up the application when it has first 
-			been installed. This includes creating data directories, user accounts, 
-			and loading some default models and chunkschemes. 
+			This installer will attempt to set up the GEMS application for first use. This process includes creating data directories, user accounts, and loading some default models and chunkschemes. 
 			</p>
 			<p>
 			Once the installation has been completed, the file <code>./install/install-ok.txt</code> will be created in the data directory <code>{{config["HOME"]}}</code>. If this file exists, the installer cannot run. Either remove the file to be able to be able to rerun the installer, or delete the entire contents of the GEMS data directory, and then visit this install page again. If you've modified any 

@@ -1,5 +1,5 @@
-GEMS Web Client/Modeller
-========================
+GEMS Modeller
+=============
 
 Architecture
 ------------

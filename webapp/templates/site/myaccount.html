@@ -1,0 +1,20 @@
+{% extends "base.html" %}
+
+{% block content %}
+	{% if not current_user.is_anonymous() %}
+		<h2>Account details: {{current_user.username}}</h2>
+		<p>
+			Your API access token is: <code>{{current_user.api_token}}</code>
+		</p>
+		<p>
+			You can test your access to the API with the following command: <code>curl --user {{current_user.username}}:{{current_user.api_token}} {{url_for('api.home',_external=True)}}</code> which should return a 200 OK with a JSON response containing <code>"authenticated": true</code>.
+		</p>
+	{% else %}
+		<h2>You must be logged in to view this page.</h2>
+	{% endif %}
+
+	{% if current_user.is_admin %}
+		
+	{% endif %}
+
+{% endblock %}

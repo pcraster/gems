@@ -14,13 +14,15 @@ Welcome to the GEMS documentation.
    intro
    prerequisites
    install
-   development
+   
    overview
    webapplication
    webclient
    processing
    webapp
    api
+   development
+   modelling
    vision
    faqs
 

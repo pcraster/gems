@@ -23,16 +23,4 @@ def home():
     - mapserver connect
     
     """
-    status = gems_system_status()
-    
-    
-    
-    connected = False
-    
-    if beanstalk:
-        connected = True
-        stats = beanstalk.queue.stats()
-    else:
-        stats = {}
-    
-    return render_template("status/status.html", status=status, stats=stats, connected=connected)
+    return render_template("status/status.html", beanstalk=beanstalk)
