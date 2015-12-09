@@ -555,6 +555,7 @@ class Model(db.Model):
         - use a getter and setter for the code attribute
         - use templates for generating mapserver config
         - clean up and refactor code
+        - automatically fill in some demo code.
 
     """
     __tablename__='model'
@@ -586,9 +587,16 @@ class Model(db.Model):
         return "<Model: name=%s id=%d>"%(self.name,self.id)
         
     def __init__(self, name=None, code=""):
+        name = re.sub(r'\W+',' ',name).lower() #lowercase and remove non-word chars
+        name = "_".join(map(str,name.split())) #replace one or more consequetive spaces with an underscore
+        
         if name is None:
             raise Exception("You need to specify a valid name.")
-            
+        
+        m = Model.query.filter_by(name=name).first()
+        if m is not None:
+            raise Exception("A model with this name exists already.")
+        
         self.name = name
         self.version = 0
         self.updatecode(code)

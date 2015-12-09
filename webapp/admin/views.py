@@ -150,20 +150,21 @@ def models():
     Shows information on models
     """
     if request.method=="POST":
-        name=re.sub(r'\W+',' ',request.form.get("modelname","")).lower()
-        name="_".join(map(str,name.split()))
-        
-        if name == "":
-            flash("Invalid model name.")
-            return redirect(url_for('site.home'))
-        
-        model = Model.query.filter_by(name=name).first()
-        if model is not None:
-            flash("It seems like that model exists already! Please try another name.","error")
-            return redirect(url_for('site.home'))
+#        name=re.sub(r'\W+',' ',request.form.get("modelname","")).lower()
+#        name="_".join(map(str,name.split()))
+#        
+#        if name == "":
+#            flash("Invalid model name.")
+#            return redirect(url_for('site.home'))
+#        
+#        model = Model.query.filter_by(name=name).first()
+#        if model is not None:
+#            flash("It seems like that model exists already! Please try another name.","error")
+#            return redirect(url_for('site.home'))
         
         try:
-            model = Model(name=name)
+            model_name = request.form.get("modelname","")
+            model = Model(name=model_name)
             db.session.add(model)
             db.session.commit()
         except Exception as e:
@@ -171,7 +172,7 @@ def models():
             flash("Something unexpected went wrong trying to add the model. Hint: %s"%(e),"error")
             return redirect(url_for('site.home'))
         else:
-            return redirect(url_for('admin.model_editor',model_name=name))
+            return redirect(url_for('admin.model_editor',model_name=model.name))
     else:
         flash("Nothing here anymore.")
         return redirect(url_for('site.home'))

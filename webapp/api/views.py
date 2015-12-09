@@ -527,11 +527,16 @@ def model_code_view(model_name):
 def model_status(model_name):
     """
     Update model code
+    
+    Todo:
+    * If a model does not exist yet, try to create it.
+    * When creating a model, call updatecode() with the contents of the file that was POSTed.
     """
-    m = Model.query.filter_by(name=model_name).first_or_404()
+    m = Model.query.filter_by(name=model_name).first()
     user = User.query.filter_by(username=request.authorization.username).first()
     if not user.is_admin:
         raise APIException("Code update failed! Your token was ok, but only admin users can update code. Sorry!", status_code=401)
+        
     try:
         m.updatecode(request.form.get("code"))
         return jsonify(model=m.name,message="Code for model %s updated! Current revision: %d"%(m.name, m.version)),200
@@ -790,4 +795,4 @@ def jobchunk_maps(jobchunk_uuid):
         
 @api.route('/<path:path>')
 def api_catch_all(path):
-    raise APIException("The API endpoint you are trying to access was not found. Please check the GEMS API documentation for valid endpoints.", status_code=404)
+    raise APIException("The API endpoint you are trying to access was not found. Please check the GEMS API documentation for valid API endpoints.", status_code=404)

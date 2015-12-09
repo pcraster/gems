@@ -1,7 +1,7 @@
 Overview
 ========
 
-This chapter contains a birds-eye view of the GEMS application. It is intended to give a basic understanding of how the system and the components that it consists of work. Refer to the chapters on the web application, modeller and processing for more detailed information.
+This chapter contains a birds-eye view of the GEMS application. It is intended to give a tech-savvy user a basic understanding of how the system and the different components work. You can refer to the chapters on the web application, modeller and processing for more detailed information.
 
 The application consists of three main parts:
 

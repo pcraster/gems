@@ -99,7 +99,7 @@
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="development.html">Developers Guide</a></li>
-<li class="toctree-l1"><a class="reference internal" href="modelling.html">Modelling</a></li>
+<li class="toctree-l1"><a class="reference internal" href="modelling.html">Building Models</a></li>
 <li class="toctree-l1"><a class="reference internal" href="vision.html">Vision</a></li>
 <li class="toctree-l1"><a class="reference internal" href="faqs.html">Frequently Asked Questions</a></li>
 </ul>
@@ -592,7 +592,7 @@ saved locally, or when the maps can&#8217;t be created in the database.</li>
 
 <dl class="function">
 <dt id="webapp.api.views.config_status">
-<code class="descclassname">webapp.api.views.</code><code class="descname">config_status</code><span class="sig-paren">(</span><em>*args</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="headerlink" href="#webapp.api.views.config_status" title="Permalink to this definition">¶</a></dt>
+<code class="descclassname">webapp.api.views.</code><code class="descname">config_status</code><span class="sig-paren">(</span><em>config_key</em><span class="sig-paren">)</span><a class="headerlink" href="#webapp.api.views.config_status" title="Permalink to this definition">¶</a></dt>
 <dd><p>Returns a JSON representation of a modelconfiguration instance. This 
 contains metadata about the model, reporting information (i.e. output 
 attributes), and time information about the model. The set of parameters 
@@ -612,8 +612,11 @@ which are used for the model run are also included.</p>
 
 <dl class="function">
 <dt id="webapp.api.views.model_status">
-<code class="descclassname">webapp.api.views.</code><code class="descname">model_status</code><span class="sig-paren">(</span><em>model_name</em><span class="sig-paren">)</span><a class="headerlink" href="#webapp.api.views.model_status" title="Permalink to this definition">¶</a></dt>
-<dd><p>REturn or update model code</p>
+<code class="descclassname">webapp.api.views.</code><code class="descname">model_status</code><span class="sig-paren">(</span><em>*args</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="headerlink" href="#webapp.api.views.model_status" title="Permalink to this definition">¶</a></dt>
+<dd><p>Update model code</p>
+<p>Todo:
+* If a model does not exist yet, try to create it.
+* When creating a model, call updatecode() with the contents of the file that was POSTed.</p>
 </dd></dl>
 
 <dl class="function">
