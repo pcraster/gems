@@ -17,14 +17,23 @@ The processing backend is a script which monitors the work queue, reserving and 
 
 .. image:: images/architecture.png
 
-Database
---------
+Data Model and Database
+-----------------------
 
 The data model in the GEMS application is defined in the ``~/webapp/models.py`` file. GEMS uses the `SQLAlchemy <http://www.sqlalchemy.org/>`_ library to define the data model using Python classes. SQLAlchemy maps the object classes to database tables, and the object's properties to fields/columns in the respective table. This means that we don't have to write our own SQL queries or create the appropriate tables ourselves, but rather we can load and modify Python objects via SQLAlchemy. Changes to these objects can then be commited back to the database, and we can use the objects properties to display information about them in templates or other parts of the application. GEMS uses a PostgreSQL database with the PostGIS extension. To be able to use spatial queries (i.e. the PostGIS funcationality) in SQLAlchemy, the `GeoAlchemy2 <https://geoalchemy-2.readthedocs.org/>`_ package is used. 
 
 Message Queue
 -------------
 The message queue (also known as work queue, or job queue) uses `beanstalkd <http://kr.github.io/beanstalkd/>`_, a simple and fast work queue written in C. Beanstalkd uses a concept of 'tubes' in which jobs can be placed. Other scripts (workers) can then monitor a tube and a receive jobs from them. Any jobs which are scheduled within the GEMS application are placed in the ``gemsjobs`` tube and processed by workers which are connected to beanstalkd and are watching the ``gemsjobs`` tube. Jobs are posted to the beanstalk queue as pickled strings.
+
+Mapserver
+---------
+
+Data Storage
+------------
+
+Processing
+----------
 
 Data Model
 ----------
@@ -33,7 +42,7 @@ The data model maps and stores certain concepts to database tables and python ob
 
 Discretization
 ^^^^^^^^^^^^^^
-A **discretization** is also known as a chunkscheme, a naming convention left over from the old GEMS application. The GEMS application needs to divide the world up into smaller managable sections so that the geographical extent of the model run can be constrained. After all, running a model on a grid with millions of rows and columns would be incredibly slow as well as contain a lot of area which the user may not be interested in. We therefore divide the world up into small chunks that represent the model area. These chunks can be any shape: for example 1 by 1 degree tiles, river catchments, countries, provinces, or some other arbitrary shape. A certain collection of these chunks is called a "Discretization". The following discretizations are created by default:
+.. autoclass:: webapp.models.Discretization
 
 ===============================  =================  =================================
 Name                             Resolution         Number of chunks
@@ -84,8 +93,8 @@ User
 A **user** describes a user in the GEMS system. The system also has UserRoles and Role data models, but these are used more internally to define types of users.
 
 
-GEMS Web Application
---------------------
+Web Application
+---------------
 
 The GEMS web application is built using the `Flask Microframework <http://flask.pocoo.org>`_, a lightweight web application framework for Python. Flask uses the concept of Blueprints to separate logical sections of a web application, allowing you to store all the views related to a specific blueprint in its own directory. The following blueprints are used in the GEMS application:
 
@@ -103,8 +112,8 @@ status                 The status blueprint serves a status page.
 
 The ``templates`` and ``static`` directories do not contain blueprints. The templates directory contains all the templates, with one subdirectory for each of the blueprints described above. The static directory contains all the static content for the web application (images, style sheets, javascripts, etc.)
 
-GEMS Modeller
--------------
+Front-end Client
+----------------
 
 The GEMS modeller is the JavaScript web application which provides the modelling/web mapping interface in which users interact with environmental models. The JavaScript code communicates with the GEMS API to submit jobs, and loads the resulting maps into the web interface using web mapping services (WMS). The main code for the modeller are JavaScripts served as static files through the static directory, but the code for generating this HTML and supplying the JavaScript files with the correct parameters (such as the API key) lives in the "modeller" blueprint of the Flask web application.
 

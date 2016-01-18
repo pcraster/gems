@@ -16,13 +16,11 @@ Welcome to the GEMS documentation.
    install
    
    overview
-   webapplication
-   webclient
-   processing
-   webapp
+   
+   datamodel
    api
-   development
    modelling
+   development
    vision
    faqs
 

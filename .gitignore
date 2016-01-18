@@ -2,3 +2,4 @@ test/*
 *.pyc
 *~
 webapp/local_settings.py
+docs/build*

@@ -31,6 +31,7 @@ sys.path.insert(0,"/home/koko/code/digitalearth/")
 extensions = [
     'sphinx.ext.autodoc',
     'sphinx.ext.pngmath',
+    'sphinx.ext.todo',
 ]
 
 # Add any paths that contain templates here, relative to this directory.
@@ -259,3 +260,7 @@ texinfo_documents = [
 
 # If true, do not generate a @detailmenu in the "Top" node's menu.
 #texinfo_no_detailmenu = False
+
+todo_include_todos = True
+
+autodoc_member_order = 'groupwise'

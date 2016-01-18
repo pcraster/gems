@@ -1,5 +1,0 @@
-GEMS Web Application
-====================
-
-Structure
----------

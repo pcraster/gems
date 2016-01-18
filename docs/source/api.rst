@@ -111,3 +111,5 @@ Views
 
 .. autofunction:: webapp.api.views.discretization_coverage
 
+.. autofunction:: webapp.api.views.worker_ping
+

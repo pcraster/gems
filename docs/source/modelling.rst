@@ -3,6 +3,10 @@ Building Models
 
 This chapter contains information on how to build environmental models in the GEMS framework. Currently only administrator users can build or edit models.
 
+.. contents::
+   :depth: 2
+   :local:
+
 Differences with PCRaster
 -------------------------
 Before starting, there are several differences between traditional PCRaster models and those running in the GEMS environment that you should be aware of. The most important ones are:
@@ -11,17 +15,17 @@ Before starting, there are several differences between traditional PCRaster mode
 
 * You don't need to worry about clone maps. GEMS automatically creates a clone map based on cell size and the Chunk that it is going to do a model run on.
 
-* There are no PCRaster .map files. Input data is read with GDAL, and output data is saved in memory as numpy arrays at the time of reporting. At the end of the model run these reported layers are dumped to a GeoTiff file (one for each output attribute) and optimizations (compression, overviews) are applied. See `Model Reporting`_
+* There are no PCRaster .map files. Input data is read with GDAL, and output data is saved in memory as numpy arrays at the time of reporting. At the end of the model run these reported layers are dumped to a GeoTiff file (one for each output attribute) and optimizations (compression, overviews) are applied. See `Reporting`_
 
-* GEMS models are configured using Python class attributes ``meta``, ``time``, ``parameters``, ``reporting``, and ``datasources``. See `Model Configuration`_.
+* GEMS models are configured using Python class attributes ``meta``, ``time``, ``parameters``, ``reporting``, and ``datasources``. See `Configuration`_.
 
-* GEMS models include some additional metadata about the model. See `Model Metadata`_.
+* GEMS models include some additional metadata about the model. See `Metadata`_.
 
-* GEMS models use real UTC time. Each model must have a UTC start time and a timestep length. The UTC time for subsequent timesteps is calculated from the start time by adding the number of seconds multiplied by the current timestep. Any maps reported before or after the dynamic section of the model are assigned the time of the first and last timestep, respectively. The ``timestamp`` property of a ``GemsModel`` instance returns a datetime object representing the current model time. See `Model Time`_
+* GEMS models use real UTC time. Each model must have a UTC start time and a timestep length. The UTC time for subsequent timesteps is calculated from the start time by adding the number of seconds multiplied by the current timestep. Any maps reported before or after the dynamic section of the model are assigned the time of the first and last timestep, respectively. The ``timestamp`` property of a ``GemsModel`` instance returns a datetime object representing the current model time. See `Time`_
 
-* GEMS separates model parameters from model code. The parameters are defined in the ``parameters`` class attribute, and can be overwritten when POSTing a processing job to the API. The ``GemModel`` class provides a ``readparam`` method which can be used to read parameter values. See `Model Parameters`_.
+* GEMS separates model parameters from model code. The parameters are defined in the ``parameters`` class attribute, and can be overwritten when POSTing a processing job to the API. The ``GemModel`` class provides a ``readparam`` method which can be used to read parameter values. See `Parameters`_.
 
-* GEMS uses data providers to provide the model with input maps. Input data cannot be read from PCRaster map files as usual, but must be requested from a data provider. This data provider will then obtain the data somehow (for example by requesting it from a WCS server or reading it from a database) and return a PCRaster field object that can be used in the model. See `Model Data Providers`_.
+* GEMS uses data providers to provide the model with input maps. Input data cannot be read from PCRaster map files as usual, but must be requested from a data provider. This data provider will then obtain the data somehow (for example by requesting it from a WCS server or reading it from a database) and return a PCRaster field object that can be used in the model. See `Data Providers`_.
 
 Creating a new model
 --------------------
@@ -33,12 +37,12 @@ To set up a bare-bones model copy the following code:
 
 A logger made available to the model, allowing you to add debugging code to your model run. The log output of a particular model run can be viewed using the API.
 
-Model Configuration
--------------------
+Configuration
+-------------
 GEMS uses Python class attributes to define the model configuration. `Refer to this link <http://www.toptal.com/python/python-class-attributes-an-overly-thorough-guide>`_ for more information about class attributes. The ``meta``, ``time``, ``parameters``, and ``reporting`` attributes are stored in the database as PostgreSQL JSON fields. See `GEMS Data Model`_ for more information.
 
-Model Metadata
---------------
+Metadata
+--------
 The model metadata section is used to define additional properties to the model, such as the model name, author, contact information, and a short abstract. The following properties are required:
 
 ==============  ===================================================================
@@ -68,8 +72,8 @@ workers there are available to do the processing. A sample metadata section look
 
 The model editor or the API will produce an error when you try to use a discretization which does not exist.
 
-Model Parameters
-----------------
+Parameters
+----------
 
 GEMS separates the model parameters from the model code. The model's default parameters can be defined in the parameters section::
 
@@ -126,19 +130,59 @@ The values defined in the ``parameters`` section can be considered defaults, and
 
 In this case GEMS will recognise ``max_distance`` and ``scenario`` as valid parameters, and try to convert the strings received in the POST request (all HTTP POST variable are per definition strings) to an int and a string respectively. Because no variable ``test`` is defined in the ``parameters`` section it is discarded. The ``bbox`` and the ``model_name`` parameters are reserved for defining which model you want to run, and what area you want to run it on.
 
-Model Time
-----------
+Time
+----
 
+Reporting
+---------
 
+Data Providers
+--------------
 
-Model Reporting
----------------
+WCS Provider
+^^^^^^^^^^^^
 
-Model Data Providers
---------------------
+GFS Provider
+^^^^^^^^^^^^
+
+OSM Provider
+^^^^^^^^^^^^
+
+Creating your own provider
+^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 Putting It All Together
 -----------------------
 
-GemModel
---------
+
+Example Models
+--------------
+
+GEMS comes with various example models.
+
+Todo for each model: description, table with input params, output maps.
+
+life
+^^^^
+
+waterworld
+^^^^^^^^^^
+
+globerosion
+^^^^^^^^^^^
+
+pcrtopo
+^^^^^^^
+
+pcrsnow
+^^^^^^^
+
+example
+^^^^^^^
+
+cosmo
+^^^^^
+
+forecast
+^^^^^^^^
+
