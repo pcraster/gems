@@ -41,22 +41,22 @@ class GemFramework(DynamicFramework):
         self._options={}
         self._options.update(options)
         
-        uuid=self._options["uuid_jobchunk"]
-        code=self._options["modelcode"]
-        parameters=self._options["parameters"]
-        grid=self._options["grid"]
+        uuid = self._options["uuid_jobchunk"]
+        code = self._options["modelcode"]
+        parameters = self._options["parameters"]
+        grid = self._options["grid"]
 
-        self._wd=os.path.join(os.getcwd(),uuid)
+        self._wd = os.path.join(os.getcwd(),uuid)
         if not os.path.isdir(self._wd):
             os.makedirs(self._wd)
         logger.debug("Working directory of this model run: %s"%(self._wd))
 
-        model_file=os.path.join(self._wd,"modelcode.py")
+        model_file=os.path.join(self._wd, "modelcode.py")
         with open(model_file,'w') as f:
             f.write(code)
             logger.debug("Model code is in: %s"%(model_file))
 
-        userModel=self._loadModel()
+        userModel = self._loadModel()
 
         userModel._workingdir=self._wd
         userModel._mapspackage=None

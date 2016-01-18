@@ -9,7 +9,13 @@ import json
 import tarfile
 
 from . import api
-from flask import g, current_app, render_template, request, jsonify, make_response, Response, url_for
+from flask import g, current_app, render_template, request, jsonify, make_response, Response, url_for, stream_with_context
+
+import select
+from sqlalchemy import text
+import datetime
+
+
 from ..models import *
 
 ###############################################################################
@@ -308,10 +314,18 @@ def job_create():
     
     if model is None:
         raise APIException("Model could not be found.", status_code=404)
+        
     if not model.validated:
         raise APIException("Model is not valid, there is probably something wrong with the code.", status_code=500)
+        
     if model.disabled:
         raise APIException("Model has been deleted.", status=404)
+        
+    if not beanstalk.connected:
+        raise APIException("GEMS API cannot connect to the work queue")
+        
+    if not beanstalk.workers_watching:
+        raise APIException("There are no workers watching the work queue. Models cannot be processed without workers.")
     
     max_chunks = model.maxchunks    
     user = User.query.filter_by(username=request.authorization.username).first()    
@@ -347,15 +361,6 @@ def job_create():
         
     if request.method=="POST":
         try:
-            if not beanstalk.ok:
-                raise BeanstalkConnectionFailure("Cannot connect to work queue.")
-                
-            if beanstalk.workers == 0:
-                raise BeanstalkWorkersFailure("No workers connected to work queue.")
-                
-            
-                
-            
             job=Job(modelconfig,chunks_to_be_processed,geom,user)
             db.session.add(job)
             db.session.commit()     
@@ -792,7 +797,84 @@ def jobchunk_maps(jobchunk_uuid):
             raise APIException("The file submitted as a maps package could not be recognised as a tar file", status_code=400)   
     
         return jsonify(status='ok', message='Maps package processed successfully.'), 201
+
+@api.route('/worker/ping', methods=["POST"])
+@requires_auth_token
+def worker_ping():
+    """
+    Endpoint for worker pings to let the API know whether a worker is still
+    actively watching the queue.
+    
+    **URL Pattern**
+    
+    ``POST /worker/ping``
+
+    **Parameters**
+    
+    worker_uuid
+        The self-generated UUID of the worker. If a worker is new and reports
+        its first ping, a new Worker instance will be created with the uuid
+        provided.
+    
+    **Returns**
+    
+    200 OK (download)
+        The ping was registered correctly.
+    
+    400 Bad Request (application/json)
+        No ``worker_id`` parameter was provided.
         
+    403 Forbidden (application/json)
+        You must provide an admin token to register pings. Not implemented at
+        this time.
+        
+    **To do**
+
+    * Allow only admin token to send pings.
+    * Update the model to also allow pings to send other data. Add a JSON field
+      ``properties`` to the model and update this with any other allowed 
+      POST parameters. This would allow workers to also send some statistics,
+      status, or when they are killed allow them to let the API know that the
+      worker is no longer functional.
+    
+    """
+    worker_uuid = request.form.get("worker_uuid", None)
+    if worker_uuid is None:
+        APIException("No worker uuid provided.", status_code=400)
+    else:
+        worker = Worker.query.filter_by(uuid=worker_uuid).first()
+        if worker is None:
+            worker = Worker(worker_uuid)
+            db.session.add(worker)
+        worker.ping()
+        db.session.commit()
+    return jsonify(status='ok', message='Thank you %s, come again!'%(worker.name)), 200
+    
+@api.route('/notifications')
+def notifications():
+    def yield_notifications():
+        yield "retry: 3600000\n\n"
+        conn = db.engine.connect()
+        conn.execute(text("LISTEN gemsnotifications;").execution_options(autocommit=True))
+        #while 1:
+            #if select.select([conn.connection],[],[],5) == ([],[],[]):
+            #    #print "Timeout"
+            #    #continue
+            #    print "timeout!"
+            #else:
+        while 1:
+            conn.connection.poll()
+            while conn.connection.notifies:
+                notify = conn.connection.notifies.pop()
+                print "Got NOTIFY:", datetime.datetime.now(), notify.pid, notify.channel, notify.payload
+                yield "data:%s\n\n"%(notify.payload)
+            print "lalal"
+                
+    if request.headers.get('accept') == 'text/event-stream':
+        return Response(stream_with_context(yield_notifications()), content_type='text/event-stream')
+    else:
+        return Response(stream_with_context(yield_notifications()), content_type='text/plain')
+
 @api.route('/<path:path>')
 def api_catch_all(path):
     raise APIException("The API endpoint you are trying to access was not found. Please check the GEMS API documentation for valid API endpoints.", status_code=404)

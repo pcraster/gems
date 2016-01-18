@@ -17,7 +17,8 @@ class Model(GemModel):
         'abstract':             'Estimates monthly soil erosion estimates using a RUSLE in monthly timesteps. Uses global soil, elevation, climate, and vegetation data based on MODIS imagery from 2012.',
         'license':              '',
         'tags':                 ['erosion','rusle','land degradation'],
-        'discretization':       'world_onedegree_100m'
+        'discretization':       'world_onedegree_100m',
+        'maxchunks':            1
     }
     parameters={
         #

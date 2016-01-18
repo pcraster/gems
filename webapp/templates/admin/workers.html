@@ -1,0 +1,53 @@
+{% extends "base.html" %}
+
+{% block content %}
+<br />
+
+<div class="panel panel-default" style="padding-bottom:0">
+	<div class="panel-heading">
+		<strong>Overview of 10 workers with recent pings</strong>
+	</div>
+	{% if not workers %}
+		<div class="panel-body">
+		<p>No workers found. This is a problem if you want to run models.</p>
+		</div>
+	{% else %}
+		<table class="table table-striped">
+		<tbody>
+			<tr>
+				<td style="padding-left:15px;">Name</td>
+				<td>Ping</td>
+				<td>Created</td>
+				<td>Last ping received</td>
+			</tr>
+			{% for worker in workers %}
+			<tr>
+				<td style="padding-left:15px;">
+					<i style="" class="fa fa-fw fa-android"></i><code>{{worker.name}}</code>
+				</td>
+				<td>
+				{% if worker.lastping < 11 %}
+					<i class="fa fa-circle" style="color:#15b01a;"></i> {{worker.lastping}} seconds ago, probably waiting for a job.
+				{% else %}
+					{% if worker.lastping > 120 %}
+						<i class="fa fa-circle" style="color:#e50000;"></i> More than two minutes ago, presumed dead.
+					{% else %}
+						<i class="fa fa-circle" style="color:orange;"></i> {{worker.lastping}} seconds ago, either busy running a model, or died.
+					{% endif %}
+				{% endif %}
+				</td>
+				<td>
+					{{worker.created_short}}
+				</td>
+				<td>
+					{{worker.updated_short}}
+				</td>
+			</tr>
+			{% endfor %}
+		</tbody>
+		</table>
+	{% endif %}
+	
+</div>
+
+{% endblock %}

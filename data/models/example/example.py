@@ -15,7 +15,8 @@ class Model(GemModel):
         'abstract':             'This is an example model which shows all the configuration settings for the virtual globe. It is also useful as a starting point for building your own models.',
         'license':              'All Rights Reserved',
         'tags':			 ['example','test'],
-        'discretization':       'thames_100m'
+        'discretization':       'world_onedegree_100m',
+        'maxchunks':            1
     }
     parameters={
         #

@@ -1,5 +1,5 @@
 <!--flashes.html-->
-{% with messages = get_flashed_messages(with_categories=true) %}
+{% with messages = get_flashed_messages(with_categories=true,category_filter=['error','info','ok','debug']) %}
   {% if messages %}
 	<div class="container-fluid" style="padding-top:17px;background-color:#fff;border-bottom:0px solid #ddd;">
 		<ul class="list-group">

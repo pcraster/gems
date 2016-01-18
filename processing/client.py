@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
 """
-Digital Earth Client
+GEMS Processing Client
 """
 
 import os
@@ -27,18 +27,18 @@ class JobParseFailure(Exception): pass
 class JobProcessingFailure(Exception): pass
 class JobReportingFailure(Exception): pass
 
-def process(num, args, gems_api, gems_beanstalk, gems_auth, gems_tube):
+def worker(worker_uuid, args, gems_api, gems_beanstalk, gems_auth, gems_tube):
     #
     # Set up logging
     #
     logger = logging.getLogger()
     logger.setLevel(logging.DEBUG)  
     formatter = logging.Formatter('%(asctime)s %(levelname)s %(message)s')
-
+    
     #
     # Add a filehandler which writes to the log file
     #
-    filehandler = logging.FileHandler('/tmp/worker-%d.log'%(num))  
+    filehandler = logging.FileHandler('/tmp/worker-%s.log'%(worker_uuid))  
     filehandler.setLevel(logging.DEBUG)   
     filehandler.setFormatter(formatter)    
     logger.addHandler(filehandler)
@@ -51,12 +51,14 @@ def process(num, args, gems_api, gems_beanstalk, gems_auth, gems_tube):
     stdouthandler.setFormatter(formatter)
     logger.addHandler(stdouthandler)
 
+    worker_name = worker_uuid[0:6]
+
     try:
         beanstalk = beanstalkc.Connection(host=gems_beanstalk, port=11300)
         beanstalk.watch(gems_tube)
-        logger.info("[Worker %d] Connected to beanstalk message queue on tube '%s'."%(num,beanstalk.using()))
+        logger.info("[Worker %s] Connected to beanstalk message queue on tube '%s'."%(worker_name,beanstalk.using()))
     except Exception as e:
-        logger.critical("[Worker %d] Could not connect to beanstalk work queue."%(num))
+        logger.critical("[Worker %s] Could not connect to beanstalk work queue."%(worker_name))
         sys.exit(1)
 
     try:
@@ -65,7 +67,7 @@ def process(num, args, gems_api, gems_beanstalk, gems_auth, gems_tube):
             # flushed after each model run to spit out the logging info related to
             # that specific run. At the end of the run the handler is removed.
 
-            time.sleep(1.0)
+            #time.sleep(1.0)
 
             stream = StringIO()
             streamhandler = logging.StreamHandler(stream)
@@ -73,40 +75,50 @@ def process(num, args, gems_api, gems_beanstalk, gems_auth, gems_tube):
             streamhandler.setFormatter(formatter)
             logger.addHandler(streamhandler)
 
-            try:
-                # Reserve and parse the incoming job (Job Parsing)
-                logger.info("[Worker %d] Waiting for a job!"%(num))
-                j = beanstalk.reserve()            
-                logger.info("[Worker %d] Reserved a job..."%(num))
+            # Send a ping to the API to let it know we're alive. There is a two
+            # second timeout on the request, but any exceptions are ignored. If
+            # we are unable to send pings back to the API the error will be 
+            # handled elsewhere.
+            url = gems_api +"/worker/ping"
+            try: r = requests.post(url, auth=gems_auth, data={'worker_uuid':worker_uuid}, timeout=2.0)
+            except: pass
+            
+            # Reserve and parse the incoming job (Job Parsing)
+            logger.info("[Worker %s] Waiting for a job!"%(worker_name))
+            j = beanstalk.reserve(timeout=10)
+            if j is None:
+                continue
 
+            try:
+                logger.info("[Worker %s] Reserved a job..."%(worker_name))
                 try:
-                    logger.info("[Worker %d] JobChunk (...) Parsing Started."%(num))
+                    logger.info("[Worker %s] JobChunk (...) Parsing Started."%(worker_name))
                     job = cPickle.loads(j.body)
                     jobchunk_uuid = job["uuid_jobchunk"]
                 except Exception as e:
-                    logger.info("[Worker %d] JobChunk (...) Parsing Failed."%(num))
-                    raise JobParseFailure("[Worker %d] Could not unpickle the job received from the message queue."%(num))
+                    logger.info("[Worker %s] JobChunk (...) Parsing Failed."%(worker_name))
+                    raise JobParseFailure("[Worker %s] Could not unpickle the job received from the message queue."%(worker_name))
                 else:
-                    logger.info("[Worker %d] JobChunk %s Parsing Completed."%(num,jobchunk_uuid))
+                    logger.info("[Worker %s] JobChunk %s Parsing Completed."%(worker_name,jobchunk_uuid))
 
                 # Set up the modelling framework (Job Processing)
                 try:
                     status_code = 0
-                    logger.info("[Worker %d] JobChunk %s Processing Started."%(num,jobchunk_uuid))
+                    logger.info("[Worker %s] JobChunk %s Processing Started."%(worker_name,jobchunk_uuid))
                     model = GemFramework(job, gems_api=gems_api)
                     model.run()
                 except Exception as e:
-                    logger.info("[Worker %d] JobChunk %s Processing Failed."%(num,jobchunk_uuid))
+                    logger.info("[Worker %s] JobChunk %s Processing Failed."%(worker_name,jobchunk_uuid))
                     raise JobProcessingFailure(e)
                 else:
-                    logger.info("[Worker %d] JobChunk %s Processing Completed."%(num,jobchunk_uuid))
+                    logger.info("[Worker %s] JobChunk %s Processing Completed."%(worker_name,jobchunk_uuid))
                 
 
                 # Report the results of the modelling job (Job Reporting)
                 try:
-                    logger.info("[Worker %d] JobChunk %s Reporting Started."%(num,jobchunk_uuid))
-                    logger.debug("[Worker %d] Maps package is approx: %.1f MB in size"%(num,os.path.getsize(model._mapspackage) >> 20))
-                    logger.info("[Worker %d] Posting maps package: %s"%(num,model._mapspackage))
+                    logger.info("[Worker %s] JobChunk %s Reporting Started."%(worker_name,jobchunk_uuid))
+                    logger.debug("[Worker %s] Maps package is approx: %.1f MB in size"%(worker_name,os.path.getsize(model._mapspackage) >> 20))
+                    logger.info("[Worker %s] Posting maps package: %s"%(worker_name,model._mapspackage))
                     
                     files = {'package': open(model._mapspackage,'rb') }
                     data = {'jobchunk': job["uuid_jobchunk"], 'token':'-' }
@@ -116,15 +128,15 @@ def process(num, args, gems_api, gems_beanstalk, gems_auth, gems_tube):
                     r.raise_for_status() # Raises an exception when the status is not ok.
 
                 except Exception as e:
-                    logger.info("[Worker %d] JobChunk %s Reporting Failed."%(num,jobchunk_uuid))
+                    logger.info("[Worker %s] JobChunk %s Reporting Failed."%(worker_name,jobchunk_uuid))
                     raise JobReportingFailure(e)
 
                 else:
-                    logger.info("[Worker %d] JobChunk %s Reporting Completed."%(num,jobchunk_uuid))
+                    logger.info("[Worker %s] JobChunk %s Reporting Completed."%(worker_name,jobchunk_uuid))
 
             except (JobParseFailure, JobProcessingFailure, JobReportingFailure) as e:
                 # Something went wrong trying to process this job.
-                logger.critical("[Worker %d] A critical failure occurred while trying to process the job!"%(num))
+                logger.critical("[Worker %s] A critical failure occurred while trying to process the job!"%(worker_name))
                 logger.critical(e)
                 status_code = -1
 
@@ -132,13 +144,13 @@ def process(num, args, gems_api, gems_beanstalk, gems_auth, gems_tube):
                 # An unexpected exception was raised. This should never really happen
                 # because any exceptions should be caught by the JobParse, JobProcessing,
                 # and JobReporting failures.
-                logger.critical("[Worker %d] A critical (and unexpected) failure occurred while trying to process the job!"%(num))
+                logger.critical("[Worker %s] A critical (and unexpected) failure occurred while trying to process the job!"%(worker_name))
                 logger.critical(e)
                 status_code = -1
 
             else:
                 # No exceptions were raised. Looking good!
-                logger.info("[Worker %s] Everything went ok! Do cleanup by deleting the job from the queue and posting the logfile."%(num))
+                logger.info("[Worker %s] Everything went ok! Do cleanup by deleting the job from the queue and posting the logfile."%(worker_name))
                 status_code = 1
 
             finally:
@@ -150,9 +162,9 @@ def process(num, args, gems_api, gems_beanstalk, gems_auth, gems_tube):
                 try: 
                     j.delete()
                 except:
-                    logger.error("[Worker %s] Failed to delete job from work queue."%(num))
+                    logger.error("[Worker %s] Failed to delete job from work queue."%(worker_name))
                 else:
-                    logger.info("[Worker %s] Deleted job from queue."%(num))
+                    logger.info("[Worker %s] Deleted job from queue."%(worker_name))
 
                 # Flush the log stream of this model run and try to post it to the
                 # API, that way we can view the logs of model runs in the browser.
@@ -162,13 +174,13 @@ def process(num, args, gems_api, gems_beanstalk, gems_auth, gems_tube):
                     r = requests.post(url, auth=gems_auth, data={'log':stream.getvalue(),'status_code':status_code,'status_percentdone':100})
                     r.raise_for_status()
                 except:
-                    logger.debug("[Worker %s] Failed to post the final log file to the server."%(num))
+                    logger.debug("[Worker %s] Failed to post the final log file to the server."%(worker_name))
                 else:
-                    logger.debug("[Worker %s] Posted the logfile of this run to the server. "%(num))
+                    logger.debug("[Worker %s] Posted the logfile of this run to the server. "%(worker_name))
                 finally:
                     logger.removeHandler(streamhandler) 
 
-                logger.info("[Worker %d] All done! Look for another job!"%(num))
+                logger.info("[Worker %s] All done! Look for another job!"%(worker_name))
             
 
     except Exception as e:
@@ -176,11 +188,11 @@ def process(num, args, gems_api, gems_beanstalk, gems_auth, gems_tube):
         logger.critical("An unexpected exception occurred while running the job. Hint: %s. Deleting job from queue and exiting."%(e))
         sys.exit(1)
 
-def signal_handler(signal, frame):
-    print "Exiting gracefully!"
-    sys.exit(0)
-
-signal.signal(signal.SIGINT, signal_handler)
+#def signal_handler(signal, frame):
+#    print "Exiting gracefully!"
+#    sys.exit(0)
+#
+#signal.signal(signal.SIGINT, signal_handler)
 
 if __name__ == "__main__":
     #
@@ -246,21 +258,30 @@ if __name__ == "__main__":
     else:
         print "GEMS API found and successfully authenticated at %s"%(gems_api)
 
-    try: 
-        num_processes = int(args.processes)
-    except: 
-        num_processes = 1
-    finally: 
-        print "Starting %d worker process(es)..."%(num_processes)
+#    try: 
+#        num_processes = int(args.processes)
+#    except: 
+#        num_processes = 1
+#    finally: 
+#        print "Starting %d worker process(es)..."%(worker_name_processes)
+
+    #
+    # Create a UUID for this worker
+    #
+    worker_uuid = str(uuid.uuid4())
+
+    print "*** STARTING GEMS CLIENT '%s' ***"%(worker_uuid)
+    
+    worker(worker_uuid, args, gems_api, gems_beanstalk, gems_auth, gems_tube)
 
     #
     # Start up the client
     #
-    print ""
-    jobs=[]
-    for i in range(num_processes):
-        p = multiprocessing.Process(target=process, args=(i, args, gems_api, gems_beanstalk, gems_auth, gems_tube))
-        jobs.append(p)
-        p.start()
+#    print ""
+#    jobs=[]
+#    for i in range(num_processes):
+#        p = multiprocessing.Process(target=process, args=(i, args, gems_api, gems_beanstalk, gems_auth, gems_tube))
+#        jobs.append(p)
+#        p.start()
 
 

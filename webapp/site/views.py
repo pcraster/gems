@@ -39,7 +39,7 @@ def myaccount_reset_api_token():
 
 @site.route('/models')
 def models():
-    return render_template("site/models.html",models=Model.query.all())
+    return render_template("site/models.html", models=Model.query.all())
  
 @site.route('/features')
 def features():

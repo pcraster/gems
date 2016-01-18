@@ -79,7 +79,7 @@ class Beanstalk(object):
         Initialize the object.
         """
         self.tubename = 'gemsjobs'
-        self.connect()
+        c = self.connect()
 
     def __nonzero__(self):
         """
@@ -114,11 +114,35 @@ class Beanstalk(object):
             return False
         else: 
             return self.connected
+            
+    def tube_clear(self):
+        """
+        Forces clearing of the entire queue. This happens for example when the
+        install procedure takes place, or from a button on the processing page.
+        """
+        while True:
+            job = self._conn.reserve()
+            job.delete()
+    
+    def tube_stats(self, statistic):
+        stats = self._conn.stats_tube(self.tubename)
+        if statistic in stats:
+            return stats[statistic]
+        else:
+            return None
         
     @property
     def ok(self):
         return True if self.workers else False
-    
+        
+    @property
+    def workers_watching(self):
+        return True if self.workers else False
+        
+    @property
+    def jobs_in_queue(self):
+        return self.tube_stats('current-jobs-ready')
+            
     @property
     def workers(self):
         """
@@ -178,62 +202,108 @@ def random_password():
     return ''.join(random.choice("abcdefghjkmnpqrstuvwxyzABCDEFGHJKLMNPQRSTUVWXYZ23456789") for _ in range(8))
 
 class Discretization(db.Model):
+    """This class describes the SQLAlchemy data model for Discretizations in
+    GEMS. The following attributes are defined as SA columns represented in 
+    the corresponding database table.
+    
+    * :attr:`~webapp.models.Discretization.id` (Integer)
+    * :attr:`~webapp.models.Discretization.name` (String)
+    * :attr:`~webapp.models.Discretization.description` (String)
+    * :attr:`~webapp.models.Discretization.cellsize` (Integer)
+    * :attr:`~webapp.models.Discretization.num_of_chunks` (Integer)
+    * :attr:`~webapp.models.Discretization.buffer_` (Integer)
+    * :attr:`~webapp.models.Discretization.coverage` (Multipolygon Geometry)
+    * :attr:`~webapp.models.Discretization.extent` (Polygon Geometry)
     """
-    Describes the discretization used to divide the earth up into managable
-    chunks which can be processed individually. Once created, discretizations 
-    cannot be modified or deleted.
-
-    Todo: * Add a coverage field, which is a single multipolygon  or a centroid
-            or something to navigate to per default.
-          * Default location (see above) also for discretizations with only 
-          one chunk. Will allow for running a model only in one location.
-
-    """
-    __tablename__='discretization'
+    
+    __tablename__ = 'discretization'
+    """Table name where discretizations are stored."""
+    
     id = db.Column(db.Integer(), primary_key=True)
+    """ID of this disretization."""
+    
     name = db.Column(db.String(512), unique=True, nullable=False, index=True)
-    description = db.Column(db.String(1024), unique=False, nullable=True, index=False)
+    """Name of this discretization."""
+    
+    description = db.Column(db.String(1024), unique=False, nullable=True, \
+        index=False)
+    """Description of this discretization."""
+    
     cellsize = db.Column(db.Integer(), nullable=False, default=100)
+    """The cell size that models being run on this chunk should use. Defaults 
+    to 100."""
+    
     num_of_chunks = db.Column(db.Integer(), nullable=False)
+    """The number of individual chunks in this discretization."""
+    
     buffer_ = db.Column(db.Integer(), nullable=False, default=1000)
+    """A buffer value that should be applied around the perimeter of the chunks 
+    in this discretization. **Not in use.**"""
+    
     coverage = db.Column(Geometry(geometry_type='MULTIPOLYGON', srid=4326))
+    """A multipolygon geometry representing a simplified coverage of all the 
+    chunks in this chunkscheme. This is used to create the overview shapes on
+    the "discretizations" admin page. The coverage is simplified to avoid 
+    having to load thousands of chunks when trying to display the area covered
+    by for example the "world_onedegree" discretization. The coverage is set 
+    once when the discretization is first created. Defined in SA as: 
+    ``Geometry(geomtry_type='MULTIPOLYGON', srid=4326)``."""
+    
     extent = db.Column(Geometry(geometry_type='POLYGON', srid=4326))
+    """A polygon geometry which is an envelope of the coverage polygon. This is
+    used to quickly establish where a certain chunkscheme is valid and to 
+    position the map accordingly. For example, when you load a model which
+    uses the "world_onedegree" chunkscheme, the initial map view is positioned
+    so that this extent is visible. The extent is set once when the 
+    discretization is first created. Defined in SA as: 
+    ``Geometry(geometry_type='POLYGON', srid=4326)``."""
 
     def __repr__(self):
+        """Returns a text representation of this discretization."""
         return "<Discretization: %s>"%(self.name)
 
     def __init__(self, name="", dataset=None, cellsize=100):
-        """
-        Create a new discretization. The following arguments are required:
+        """Creates a new discretization and corresponding chunks. An exception
+        is raised when something failed during the creation process.
         
-        - dataset (a gdal vector dataset. all the polygons will be extracted and used)
-        - cell size (integer in meters)
-        - name
+        :param str name: Name of the discretization. Do not use any non-word
+            characters. The actual name will be modified by appending the cell
+            size to it.
+        :param int cellsize: Cell size in meters. Choose this value with care!
+            Creating a discretization with chunks the size of France and a cell
+            size of 100m will create enormous raster files for each model run,
+            probably bringing the system to a halt. 
+        :param GDALDataset dataset: Instance of a GDALDataset which contains 
+            polygon features. Each polygon will be turned into a Chunk within
+            this discretization.
+            
+        .. note::
         
-        Todo:
+            Keep the following in mind when creating Discretizations yourself:
         
-        - Look into other ways of simplifying the coverage. If a large shapefile with
-        very detailed polygons is uploaded it creates a lot of overhead. We solve this
-        now by creating the coverage by doing a cascaded union on the envelopes of 
-        all the individual polygons. This saves a lot of processing, and while the 
-        results are a bit more ugly than neatly unioned polygons with real catchment
-        shapes, it doesnt make much difference in the end when the coverage is just used
-        for showing where the model can be run, and setting the map to this location
-        automatically if no other place was specified.
+            * In the discretization name any (consequetive) non-word characters 
+              will be replaced with an underscore, and the cellsize will be 
+              appended to the final discretization name. For example, creating
+              a discretization with the ``name="world onedegree"`` and 
+              ``cellsize=100`` will end up with the name 
+              ``world_onedegree_100m``.
+              
+            * Only geometries of type POLYGON will be converted to chunks and 
+              coupled to this Discretization.
+            
+            * Only datasets with features in WGS84 latlng coordinates (epsg:
+              4326) will be accepted.
+            
+        .. todo::
         
-        - Make a primitive area calculation, an integer field in units of ha or sq. km,
-        then allow per model definition of the max number of sq km which is allowed to
-        be calculated in one job. Depending on that the system can then automatically
-        select one, two, three, or ten chunks to process.
-        
-        - Make a description field for each chunk which can be used in the "Find places"
-        menu. That way, if we're modelling on a list of US counties, we can search by
-        county name, for catchments by catchment name, etc. This is pretty low priority
-        though. A number of these parameters (area, name, id, etc) can then also be shown
-        in the web interface in a popup item surrounding the shape outline or at the 
-        shape centroid with an (I)nfo icon.
-        
-        
+            It would be interesting to create a "description" or "search terms"
+            field which contains attributes such as a name of the features. 
+            The search functionality in the web app could then include these
+            terms. In such a scenartio, if we have a chunk scheme of US 
+            Counties, we could search for a county by name and jump straight 
+            to it. Another possibility would be to add attribute fields to the
+            selected (with the red outline) chunk in the web interface. Such
+            functionality is pretty low-priority though.
         """
         if dataset is None:
             raise Exception("Dataset with features cannot be accessed.")
@@ -255,7 +325,7 @@ class Discretization(db.Model):
         polygons = []
 
         if layer_epsg != 4326:
-            raise Exception("Shapes must be in WGS84 latlng coordinates (epsg 4326)")
+            raise Exception("Shapes must be in unprojected WGS84 latlng coordinates (epsg 4326)")
         else:
             feature = layer.GetNextFeature()
             while feature:
@@ -283,17 +353,13 @@ class Discretization(db.Model):
             self.chunks.append(Chunk(wkt_polygon=polygon))
             num_of_chunks+=1
             
-        print "Found %d polygon features."%(num_of_chunks)
+        #print "Found %d polygon features."%(num_of_chunks)
         self.num_of_chunks=num_of_chunks
             
-        print "Creating cascaded union... This may take a while if your polygons are complicated..."
-        chunk_polygons = MultiPolygon(polygons=[loads(wkt).buffer(0.01) for wkt in polygons])
-        
+        #print "Creating cascaded union... This may take a while if your polygons are complicated..."
+        #chunk_polygons = MultiPolygon(polygons=[loads(wkt).buffer(0.01) for wkt in polygons])
         chunk_extents = MultiPolygon(polygons=[box(*loads(wkt).buffer(0.01).bounds) for wkt in polygons])
-        
         chunk_union = cascaded_union(chunk_extents)
-
-        print "Simplifying the merged polygon further since this one is only used for display purposes."
         chunk_union.simplify(0.01)
         
         if chunk_union.geom_type == 'Polygon':
@@ -301,62 +367,86 @@ class Discretization(db.Model):
             # is created rather than a MultiPolygon. Our database column needs
             # a MultiPolygon, so convert it before saving it.
             chunk_union = MultiPolygon([chunk_union])
-        print "Done!"
+
         chunk_box = box(*chunk_union.bounds)
 
         self.coverage = from_shape(chunk_union, srid=4326)
         self.extent = from_shape(chunk_box, srid=4326)
-        print "Storing..."
+        #print "Storing..."
         
     @property
     def extent_as_bounds(self):
+        """Return the discretization extent as a comma-separated string of 
+        coordinates."""
         bounds = to_shape(self.extent).bounds
         return ",".join(map(str,bounds))
-        #return db.session.scalar(ST_AsGeoJSON(self.extent))
         
     @property
     def coverage_as_geojson(self):
+        """Return the discretization coverage as a GeoJSON string."""
         cov = to_shape(self.coverage)
         return json.dumps(mapping(cov))
         
 class Chunk(db.Model):
-    """
-    Describes a unit within a discretization. For example, the discretization
-    "world_onedegree" divides the world into ~50000 chunks of 1x1 degree. This
-    model describes those individual chunks. The chunks are assigned to 
-    processing requests and processed individually.
-          
-    """
-    __tablename__='chunk'
-    id = db.Column(db.Integer(), primary_key=True)
-    discretization_id = db.Column(db.Integer(), db.ForeignKey('discretization.id'))
-    discretization = db.relationship('Discretization', backref=db.backref('chunks', lazy='dynamic'))
-    jobchunks = db.relationship('JobChunk', backref='chunk', lazy='dynamic')
-    uuid = db.Column(UUID, index=True)
-    geom = db.Column(Geometry(geometry_type='POLYGON', srid=4326))
+    """This class describes the SQLAlchemy data model for Chunks in GEMS. The
+    following attributes are defined as SA columns represented in the 
+    corresponding database table.
     
-    def __init__(self,wkt_polygon):
-        self.uuid=str(uuid.uuid4())
-        self.geom=from_shape(loads(wkt_polygon),srid=4326)
+    * :attr:`~webapp.models.Chunk.id` (Integer)
+    * :attr:`~webapp.models.Chunk.discretization_id` (Integer)
+    * :attr:`~webapp.models.Chunk.uuid` (UUID)
+    * :attr:`~webapp.models.Chunk.geom` (Polygon Geometry)
+    
+    The following relationships to other models are defined:
+    
+    * :attr:`~webapp.models.Chunk.discretization` (Relationship to a :class:`~webapp.models.Chunk`)
+    * :attr:`~webapp.models.Chunk.jobchunks` (Relationship to a :class:`~JobChunk`)
+    """
+    
+    __tablename__ = 'chunk'
+    """Name of the table where this model is stored."""
+    
+    id = db.Column(db.Integer(), primary_key=True)
+    """SA column containing the ID of this chunk."""
+    
+    discretization_id = db.Column(db.Integer(), db.ForeignKey('discretization.id'))
+    """SA column containing the ID of the discretization to which this chunk 
+    belongs."""
+    
+    discretization = db.relationship('Discretization', backref=db.backref('chunks', lazy='dynamic'))
+    """SA relationship to a Discretization instance."""
+    
+    jobchunks = db.relationship('JobChunk', backref='chunk', lazy='dynamic')
+    """SA relationship to a JobChunk instance."""
+    
+    uuid = db.Column(UUID, index=True)
+    """SA column containing the UUID of this chunk."""
+    
+    geom = db.Column(Geometry(geometry_type='POLYGON', srid=4326))
+    """SA column containing the Polygon Geometry of this chunk."""
+    
+    def __init__(self, wkt_polygon):
+        """Creates a new chunk from a polygon in WKT (Well-Known Text) format.
+        Usually chunks are created automatically when a 
+        :class:`~webapp.models.Discretization` is made, so you'll usually won't
+        have to do this yourself. Chunks which are not part of any
+        discretization cannot be used.
+        
+        :param str wkt_polygon: String with a WKT polygon in it. Must be in 
+            unprojected Lat-Long format.
+        """
+        polygon = loads(wkt_polygon)
+        self.uuid = str(uuid.uuid4())
+        self.geom = from_shape(polygon, srid=4326)
         
     @property
-    def as_grid(self):
-        geom=to_shape(self.geom)
-        return {
-            'bounds':geom.bounds,
-            'bbox':self.bbox,
-            'uuid':str(self.uuid),
-            'discretization':self.discretization.name,
-            'cellsize':self.discretization.cellsize,
-            'srid':self.srid
-        }
-    @property
     def grid(self):
-        """
-        Returns a grid representation of this chunk, including the bounding box,
-        geotransform variables, cellsize, rows, cols, etc. All this information
-        is used to construct a grid and a mask on which the model will be run
-        in the end.
+        """Property returning a dictionary (grid) representation of this chunk, 
+        including the bounding box, geotransform variables, cellsize, rows, 
+        cols, etc. This information is used to construct a grid, a clone map, 
+        and a mask  on which the model will be run by the workers. The Chunk's 
+        grid property is also used to construct the JobChunk posted into the 
+        work queue.
         """
         geom = to_shape(self.geom)
         return {
@@ -376,10 +466,10 @@ class Chunk(db.Model):
             'projection':self.projection,
             'mask':self.mask.wkt
         }
+        
     @property
     def srid(self):
-        """
-        Return the EPSG code for the UTM zone 
+        """EPSG code of the UTM zone in which this Chunk is located. :py:`int`
         """
         epsg = 32600
         geom = to_shape(self.geom)
@@ -390,147 +480,216 @@ class Chunk(db.Model):
 
     @property
     def cellsize(self):
+        """Cell size of the discretization to which this chunk belongs. (int)
+        """
         return self.discretization.cellsize
         
     @property
     def pixelwidth(self):
+        """Integer width of a single pixel of this chunk."""
         (minx, miny, maxx, maxy) = self.bbox
         return (maxx-minx)/self.cols
 
     @property
     def pixelheight(self):
+        """Returns the height of a single pixel of this chunk."""
         (minx, miny, maxx, maxy) = self.bbox
         return (miny-maxy)/self.rows        
         
     @property
     def bbox(self):
+        """Returns the UTM bounding box of this chunk."""
         return self.bbox_utm
     
     @property
     def bbox_utm(self):
-        project = partial(pyproj.transform, pyproj.Proj(init="epsg:4326"), pyproj.Proj(init="epsg:%d"%(self.srid)))
+        """Returns the UTM bounding box of this chunk."""
+        project = partial(pyproj.transform, pyproj.Proj(init="epsg:4326"), \
+            pyproj.Proj(init="epsg:%d"%(self.srid)))
         return transform(project,to_shape(self.geom)).bounds
         
     @property
     def bbox_latlng(self):
+        """Returns a Lat-Lng bounding box of this chunk."""
         geom = to_shape(self.geom)
         return geom.bounds
         
     @property
     def mask(self):
-        """
-        Return the chunk polygon in a local projection.
-        """
-        project=partial(pyproj.transform, pyproj.Proj(init="epsg:4326"), pyproj.Proj(init="epsg:%d"%(self.srid)))
+        """Returns a geometry in the local UTM projection defined in this 
+        chunk's ``srid`` property."""
+        project=partial(pyproj.transform, pyproj.Proj(init="epsg:4326"), \
+            pyproj.Proj(init="epsg:%d"%(self.srid)))
         return transform(project,to_shape(self.geom))
         
     @property
     def rows(self):
-        """
-        Return the number of rows that this chunk has in the local utm
-        projection.
-        """
+        """Return the number of rows that this chunk has in the local utm
+        projection."""
         bbox=self.bbox
         return int(round((bbox[3]-bbox[1])/self.cellsize))
 
     @property
     def cols(self):
-        """
-        Return the number of cols that this chunk has in the local utm
-        projection.
-        """
+        """Return the number of cols that this chunk has in the local utm
+        projection."""
         bbox=self.bbox
         return int(round((bbox[2]-bbox[0])/self.cellsize))
         
     @property
     def projection(self):
-        """
-        Return a wkt projection string.
-        """
+        """Returns a projection string in WKT format of the UTM zone that this
+        chunk falls in."""
         ref = osr.SpatialReference()
         ref.ImportFromEPSG(self.srid) 
         return ref.ExportToWkt()
         
     @property
     def geotransform(self):
-        """
-        Returns the 6 coefficients which map pixel/line coords into a geo-
-        referenced space. These coordinates are a function of self.bbox and
+        """Returns the 6 coefficients which map pixel/line coords into a 
+        georeferenced space. These coordinates are a function of self.bbox and
         self.cellsize and are assigned to output datasets using gdal's 
         SetGeoTransform function.
         
-        The coefficients are (left,pixelwidth,0,top,0,pixelheight)
-        
-DEBUG Projection is: 
-2015-06-25 17:44:51,848 DEBUG PROJCS["WGS 84 / UTM zone 60S",GEOGCS["WGS 84",DATUM["WGS_1984",SPHEROID["WGS 84",6378137,298.257223563,AUTHORITY["EPSG","7030"]],AUTHORITY["EPSG","6326"]],PRIMEM["Greenwich",0],UNIT["degree",0.0174532925199433],AUTHORITY["EPSG","4326"]],PROJECTION["Transverse_Mercator"],PARAMETER["latitude_of_origin",0],PARAMETER["central_meridian",177],PARAMETER["scale_factor",0.9996],PARAMETER["false_easting",500000],PARAMETER["false_northing",10000000],UNIT["metre",1,AUTHORITY["EPSG","9001"]],AUTHORITY["EPSG","32760"]]
-2015-06-25 17:44:51,848 DEBUG Geotransform is:
-2015-06-25 17:44:51,849 DEBUG (414639.56133316015, 99.9536481158079, 0.0, 5572242.772899812, 0.0, -99.98327705229146)
-
-        
-        """
+        The coefficients are (left, pixelwidth, 0, top, 0, pixelheight)"""
         (minx, miny, maxx, maxy) = self.bbox
-        return (minx,self.pixelwidth,0,maxy,0,self.pixelheight)
+        return (minx, self.pixelwidth, 0, maxy, 0, self.pixelheight)
 
 
 class Map(db.Model):
+    """Describes a single attribute map generated by a model. All maps or 
+    output attributes created by a model must be uniquely identifiable by four 
+    criteria:
+    
+    * A **ModelConfiguration** instance. This describes the set of 
+      configuration parameters that were used to create the attribute value
+      stored in the map.
+    
+    * A **Chunk** instance. This describes the area which is represented 
+      in the map.
+      
+    * An **attribute name** which was given when the map was reported in the 
+      model script.
+      
+    * A **timestamp** which is representative of the timestep in which this map
+      was reported.
+      
+    Some of the data for these criteria is part of other models (such as 
+    the extent which is defined by a Chunk instance, or a configuration key
+    which is defined by a ModelConfiguration instance. The relevant 
+    information from these models is straight up copied into the Map 
+    data model rather than just referenced using an SQLAlchemy 
+    relationship. The reason for this is that other applications (in this 
+    case Mapserver) make use of the map table to display WMS maps of the 
+    output attribute given the four criteria mentioned above, and that 
+    Mapserver cannot follow, sort, select, or create tile indexes via such 
+    SQLAlchemy relationships. For these types of purposes we need a single 
+    table with clear attributes which can then be easily sorted and 
+    selected upon. 
+      
+    .. note::
+    
+        The actual map raster data is not stored in the database, but a
+        reference to a VRT (virtual dataset) is stored in the "filename" 
+        attribute. The VRT in turn points to a specific band in a compressed
+        and optimized GeoTIFF file in which the actual raster values are 
+        stored.
+              
+    .. note::
+    
+        Backreferences named **maps** are defined on the ModelConfiguration
+        and Chunk models. That way, for example if you have a Chunk or
+        ModelConfiguration instance you can query all the maps created with 
+        that configuration by looping over the ModelConfiguration's 'maps' 
+        attribute.
+        
     """
-    Describes a single output map generated by a model. Maps created by models
-    are identifiable by:
     
-    - model configuration id (foreign key modelconfiguration.id)
-    - chunk id (or geometry)
-    - attribute name that was given when the map was reported
-    - timestamp 
-    
- 
-    
-    Todo:
-    - add timestamp field
-    - add datatype field
-    - add stats fields (min,max) for visualization purposes...
-    - consider adding a "MapSet" model where the attribute properties
-      are defined. Otherwise we'll just have to filter for uniques in this
-      massive table and turn each unique attribute into a mapserver layer.
-    """
     __tablename__='map'
+    """Table name where map data is stored."""
+    
     id = db.Column(db.Integer(), primary_key=True)
+    """ID of the map instance."""
 
-    #The model configuration that this map was generated with
     modelconfiguration_id = db.Column(db.Integer(), db.ForeignKey('modelconfiguration.id'))
+    """ID of the ModelConfiguration instance that was used to create the data
+    present in this map."""
+    
     modelconfiguration = db.relationship('ModelConfiguration', backref='maps')
+    """SA relationship to the ModelConfiguration instance."""
     
-    #This config key is a duplicate of modelconfiguration.key and is added
-    #here as a separate field because mapserver needs to be able to query this
-    #table via postgis by config key, rather than just the id of the modelconfiguration.
     config_key = db.Column(db.String(32), nullable=False, unique=False, index=True)
+    """Text representation of the configuration key defined in the related
+    ModelConfiguration instance. This is one of the attributes that Mapserver
+    needs to sort by to display this map as a WMS service."""
     
-    #Other important keys are the timestamp and attribute
-    timestamp = db.Column(db.DateTime(),nullable=True, index=True)
+    timestamp = db.Column(db.DateTime(), nullable=True, index=True)
+    """Timestamp field representing the model timestep at the time when this
+    map was reported. This is one of the attributes that Mapserver needs to
+    sort by to display this map as a WMS service."""
+    
     attribute = db.Column(db.String(1024), nullable=False, index=True)
-
-    #Modified. Important for caching... if maps newer than the cahced tile 
-    #exist, refetch from mapserver.
-    #modified = db.Column(db.DateTime(),nullable=False, index=True, default=db.func.now())
-
-    #The chunk that this map was created on. Steal the extent from the chunk
-    #too. While this works nicely now, mapserver needs the geometry of a tile-
-    #index to be a column of the actual table, not a reference to another 
-    #table like the chunk table. So, add a geometry field to the map as well,
-    #this is popuplated upon creation with a copy of the geom of the chunk.
+    """The model output attribute that this map represents. This is one of the 
+    attibutes that Mapserver needs to sort by to display this map as a WMS 
+    service."""
+    
     chunk_id = db.Column(db.Integer(), db.ForeignKey('chunk.id'))
+    """ID of the Chunk that this map was created on."""
+    
     chunk = db.relationship('Chunk', backref='maps')
+    """SA relationship to the Chunk instance that this Map was originally
+    created on."""
     
     geom = db.Column(Geometry(geometry_type='POLYGON', srid=4326))
-    geom_web_mercator = db.Column(Geometry(geometry_type='POLYGON', srid=3857))
+    """Geometry in Lat-Lng representing the extent of this Map. The geometry 
+    is copied from the related Chunk's extent."""
     
-    datatype = db.Column(db.String(1024), nullable=False, index=False)    
+    geom_web_mercator = db.Column(Geometry(geometry_type='POLYGON', srid=3857))
+    """Geometry in Pseudo Mercator representing the extent of this Map. The 
+    geometry is copied/reprojected from the related Chunk's extent to be able 
+    to let Mapserver use the spatial index as well as having to avoid
+    on-the-fly reprojections."""
+    
+    datatype = db.Column(db.String(1024), nullable=False, index=False)  
+    """Datatype of this map."""
+    
     filename = db.Column(db.String(1024), nullable=False, index=False)
+    """Filename pointing to the VRT (virtual dataset) of this Map."""
+    
     filesrs = db.Column(db.String(2048), nullable=True, index=False, default='')
+    """The spatial reference system of the file specified in the "filename"
+    attribute. This will be an SRS corresponding to the UTM zone that the data
+    was created in by the model. Mapserver needs this field to be able to 
+    stitch together different files (defined by filename) which are in 
+    different projections."""
 
     def __repr__(self):
+        """Text representation of this map."""
         return "<Map config=%s chunk=%s time=%s filename=%s>"%(self.config_key[0:6],self.chunk.uuid[0:6],self.timestamp.isoformat(),self.filename) 
         
-    def __init__(self,chunk,modelconfiguration,options):
+    def __init__(self, chunk, modelconfiguration, options):
+        """Creates a new Map.
+        
+        :param Chunk chunk: Chunk instance that this Map is created on.
+        :param ModelConfiguration modelconfiguration: ModelConfiguration 
+            instance that was used to generate this map.
+        :param dict options: Dictionary containing additional data about this 
+            map, such as keys for the attribute name, filesrs, datatype, and
+            timestamp.
+        
+        .. note::
+        
+            Map instances are typically created by the API upon receiving a 
+            maps package, which is the result of a model run. The maps 
+            package will contain a manifest JSON file listing all the files in
+            the maps package as well as its attributes, timestamps, config key,
+            etc. for each map. Each entry in the manifest of the maps package 
+            is turned into a Map instance in the database by the API endpoint
+            receiving the maps package upload.
+            
+            The mapserver configuration files for each model use the map table
+            to create WMS services.
+        """
         self.chunk=chunk
         self.modelconfiguration=modelconfiguration
         self.config_key=modelconfiguration.key
@@ -546,8 +705,8 @@ class Map(db.Model):
         self.timestamp=datetime.datetime.strptime(options["timestamp"], "%Y%m%d%H%M%S")
     
 class Model(db.Model):
-    """
-    Describes a pcraster-python model which can be run in this environment.
+    """Describes an environmental model which can be run in the GEMS 
+    environment.
 
     Todo:
         - add owner
@@ -558,39 +717,105 @@ class Model(db.Model):
         - automatically fill in some demo code.
 
     """
+
     __tablename__='model'
+    """Tabla name used to store the model"""
+    
     id = db.Column(db.Integer(), primary_key=True)
+    """ID of the model"""
+    
     name = db.Column(db.String(512), unique=True, nullable=False, index=True)
+    """Model name"""
     
     abstract = db.Column(db.Text(), unique=False, nullable=True)
+    """Short description of the model functionality."""    
+    
     contact = db.Column(db.String(512), unique=False, nullable=True)
+    """Short contact information for the model creator."""
 
     #jobs = db.relationship('Job', backref='model', lazy='dynamic')
 
     disabled = db.Column(db.Boolean(), nullable=False, default=False)    
-    highlighted = db.Column(db.Boolean(), nullable=False, default=True)
-    validated = db.Column(db.Boolean(), nullable=False, default=False)
+    """Boolean property indicating whether this model is enabled or not."""
     
-    modified = db.Column(db.DateTime(),nullable=True)
+    highlighted = db.Column(db.Boolean(), nullable=False, default=True)
+    """Boolean property indicating whether this model is visible to all users
+    or if it should show up in the "Hidden models" section of the GEMS 
+    homepage."""
+    
+    validated = db.Column(db.Boolean(), nullable=False, default=False)
+    """Boolean property indicating whether the model's Python code could be 
+    imported successfully and it's properties could be read. If a model is not
+    validated it cannot be run because it would just cause an error anyway."""
+    
+    modified = db.Column(db.DateTime(), nullable=True)
+    """Date field signifying when the model was last updated."""
+    
     discretization_id = db.Column(db.Integer(), db.ForeignKey('discretization.id'))
+    """ID of the Discretization that this model should run on."""
+    
     discretization = db.relationship('Discretization', backref='models')
+    """SA relationship to a Discretization instance."""
     
     version = db.Column(db.Integer(), default=1)
+    """Integer value representing the version/revision of the model. This value
+    is incremented each time the model is successfully saved."""
+    
     modelcode = db.Column(db.Text(), nullable=True, unique=False)
+    """Python model code. 
+    
+    .. todo:
+        Find out if this is still in use.
+    """
 
     meta = db.Column(JSON(), nullable=True)
+    """JSON property containing the values defined in the "meta" class
+    attribute of the model code. This value is updated every time the model
+    is successfully saved.
+    
+    :return: dictionary of metadata
+    
+    :param arg1: first param descr
+    
+    :type arg1: type description    
+    
+    :rtype: dict
+    
+    
+    :Example:
+
+        .. code-block:: python
+            
+            import module
+    
+    
+    """    
+    
     parameters = db.Column(JSON(), nullable=True)
+    """JSON property containing the values defined in the "parameters" class
+    attribute of the model code. This value is updated every time the model 
+    is successfully saved."""
+    
     time = db.Column(JSON(), nullable=True)
+    """JSON property containing the values defined in the "time" class 
+    attribute of the model code. This value is updated every time the model is
+    successfully saved."""
+    
     reporting = db.Column(JSON(), nullable=True)
+    """JSON property containing the values defined in the "reporting" class
+    attribute of the model code. This value is updated every time the model is
+    successfully saved."""
     
     def __repr__(self):
+        """Text representation of the model."""
         return "<Model: name=%s id=%d>"%(self.name,self.id)
         
-    def __init__(self, name=None, code=""):
+    def __init__(self, name=None, code=None):
+        """Creates a new model."""
         name = re.sub(r'\W+',' ',name).lower() #lowercase and remove non-word chars
         name = "_".join(map(str,name.split())) #replace one or more consequetive spaces with an underscore
         
-        if name is None:
+        if name is None or len(name)==0:
             raise Exception("You need to specify a valid name.")
         
         m = Model.query.filter_by(name=name).first()
@@ -599,6 +824,10 @@ class Model(db.Model):
         
         self.name = name
         self.version = 0
+        
+        if code is None:
+            code = render_template('new_model_template/new_model.py', model_name=self.name)
+
         self.updatecode(code)
         
     @property
@@ -761,7 +990,6 @@ class Model(db.Model):
             sys.path.remove(code_path)
             
             #remove the intermediate testing files
-            print "Removing intermediate files"
             if os.path.exists(self.filename+"c"):
                 os.remove(self.filename+"c")
             if os.path.exists(self.filenametest):
@@ -852,8 +1080,6 @@ class Model(db.Model):
 
         #create a configuration with a configuration id for this job
         config_key,config_string,parameters=create_configuration_key(modelparams)
-        print "Key '%s' consists of:"%(config_key)
-        print parameters
 
         modelconfiguration=ModelConfiguration.query.filter(ModelConfiguration.key==config_key).first()
         
@@ -889,7 +1115,9 @@ class Model(db.Model):
     @property
     def default_config_key(self):
         """
-        Returns a configuration key for this model with the default parameters.
+        Returns a default configuration key for this model by calling 
+        configure() without any parameters. In this case the default params
+        will be used.
         """
         modelconfig=self.configure()
         return modelconfig.key
@@ -1159,6 +1387,7 @@ class Job(db.Model):
     date_created = db.Column(db.DateTime(), nullable=False, default=db.func.now())
     date_completed = db.Column(db.DateTime(), nullable=True)
     user_id = db.Column(db.Integer(), db.ForeignKey('user.id'))
+    user = db.relationship('User', backref='jobs')
     
     modelconfiguration_id = db.Column(db.Integer(), db.ForeignKey('modelconfiguration.id'))
     modelconfiguration = db.relationship('ModelConfiguration', backref='jobs')
@@ -1489,6 +1718,47 @@ class User(db.Model, UserMixin):
         self.password = current_app.user_manager.hash_password(new_password)
         db.session.commit()
         return new_password
+        
+class Worker(db.Model):
+    __tablename__="workers"
+    id = db.Column(db.Integer(), primary_key=True)
+    uuid = db.Column(UUID, index=True)
+    created = db.Column(db.DateTime(), nullable=False, default=datetime.datetime.now)
+    updated = db.Column(db.DateTime(), nullable=True, index=True)
+    
+    def __repr__(self):
+        return "<Worker %s>"%(str(self.uuid))
+        
+    def __init__(self, worker_uuid):
+        self.uuid = worker_uuid
+        
+    def ping(self):
+        """
+        Register a ping event on this worker. Update the ping time.        
+        """
+        self.updated = datetime.datetime.now()
+        
+    @property
+    def name(self):
+        return str(self.uuid)[0:6]
+        
+    @property
+    def lastping(self):
+        """
+        Return the number of seconds since the last ping.
+        """
+        delta = datetime.datetime.now() - self.updated
+        seconds = delta.seconds+(delta.days*24*3600)
+        return seconds
+        
+    @property
+    def updated_short(self):
+        return self.updated.strftime('%Y-%m-%d %H:%M:%S')
+        
+    @property
+    def created_short(self):
+        return self.created.strftime('%Y-%m-%d %H:%M:%S')
+        
 
 # Define the UserRoles DataModel
 class UserRoles(db.Model):

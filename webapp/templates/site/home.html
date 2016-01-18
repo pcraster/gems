@@ -32,10 +32,10 @@
 					{%- for model in columns -%}
 						<div class="panel panel-default">
 						  <div class="panel-heading" style="background-color:#eee;">
-						  	<small class="pull-right" style="color:#888;padding-top:5px;">
+						  	<!--<small class="pull-right" style="color:#888;padding-top:5px;">
 						  		Revision: {{model.version}} Valid: 
 						  		{% if model.validated %}Yes{%else%}No{%endif%}
-						  	</small>
+						  	</small>-->
 						  	<h3 style="margin:0;">
 						  		<strong>{{model.name}}</strong> 
 						  		{% if model.validated %}
@@ -107,6 +107,7 @@
 						<a href="/admin/datasets" class="list-group-item"><i class="fa fa-fw fa-database"></i> Datasets</a></a>
 						<a href="/admin/discretization" class="list-group-item"><i class="fa fa-fw fa-pie-chart"></i> Domain Discretization</a>
 						<a href="/admin/processing" class="list-group-item"><i class="fa fa-fw fa-gear"></i> Processing</a>
+						<a href="/admin/workers" class="list-group-item"><i class="fa fa-fw fa-android"></i> Workers</a>
 						<a href="/admin/models" class="list-group-item"><i class="fa fa-fw fa-leaf"></i> Models</a>
 						<a href="/admin/users" class="list-group-item"><i class="fa fa-fw fa-user"></i> Users</a>
 					</div>

@@ -1,0 +1,22 @@
+{% extends "base.html" %}
+
+
+{% block footjs %}
+         <script type="text/javascript">
+         var evtSrc = new EventSource("/api/v1/notifications");
+         evtSrc.onmessage = function(e) {
+             console.log(e.data);
+         };
+         </script>
+{% endblock %}
+{% block content %}
+<br />
+
+<div class="panel panel-default" style="padding-bottom:0">
+	<div class="panel-heading">
+		<strong>Notifcations overview.</strong>
+	</div>
+</div>
+
+
+{% endblock %}

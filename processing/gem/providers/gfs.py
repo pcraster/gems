@@ -130,15 +130,17 @@ class GfsProvider(provider.Provider):
         wcs=WebCoverageService(req_url, version='1.0.0')
         meta=wcs.contents[name]
             
-        cov = wcs.getCoverage(identifier=name,bbox=extent.bounds, format="GeoTIFF_Float")
+        #cov = wcs.getCoverage(identifier=name,bbox=extent.bounds, format="GeoTIFF_Float")
+        try:
+            cov = wcs.getCoverage(identifier=name, bbox=extent.bounds, format="GeoTIFF_Float")
+            filename=os.path.join(self._cache,"%s.tif"%(cache_key))
+            logger.debug("WCS: saving file to: %s"%(filename))
+            with open(filename,'w') as f:
+                f.write(cov.read())
+            dataset = gdal.Open(filename, gdalconst.GA_ReadOnly)
+        except Exception as e:
+            logger.error("WCS: failure: %s"%(e))
         
-        print cov.url
-        
-        filename=os.path.join(self._cache,"%s.tif"%(cache_key))
-        logger.debug("saving file to: %s"%(filename))
-        with open(filename,'w') as f:
-            f.write(cov.read())
-        
-        return self.warp_to_grid(filename)
+        return self.warp_to_grid(dataset)
         #pass
 

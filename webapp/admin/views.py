@@ -112,6 +112,24 @@ def processing():
     """
     jobs=Job.query.order_by(Job.date_created.desc()).limit(10)
     return render_template("admin/processing.html",jobs=jobs)
+    
+
+@admin.route('/notifications')
+@roles_required('admin')
+def notifications():
+    """
+    Show notifications sent via postgresql NOTIFY
+    """
+    return render_template("admin/notifications.html")
+
+@admin.route('/workers')
+@roles_required('admin')
+def workers():
+    """
+    Shows information on connected workers
+    """
+    workers = Worker.query.order_by(Worker.updated.desc()).limit(10)
+    return render_template("admin/workers.html", workers=workers)
 
 @admin.route('/models/<model_name>/editor',methods=["GET","POST"])
 def model_editor(model_name):
@@ -141,7 +159,7 @@ def model_parameters(model_name):
     show the code editor
     """
     model=Model.query.filter_by(name=model_name).first_or_404()
-    return render_template('admin/modelparameters.html',model=model)        
+    return render_template('admin/modelparameters.html',model=model)    
 
 @admin.route('/models',methods=["GET","POST"])
 @roles_required('admin')
@@ -163,8 +181,7 @@ def models():
 #            return redirect(url_for('site.home'))
         
         try:
-            model_name = request.form.get("modelname","")
-            model = Model(name=model_name)
+            model = Model(name=request.form.get("modelname",""))
             db.session.add(model)
             db.session.commit()
         except Exception as e:
@@ -174,6 +191,6 @@ def models():
         else:
             return redirect(url_for('admin.model_editor',model_name=model.name))
     else:
-        flash("Nothing here anymore.")
+        flash("The models admin page is no longer in use because all the models are now listed on the homepage.","info")
         return redirect(url_for('site.home'))
         

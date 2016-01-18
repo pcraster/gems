@@ -8,6 +8,7 @@ import beanstalkc
 import datetime
 import logging
 import pytz
+import random
 
 #from tzwhere import tzwhere
 #tz = tzwhere.tzwhere()
@@ -182,6 +183,11 @@ class GemModel(DynamicModel, ModelReporter):
           any output layers along the mask. It is important that self._mask
           is always set!
           
+        Todo:
+        
+        * Rasterization to create a boolean mask should use a timer in case
+          gdal.RasterizeLayer freezes.
+          
         """
         self._grid = grid
         
@@ -191,10 +197,11 @@ class GemModel(DynamicModel, ModelReporter):
         logger.debug(" - Bounding box (utm): %s"%(str(grid['bbox_utm'])))
         logger.debug(" - Bounding box (latlng): %s"%(str(grid['bbox_latlng'])))
         
+
         if len(grid['mask']) > 1024:
-            logger.debug(" - Geojson mask: %s"%(str(grid['mask'])))
+            logger.debug(" - WKT mask: %s"%(str(grid['mask'])))
         else:
-            logger.debug(" - Geojson mask: %s (...) Rest of geojson mask omitted for brevity."%(str(grid['mask'])[0:256]))
+            logger.debug(" - WKT mask: %s (...) Rest of geojson mask omitted for brevity."%(str(grid['mask'])[0:256]))
         
 
         try:
@@ -212,16 +219,24 @@ class GemModel(DynamicModel, ModelReporter):
             srs = osr.SpatialReference()  
             srs.ImportFromWkt(self._grid["projection"])  
             drv = ogr.GetDriverByName("ESRI Shapefile")
-            ds = drv.CreateDataSource("/vsimem/temp.shp")
-
+            filename = "/vsimem/temp-chunk-%s.shp"%(random.random())
+            ds = drv.CreateDataSource(filename)
+            #ds = drv.CreateDataSource("/tmp/temp-shape.shp")
+            logger.debug("Created in memory shapefile data source: %s"%(filename))
             layer = ds.CreateLayer("feature_layer", geom_type=ogr.wkbPolygon, srs=srs)   
             feature = ogr.Feature(layer.GetLayerDefn())
             feature.SetGeometry(ogr.CreateGeometryFromWkt(str(grid['mask'])))
             layer.CreateFeature(feature)
+                        
+            #Create a GDAL raster datasource representative of the chunk
             self._mask = gdal.GetDriverByName('MEM').Create('', self._grid['cols'], self._grid['rows'], 1, gdalconst.GDT_Float32)
             self._mask.SetGeoTransform(self._grid["geotransform"])
             self._mask.SetProjection(self._grid["projection"])
+            
+            
+            logger.debug("Calling gdal.RasterizeLayer()")
             err = gdal.RasterizeLayer(self._mask, (1,), layer, burn_values=(1,), options=["ALL_TOUCHED=TRUE"])
+            logger.debug("Done!")
             if err != 0:
                 raise Exception("Rasterization failed with error code %d"%(err))
             else:

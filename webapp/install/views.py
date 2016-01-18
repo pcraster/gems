@@ -168,7 +168,7 @@ def check_configuration():
     ###
     ### check the data directory is writable
     ###
-    if beanstalk.ok:
+    if beanstalk:
         yield report("Connected to beanstalk work queue!")
     else:
         yield report("Could not connect to beanstalkd work queue. Make sure the service is running and that it is accessible from this machine.",'error')
@@ -272,36 +272,53 @@ def create_discretizations():
     """
     Initializes the database with default users, chunkschemes, and models.
     """
-    yield report("Creating <code>newzealand_onedegree</code>")
-    yield create_discretization("newzealand_onedegree")
-    
-    yield report("Creating <code>frankrijk_veldwerkgebied</code>")
-    yield create_discretization("frankrijk_veldwerkgebied")
-    
-    yield report("Creating <code>thames</code>")    
-    yield create_discretization("thames")
-    
-    yield report("Creating <code>world_onedegree</code> (this one is rather large so it may take a while, please be patient...)")
-    yield create_discretization("world_onedegree")
+    discretizations = (
+        {
+            'name':'newzealand_onedegree',
+            'cellsize':100   
+        },
+        {
+            'name':'frankrijk_veldwerkgebied',
+            'cellsize':50
+        },
+        {
+            'name':'world_onedegree',
+            'cellsize':100   
+        },
+        {
+            'name':'rocky_mountain_national_park',
+            'cellsize':100   
+        },
+        {
+            'name':'southeast_african_countries',
+            'cellsize':10000
+        },
+        {
+            'name':'us_continental_counties',
+            'cellsize':100   
+        },
+        {
+            'name':'nederland',
+            'cellsize':10
+        },
+#        {
+#            'name':'european_catchments',
+#            'cellsize':1000
+#        },
+    )
+    for d in discretizations:
+        yield report("Creating <code>%s</code>"%(d['name']))
+        yield create_discretization(d['name'],d['cellsize'])
+
     
 def create_models():
     """
     Initializes the default models.
     """
-    yield report("Load model <code>example</code>")
-    yield create_model("example")
-    yield report("Load model <code>pcrtopo</code>")
-    yield create_model("pcrtopo")
-    yield report("Load model <code>forecast</code>")
-    yield create_model("forecast")
-    yield report("Load model <code>globerosion</code>")
-    yield create_model("globerosion")
+    for model_name in ("example", "life", "pcrtopo", "pcrsnow", "globerosion", "forecast", "cosmo", "waterworld"):
+        yield create_model(model_name)
 
-#    create_discretization("european_catchments")
-#    create_discretization("newzealand_subcatchments")
-#    create_discretization("newzealand_randompolygons")
-
-def create_discretization(name):
+def create_discretization(name, cellsize=100):
     """
     Creates a discretization in the database from a zipfile containing 
     polygon features. New disretizations are created by uploading a shapefile
@@ -315,7 +332,7 @@ def create_discretization(name):
         filename = os.path.join(current_app.config["CODE"],"data","discretizations",name+".zip")
         ds = ogr.Open("/vsizip/"+filename)
         if ds is not None:
-            db.session.add(Discretization(name, ds, 100))
+            db.session.add(Discretization(name, ds, cellsize))
             db.session.commit()
         else:
             raise Exception("No data found in: %s"%(filename))

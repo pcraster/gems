@@ -16,6 +16,7 @@
 		<tbody>
 			<tr>
 				<td style="padding-left:15px;">Submitted</td>
+				<td>Owner</td>
 				<td>Config Key</td>
 				<td>Job</td>
 				<td>Job Chunks</td>
@@ -23,10 +24,12 @@
 		{% for j in jobs %}
 			<tr>
 				<td style="padding-left:15px;">
-					{{j.shortdate}} {{j.user_id}}
+					{{j.shortdate}}
 				</td>
+				<td><i class="fa fa-user"></i> <code>{{j.user.username}}</code></td>
 				<td><i class="fa fa-fw fa-wrench"></i> <code><a href="/api/v1/config/{{j.modelconfiguration.key}}">{{j.modelconfiguration.shortkey}}</a></code></td>
-				<td><i class="fa fa-fw fa-sitemap"></i> <code>{{j.shortkey}} <a href="/api/v1/job/{{j.uuid}}/log">[Log]</a></code></td>
+				<td><i class="fa fa-fw fa-sitemap"></i> <code>{{j.shortkey}}</code> <a class="btn btn-default btn-xs" href="/api/v1/job/{{j.uuid}}/log"><i class="fa fa-file-text-o"></i>
+ View Log</a></td>
 				
 				<td>
 				{% for c in j.jobchunks %}
@@ -40,7 +43,10 @@
 					{% if c.status_code == 1 %}
 					<i class="fa fa-circle" style="color:#15b01a;"></i>
 					{% endif %}
-					<code>{{loop.index}}/{{j.jobchunks_total}}</code><i class="fa fa-fw fa-angle-right" style="color:#666;"></i><code>{{c.shortkey}} <a href="{{url_for('api.jobchunk_log',jobchunk_uuid=c.uuid)}}">[Log]</a> </code> 
+					<code>{{loop.index}}/{{j.jobchunks_total}}</code><i class="fa fa-fw fa-angle-right" style="color:#666;"></i><code>{{c.shortkey}}</code>
+<a class="btn btn-default btn-xs" href="{{url_for('api.jobchunk_log',jobchunk_uuid=c.uuid)}}"><i class="fa fa-file-text-o"></i>
+ View Log</a>
+
 					</p>
 				{% endfor %}
 

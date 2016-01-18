@@ -14,7 +14,8 @@ class Model(GemModel):
         'abstract':             'Calculates topographic derivates from the SRTM digital elevation model.',
         'license':              'All Rights Reserved',
         'tags':			 ['topography','SRTM','slope','aspect'],
-        'discretization':       'world_onedegree_100m'
+        'discretization':       'world_onedegree_100m',
+        'maxchunks':            1
     }
     parameters={
         #

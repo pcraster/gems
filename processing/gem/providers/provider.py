@@ -10,6 +10,36 @@ from shapely.wkt import loads
 
 logger = logging.getLogger()
 
+def gdal_reprojectimage(source_dataset, target_dataset, source_projection, target_projection, resampling):
+    """
+    Reproject an image onto the model grid. 
+    
+    Todo:
+    
+    * Add a timeout here that if the gdal command takes too long to run (ie. it freezes) that our
+      whole server does not get unresponsive. Under some weird circumstances gdal.ReprojectImage or 
+      rasterize can do this. For timeout see http://stackoverflow.com/questions/2281850/timeout-function-if-it-takes-too-long-to-finish
+    """
+    logger.debug("Reprojecting dataset using gdal.ReprojectImage(). Timeout is set to 10 seconds.")
+    logger.debug("Input dataset is %d by %d pixels"%(source_dataset.RasterXSize, source_dataset.RasterYSize))
+    logger.debug("Input projection: %s"%(source_dataset.GetProjection()))        
+    logger.debug("Output dataset is %d by %d pixels"%(target_dataset.RasterXSize, target_dataset.RasterYSize))
+    logger.debug("Output projection: %s"%(target_dataset.GetProjection()))
+    
+    gdal.ReprojectImage(source_dataset, target_dataset, source_dataset.GetProjection(), target_dataset.GetProjection(), resampling)
+    band = target_dataset.GetRasterBand(1)
+    
+    dt = np.dtype(np.float32)
+    if gdal.GetDataTypeName(band.DataType) in ('Int32','Int16','Byte'):
+        dt = np.dtype(np.int32)
+
+    data = np.array(band.ReadAsArray(), dtype=dt)
+    source_dataset = None
+    target_dataset = None
+    
+    return data
+
+
 class Provider(object):
     """
     Base class for a GEMS data provider. All providers must extend this 
@@ -105,22 +135,7 @@ class Provider(object):
         needs to provide data to the model in a UTM projection).
         """
         dst = self.create_clone()
-        
-        logger.debug("Warping a dataset to the model grid")
-        logger.debug("Input: %s"%(dataset.GetProjection()))        
-        logger.debug("To: %s"%(dst.GetProjection()))
-        
-        gdal.ReprojectImage(dataset, dst, dataset.GetProjection(), dst.GetProjection(), resample)
-        band = dst.GetRasterBand(1)
-        
-        dt = np.dtype(np.float32)
-        if gdal.GetDataTypeName(band.DataType) in ('Int32','Int16','Byte'):
-            dt = np.dtype(np.int32)
-
-        data = np.array(band.ReadAsArray(), dtype=dt)
-        dataset = None
-        dst = None
-
+        data = gdal_reprojectimage(dataset, dst, dataset.GetProjection(), dst.GetProjection(), resample)
         return data
 
     def burn_to_grid(self, dataset, options):
