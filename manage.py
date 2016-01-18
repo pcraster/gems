@@ -42,26 +42,5 @@ def reset_password(username):
     db.session.commit()
     print "New password for user '%s': %s"%(username,new_password)
 
-@manager.command
-def notifications():
-    conn = db.engine.connect()
-    conn.execute(text("LISTEN gemsnotifications;").execution_options(autocommit=True))
-    while 1:
-        if select.select([conn.connection],[],[],5) == ([],[],[]):
-            print "Timeout"
-        else:
-            conn.connection.poll()
-            while conn.connection.notifies:
-                notify = conn.connection.notifies.pop()
-                print "Got NOTIFY:", datetime.datetime.now(), notify.pid, notify.channel, notify.payload
-
-@manager.command
-def notify():
-    listen(Pool, "gemsnotification", my_on_connect)
-    
-def my_on_connect(**kwargs):
-    print "NOTIFICASTION!!"
-    
-
 if __name__=="__main__":
     manager.run()
