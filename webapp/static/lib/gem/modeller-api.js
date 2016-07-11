@@ -129,6 +129,15 @@ var M=$.extend(M || {},{
 					M.map.geojsonlayer.clearLayers()
 					M.map.geojsonlayer.addData(data.features)
 					M.map.geojsonlayer.bringToFront()
+					/*
+					This updates the map state when a parameter in the 
+					'Edit Parameters' section is changed. Needs to be better,
+					if there is no current datalayer but there is one for the changed
+					parameter, it does not work.
+					*/
+					if(M.map.datalayer != undefined) {
+						M.map.update({configkey:data["configkey"]})
+					}
 					M.state['prognosis']=true
 					M.state['prognosis_message']=data["message"]
 					M.gui.done('api-prognosis')

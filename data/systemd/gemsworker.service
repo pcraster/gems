@@ -3,7 +3,7 @@ Description=GEMS Worker
 
 [Service]
 Type=simple
-ExecStart=/var/www/gems/processing/client.py
+ExecStart=/var/www/gems/processing/client.py -k admin:2v2hgbXDb
 StandardOutput=syslog
 StandardError=syslog
 

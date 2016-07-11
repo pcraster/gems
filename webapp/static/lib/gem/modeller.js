@@ -697,7 +697,11 @@ var M=$.extend(M || {},{
 				//console.log("Input "+input.prop("id")+" has changed!!")
 				M.api.job_prognosis()
 			})
-
+			
+			$("h2#output-layer-header").on("click",function(){
+				$("form#attribute-form").slideToggle()
+				$("div#arrow").toggleClass("arrow-down arrow-right")
+			})
 			/*
 			Add the control with input params to the top left of the Leaflet map
 			and disable that mousewheel and click events propagate to the map

@@ -52,7 +52,7 @@
 			padding:10px;
 			padding-bottom:6px;
 			padding-top:12px;
-			width:300px;
+			width:450px;
 			font-size:1.0em;
 		}
 		div.map-control-left {
@@ -272,5 +272,26 @@ div.legend-chart-placeholder.loading > * {
 div.clickable {
 	cursor:pointer;
 }
-
+div.arrow-down {
+	display:inline;
+	position:relative;
+	top:10px;
+	margin-right:5px;
+	width: 0; 
+	height: 0; 
+	border-left: 4px solid transparent;
+	border-right: 4px solid transparent;
+	border-top: 6px solid #888;
+}
+div.arrow-right {
+	display:inline-block;
+	position:relative;
+	margin-right:5px;
+	margin-bottom:1px;
+	width: 0; 
+	height: 0; 
+	border-top: 4px solid transparent;
+	border-bottom: 4px solid transparent;
+	border-left: 6px solid black;
+}
 
