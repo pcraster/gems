@@ -168,7 +168,7 @@ class GemFramework(DynamicFramework):
             self._timings["total"]=now()-self.time_total
                 
         except Exception as e:
-            logger.critical("An exception occurred during this run!")
+            logger.critical("An exception occurred during this run!", exc_info=True)
             logger.critical(e)
         else:
             logger.debug("Model run completed without raising any exceptions")

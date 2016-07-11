@@ -17,20 +17,24 @@ var M=$.extend(M || {},{
 				data points in the plot. These need to be bound only once, and they'll
 				stick to the placeholder even if the chart gets redrawn in the meantime.
 				*/
-				this.placeholder.bind("plotclick", function (event, pos, item) {
+				this.placeholder.bind("plotclick", $.proxy(function (event, pos, item) {
 					if (item) {
 						var timestamp = new Date(item.datapoint[0])
 						var value = item.datapoint[1]
 						M.map.setTime(M.util.datetotimestamp(timestamp))
+						var legend = M.legends.get(M.state['layers'])
+						this.defaultvalue=item.datapoint[1]
+						legend.marker(this.defaultvalue)
 					}
-				});
+				},this));
+				
 				this.placeholder.bind("plothover", $.proxy(function (event, pos, item) {
 					var legend = M.legends.get(M.state['layers'])
 					if(item) {
 						legend.marker(item.datapoint[1])
 						this.placeholder.addClass("clickable");
 					} else {
-						legend.marker()
+						legend.marker(this.defaultvalue)
 						this.placeholder.removeClass("clickable");
 					}
 				},this));
@@ -79,6 +83,9 @@ var M=$.extend(M || {},{
 					this.gridMarkings=[]
 					if (data != undefined) {
 						this.gridMarkings=[]
+						var legend = M.legends.get(M.state['layers'])
+						this.defaultvalue=data.currentvalue
+						legend.marker(this.defaultvalue)
 						for (var n = 0; n < data["value"].length; n+=1) {
 							if (data["timestamp"][n]==this.options['time']) {
 								this.gridMarkings = [{ xaxis: { from: n-0.5, to: n+0.5}, color: "yellow" }]

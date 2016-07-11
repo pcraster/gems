@@ -273,22 +273,21 @@ def point():
             p=subprocess.Popen(["/usr/bin/gdallocationinfo","-wgs84","-valonly",sourcefile,str(lng), str(lat)], stdout=subprocess.PIPE)
             stdout, err = p.communicate()
             values = [round(v, rounding) for v in map(float,stdout.split())]
-            
+            current_value=values[timestamps.index(time)]
             
             print "modelparameters:"
             print reporting['symbolizer']['values']
                         
             
-            #results = 
             yaxis = {
                 'min':reporting['symbolizer']['values'][0],
                 'max':reporting['symbolizer']['values'][1]
             }
 
-            return jsonify(value=values,timestamp=timestamps,model=modelconfig.model.name,yaxis=yaxis),200
+            return jsonify(currentvalue=current_value, value=values,timestamp=timestamps,model=modelconfig.model.name,yaxis=yaxis),200
         except Exception as e:
-            return jsonify(value=[],timestamp=[],message="Error:%s"%(e)),500
-    return jsonify(value=[],timestamp=[],message="No data found"),200
+            return jsonify(currentvalue=undefined, value=[],timestamp=[],message="Error:%s"%(e)),500
+    return jsonify(currentvalue=undefined, value=[],timestamp=[],message="No data found"),200
         
     
     

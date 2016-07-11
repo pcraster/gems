@@ -8,6 +8,9 @@ import os
 ### sensitive information in the settings.py file.
 ###############################################################################
 DEBUG = True 
+#When you use DEBUG = False, PROPAGATE_EXCEPTIONS needs to be set to True,
+#or some POST methods will not work (for instance Add Discretization)
+PROPAGATE_EXCEPTIONS = True 
 MAIL_FROM_EMAIL =           ''
 SECRET_KEY =                ''
 HOME=                       '/var/wwwdata/gems'
