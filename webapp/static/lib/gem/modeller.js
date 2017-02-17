@@ -205,21 +205,24 @@ var M=$.extend(M || {},{
 			Initialize the leaflet map object. It is stored in M.map.obj.
 			*/
 			M.map.obj = L.map('map',{
+				'layers':MQ.mapLayer(),
 				'scrollWheelZoom':true,
 				'zoomControl':false,
 				'minZoom':4,
 				'maxZoom':20,
-				'attributionControl':false,
+				/*
+				'attributionControl':false,*/
 			});
 
 			/*
-			Add the background tile layer to the map.
-			*/
-			L.tileLayer('http://otile{s}.mqcdn.com/tiles/1.0.0/map/{z}/{x}/{y}.jpg', {
-				attribution: '',
+			Add the background tile layer to the map. OLD
+			
+			L.tileLayer('http://{s}.tile.osm.org/{z}/{x}/{y}.png', {
+				attribution: '© OpenStreetMap contributors',
 				maxZoom: 18,
 				subdomains: '1234'
 			}).addTo(M.map.obj);
+			*/
 
 			M.map.geojsonlayer = L.geoJson(undefined, {
 				'style':{
@@ -234,7 +237,8 @@ var M=$.extend(M || {},{
 					})
 				}
 			}).addTo(M.map.obj);
-
+			
+			L.control.zoom({position:'bottomright'}).addTo(M.map.obj);
 			L.control.scale({position:'bottomleft'}).addTo(M.map.obj);
 			/*
 			Attache some events for when the map is moving
@@ -696,8 +700,8 @@ var M=$.extend(M || {},{
 				var input=$(this)
 				//console.log("Input "+input.prop("id")+" has changed!!")
 				M.api.job_prognosis()
+				M.map.updatestate()
 			})
-			
 			$("h2#output-layer-header").on("click",function(){
 				$("form#attribute-form").slideToggle()
 				$("div#arrow").toggleClass("arrow-down arrow-right")

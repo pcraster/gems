@@ -202,7 +202,7 @@ if __name__ == "__main__":
     parser.add_argument("-p","--processes", help="Number of processes to start", default=1)
     parser.add_argument("-v","--verbose",   help="Log level", action='store_true',  default=True)
     parser.add_argument("-d","--directory", help="Working directory", default="/tmp/.gemsrundir")
-    parser.add_argument("-a","--api",       help="Host name of the GEMS server where the work queue and API are running", default="localhost")
+    parser.add_argument("-a","--api",       help="Host name of the GEMS server where the work queue and API are running", default="localhost:88")
     parser.add_argument("-k","--apikey",    help="API username and key (admin:<key>)", required=True)
     parser.add_argument("-q","--queue",     help="Host name of the beanstalk work queue", default="localhost")
     parser.add_argument("-t","--tube",      help="Name of the beanstalk tube to use", default="gemsjobs")
