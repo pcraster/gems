@@ -1067,7 +1067,8 @@ class Model(db.Model):
                 if paramtype is float:
                     try: v=float(v)
                     except: pass
-                modelparams.update({k:v})
+                if v != "###":
+                    modelparams.update({k:v})
 
         #add the default parameters to the configuration as well
         modelparams.update({
@@ -1644,6 +1645,7 @@ Log:
             'grid':self.chunk.grid,
             'modelcode':self.job.modelconfiguration.model.code
         })
+        
 
 
 class User(db.Model, UserMixin):

@@ -784,7 +784,7 @@ def jobchunk_maps(jobchunk_uuid):
                         #
                         #Todo: check that the file actually exists and that a manifest is 
                         #      present, otherwise we may be adding maps to the mapindex
-                    #           which do not have a corresponding file on disk.
+                        #      which do not have a corresponding file on disk.
                         #
                         try: maps_list.append(Map(chunk,modelconfiguration,map_dict))
                         except: pass

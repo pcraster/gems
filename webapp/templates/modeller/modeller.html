@@ -6,6 +6,9 @@
 
 	<script src="/static/lib/leaflet/leaflet.js"></script>
 	<script src="/static/lib/leaflet-plugins/grid/L.Grid.js"></script>
+	<script src="https://www.mapquestapi.com/sdk/leaflet/v2.2/mq-map.js?key=Rb8mk6WhnRbq72GpHLRGXnkX5u35Ou3K "></script>
+
+
 
 
 	<!-- script src="/static/lib/chart/Chart.min.js"></script -->
@@ -162,15 +165,15 @@ opacity:0.8;
 				<h2>Model parameters</h2>
 				<form id="model-parameters" action="/api/v1/job" method="POST" class="form-horizontal">
 					<div class="form-group" style="display:none;">
-						<label for="model_name" class="col-sm-7 control-label">Model Identifier</label>
-						<div class="col-sm-5">
+						<label for="model_name" class="col-sm-4 control-label">Model Identifier</label>
+						<div class="col-sm-8">
 							<input type="text" class="form-control input-sm" name="model_name" style="width:100%;text-align:center;" value="{{model.name}}">
 						</div>
 					</div>
 					{% for parameter in model.parameters %}
 					<div class="form-group">
-						<label for="{{parameter}}" class="col-sm-7 control-label">{{parameter}}</label>
-						<div class="col-sm-5">
+						<label for="{{parameter}}" class="col-sm-4 control-label">{{parameter}}</label>
+						<div class="col-sm-8">
 							<input type="text" class="form-control input-sm" id="{{parameter}}" placeholder="" name="{{parameter}}" style="width:100%;text-align:center;" value="###">
 							<!-- 
 							The '###' values will be replaced when a JavaScript loads the 
@@ -200,7 +203,7 @@ opacity:0.8;
 		</div>
 
 		<div id="panel-attributes" class="map-control map-control-right" style="width:350px;">
-			<h2>Output layers</h2>
+			<h2 id="output-layer-header"><div class="arrow-down" id="arrow"></div>Output layers</h2>
 			<p style="color:#888;">Hint: Hold down SPACE to quickly show and hide the data layer.</p>
 			<form class="form-horizontal" id="attribute-form">
 				{% for attribute in model.reporting %}

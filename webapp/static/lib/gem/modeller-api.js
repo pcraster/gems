@@ -129,6 +129,9 @@ var M=$.extend(M || {},{
 					M.map.geojsonlayer.clearLayers()
 					M.map.geojsonlayer.addData(data.features)
 					M.map.geojsonlayer.bringToFront()
+					if(M.map.datalayer!=undefined) {
+						M.map.update({configkey:data["configkey"]})
+					}
 					M.state['prognosis']=true
 					M.state['prognosis_message']=data["message"]
 					M.gui.done('api-prognosis')
