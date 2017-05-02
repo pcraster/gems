@@ -28,7 +28,7 @@ from osgeo import gdal, gdalconst
 
 from shapely.geometry import box
 
-sys.path.append("/home/koko/pcraster/pcraster-4.0.2_x86-64/python")
+sys.path.append("/opt/pcraster/python")
 logger=logging.getLogger()
 
 def round_datetime(dt=datetime.datetime.now(), seconds=-3600):
@@ -47,6 +47,12 @@ def round_to(number,roundto):
 
 class GfsProvider(provider.Provider):
     def __init__(self, config, grid):
+        """
+        Current Issues:
+        - only 'now' works as starttime in the model. any other model gives an 
+        error at line 132 (req_url).
+        Somethingsomething dictionary not fed the correct keys.
+        """
         #
         # Initialize the provider. This sets up a temporary directory and some
         # general stuff that all providers need.
@@ -62,7 +68,7 @@ class GfsProvider(provider.Provider):
         start = round_datetime(dt=datetime.datetime.utcnow(), seconds=-21600)
         
         logger.debug("Looking for most recent GFS dataset")
-        for offset in xrange(-21600*1, -21600*6, -21600):
+        for offset in xrange(-21600*1, -21600*12, -21600):
             logger.debug("trying date")
             gfs_latest = start + datetime.timedelta(seconds=offset)
             gfs_dt.append(gfs_latest)      

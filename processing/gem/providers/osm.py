@@ -9,7 +9,7 @@ import provider
 import numpy as np
 from osgeo import gdal, gdalconst, ogr
 
-sys.path.append("/home/koko/pcraster/pcraster-4.0.2_x86-64/python")
+sys.path.append("/opt/pcraster/python")
 logger=logging.getLogger()
 
 class OsmProvider(provider.Provider):
