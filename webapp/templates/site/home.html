@@ -139,43 +139,31 @@ Data Download in the sidebar
 			</p>
 			{% else %}
 			<p>
-				Download the data zip files from previous model runs.<br />
-				Click 'Map' to open the modeller with the used parameters loaded.
+				<code>Download</code> the data zip files from previous model runs.<br />
+				Click <code style="background-color:#333;color:#15b01a;">Map</code> to open the modeller with the used parameters loaded.
 			</p>
 			<table class="table">
 				<tbody>
 					<tr>
 						<td style="padding-left:15px;">Submitted</td>
-						<td>Job Log</td>
+						<td>Model Config</td>
 						<td>Job Chunks (Download)</td>
 					</tr>
 					{% for j in jobs %}
 					<tr>
 						<td style="padding-left:15px;">
-							{{j.shortdate}}
+							{{j.shorterdate}}
 						</td>
 						<td>
-							<i class="fa fa-fw fa-wrench"></i> <code><a href="/api/v1/config/{{j.modelconfiguration.key}}">{{j.modelconfiguration.shortkey}}</a></code>
+							<i class="fa fa-fw fa-wrench"></i> <code><a href="/api/v1/shortcon/{{j.modelconfiguration.key}}">{{j.modelconfiguration.model.shortname}}</a></code>
 							<code style="background-color:#333;"><a style="color:#15b01a;" href="/modeller/{{j.modelconfiguration.model.name}}#{{j.modelconfiguration.key}}">Map</a></code>
 						</td>
 						<td>
 							{% for c in j.jobchunks %}
-							<p style="margin-bottom:3px;">
-								{% if c.status_code == 0 %}
-								<i class="fa fa-circle" style="color:#cccccc;"></i>
-								{% endif %}
-								{% if c.status_code == -1 %}
-								<i class="fa fa-circle" style="color:#e50000;"></i>
-								{% endif %}
-								{% if c.status_code == 1 %}
-								<i class="fa fa-circle" style="color:#15b01a;"></i>
-								{% endif %}
 								<code>{{loop.index}}/{{j.jobchunks_total}}</code>
 								<a href="/data/download/{{c.uuid}}">
 									<i class="fa fa-fw fa-angle-right" style="color:#666;"></i><code>Download</code>
 								</a>
-
-							</p>
 							{% endfor %}
 						</td>
 					</tr>

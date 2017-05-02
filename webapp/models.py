@@ -837,6 +837,13 @@ class Model(db.Model):
             "reporting":self.reporting,
             "time":self.time
         }
+    
+    @property
+    def shortname(self):
+        if len(self.name) >12:
+            return self.name[:9]+"..."
+        else:
+            return self.name
         
     @property
     def filename(self):
@@ -853,6 +860,7 @@ class Model(db.Model):
             print "model dir no exist..try to create... %s"%(_model_dir)
             os.makedirs(_model_dir)
         return os.path.join(_model_dir)
+        
     @property
     def mapserver_config_params(self):
         """
@@ -1308,6 +1316,17 @@ class ModelConfiguration(db.Model):
             "timesteps":self.model_timesteps,
             "results":self.results
         }
+        
+    @property
+    def as_short_dict(self):
+        """
+        Return a JSON representation of a modelconfiguration.
+        """
+        return {
+            "parameters":self.parameters,
+            "meta":self.model.meta,
+        }
+        
     @property
     def as_text(self):
         params_as_str = "\n".join(["%s -> %s"%(param,str(self.parameters[param])) for param in sorted(self.parameters)])
@@ -1428,6 +1447,10 @@ class Job(db.Model):
     @property
     def shortdate(self):
         return self.date_created.strftime('%Y-%m-%d %H:%M:%S')
+        
+    @property
+    def shorterdate(self):
+        return self.date_created.strftime('%a %H:%M')
 
     @property
     def jobchunks_list(self):

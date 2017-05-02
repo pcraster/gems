@@ -518,7 +518,37 @@ def config_status(config_key):
         raise APIException("The model configuration could not be retrieved with the specified config key.", status_code=404)
     else:
         return jsonify(config.as_dict),200
+        
+@api.route('/shortcon/<config_key>',methods=["GET"])
+def shortcon_status(config_key):
+    """Returns a JSON representation of a modelconfiguration instance. This 
+    contains metadata about the model, reporting information (i.e. output 
+    attributes), and time information about the model. The set of parameters 
+    which are used for the model run are also included.
+    
+    **URL Pattern**
+    
+    ``GET /config/<config_key>``
 
+    **Parameters**
+    
+    None.
+    
+    **Returns**
+    
+    200 OK (application/json)
+        Returns a JSON document of the model configuration.
+        
+    404 Not Found (application/json)
+        This configuration key does not exist.
+        
+    """
+    config = ModelConfiguration.query.filter_by(key=config_key).first()
+    if config is None:
+        raise APIException("The model configuration could not be retrieved with the specified config key.", status_code=404)
+    else:
+        return jsonify(config.as_short_dict),200
+        
 @api.route('/model/<model_name>',methods=["GET"])
 def model_code_view(model_name):
     """

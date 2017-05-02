@@ -5,7 +5,7 @@ var M=$.extend(M || {},{
 	config: {
 		version:'0.1',
 		api:'/api/v1/',
-		debug:true
+		debug:false
 	},
 	/*
 	Default state variables. Will be updated as soon as a certain config
@@ -214,19 +214,6 @@ var M=$.extend(M || {},{
 				'attributionControl':false,*/
 			});
 
-<<<<<<< HEAD
-			/*
-			Add the background tile layer to the map. OLD
-			
-			L.tileLayer('http://{s}.tile.osm.org/{z}/{x}/{y}.png', {
-				attribution: '© OpenStreetMap contributors',
-				maxZoom: 18,
-				subdomains: '1234'
-			}).addTo(M.map.obj);
-			*/
-
-=======
->>>>>>> sidebar
 			M.map.geojsonlayer = L.geoJson(undefined, {
 				'style':{
 					"color": "#e50000",
@@ -240,11 +227,7 @@ var M=$.extend(M || {},{
 					})
 				}
 			}).addTo(M.map.obj);
-<<<<<<< HEAD
-			
-=======
 
->>>>>>> sidebar
 			L.control.zoom({position:'bottomright'}).addTo(M.map.obj);
 			L.control.scale({position:'bottomleft'}).addTo(M.map.obj);
 			/*
@@ -709,13 +692,10 @@ var M=$.extend(M || {},{
 				M.api.job_prognosis()
 				M.map.updatestate()
 			})
-<<<<<<< HEAD
-=======
 			/*
 			We add a control to the layer select tab that slides in the layers.
 			This way the chart does not get hidden on smaller screens.
 			*/
->>>>>>> sidebar
 			$("h2#output-layer-header").on("click",function(){
 				$("form#attribute-form").slideToggle()
 				$("div#arrow").toggleClass("arrow-down arrow-right")
