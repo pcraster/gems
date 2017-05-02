@@ -12,23 +12,23 @@ logger = logging.getLogger()
 
 def gdal_reprojectimage(source_dataset, target_dataset, source_projection, target_projection, resampling):
     """
-    Reproject an image onto the model grid. 
-    
+    Reproject an image onto the model grid.
+
     Todo:
-    
+
     * Add a timeout here that if the gdal command takes too long to run (ie. it freezes) that our
-      whole server does not get unresponsive. Under some weird circumstances gdal.ReprojectImage or 
+      whole server does not get unresponsive. Under some weird circumstances gdal.ReprojectImage or
       rasterize can do this. For timeout see http://stackoverflow.com/questions/2281850/timeout-function-if-it-takes-too-long-to-finish
     """
     logger.debug("Reprojecting dataset using gdal.ReprojectImage(). Timeout is set to 10 seconds.")
     logger.debug("Input dataset is %d by %d pixels"%(source_dataset.RasterXSize, source_dataset.RasterYSize))
-    logger.debug("Input projection: %s"%(source_dataset.GetProjection()))        
+    logger.debug("Input projection: %s"%(source_dataset.GetProjection()))
     logger.debug("Output dataset is %d by %d pixels"%(target_dataset.RasterXSize, target_dataset.RasterYSize))
     logger.debug("Output projection: %s"%(target_dataset.GetProjection()))
-    
+
     gdal.ReprojectImage(source_dataset, target_dataset, source_dataset.GetProjection(), target_dataset.GetProjection(), resampling)
     band = target_dataset.GetRasterBand(1)
-    
+
     dt = np.dtype(np.float32)
     if gdal.GetDataTypeName(band.DataType) in ('Int32','Int16','Byte'):
         dt = np.dtype(np.int32)
@@ -36,18 +36,18 @@ def gdal_reprojectimage(source_dataset, target_dataset, source_projection, targe
     data = np.array(band.ReadAsArray(), dtype=dt)
     source_dataset = None
     target_dataset = None
-    
+
     return data
 
 
 class Provider(object):
     """
-    Base class for a GEMS data provider. All providers must extend this 
-    class and implement their own provide() method which provides the 
+    Base class for a GEMS data provider. All providers must extend this
+    class and implement their own provide() method which provides the
     layer that the model is requesting. See the example.py provider for
     some ideas.
 
-    The provider base provides functionality that all providers share, 
+    The provider base provides functionality that all providers share,
     as well as some additional convenience methods that allow providers
     to easily reproject a grid onto the model grid (e.g. warp_to_grid).
     """
@@ -61,7 +61,7 @@ class Provider(object):
         self._grid = grid
         self._name = self.__class__.__name__
         self.available_layers = []
-        
+
         #
         # Create an empty gdal dataset to use as a target for any warping.
         # This empty dataset matches the cell size and extent of the raster
@@ -73,15 +73,15 @@ class Provider(object):
         #self._clone = gdal.GetDriverByName('MEM').Create('', self._grid['cols'], self._grid['rows'], 1, gdalconst.GDT_Float32)
         #self._clone.SetGeoTransform(self._grid["geotransform"])
         #self._clone.SetProjection(self._grid["projection"])
-        
-        
+
+
         try:
             self._geom = loads(self._grid["mask"])
         except:
             self._geom = None
-                
-        
-        # Create a caching directory which is unique for this provider and 
+
+
+        # Create a caching directory which is unique for this provider and
         # this chunk uuid. The provider can use this directory to do extra
         # computations in and to store cached files which have been requested
         # previously. This way a second run in the same area doesn't need to
@@ -89,29 +89,29 @@ class Provider(object):
 
         # TODO:::: maybe get rid of this.... caching is a bit of a premature optimization at this point...
         try:
-            self._cache = os.path.join('/tmp/', "gems-provider-data", self._name, self._grid['uuid'], "cache")
-            if not os.path.isdir(self._cache):        
+            self._cache = os.path.join(os.getcwd(), "gems-provider-data", self._name, self._grid['uuid'], "cache")
+            if not os.path.isdir(self._cache):
                 os.makedirs(self._cache) #create the cache directory
         except:
             raise Exception("Creating cache directory %s for provider %s failed!"%(self._cache, self._name))
         else:
             logger.debug(" - Cache directory for %s provider: %s"%(self._name, self._cache))
-        
+
     def provide(self, name, options={}):
         """
-        The provide method of a provider must return a numpy array of the 
+        The provide method of a provider must return a numpy array of the
         dimensions specified in the self._grid dict to the model. How it does
-        this, or what datatype it makes this array is completely up to the 
+        this, or what datatype it makes this array is completely up to the
         provider to decide.
         """
         raise NotImplementedError()
-    
+
     def create_clone(self, datatype=gdalconst.GDT_Float32, nodatavalue=None, initvalue=None):
         """
-        Return an in memory one band dataset which matches the projection and 
-        cellsize required for this particular chunk/run. The provider can then 
+        Return an in memory one band dataset which matches the projection and
+        cellsize required for this particular chunk/run. The provider can then
         do its thing on this blank canvas, whether it is rasterizing shapes,
-        reprojecting other data, downloading some figures, or drawing something 
+        reprojecting other data, downloading some figures, or drawing something
         else.
         """
         clone = gdal.GetDriverByName('MEM').Create('', self._grid['cols'], self._grid['rows'], 1, datatype)
@@ -120,16 +120,16 @@ class Provider(object):
 
         if nodatavalue is not None:
             clone.GetRasterBand(1).SetNoDataValue(nodatavalue)
-        
+
         if initvalue is not None:
             clone.GetRasterBand(1).Fill(initvalue)
-        
+
         return clone
-    
+
     def warp_to_grid(self, dataset, resample=gdalconst.GRA_NearestNeighbour):
         """
         Return the provided GDAL dataset, but reprojected onto a model grid,
-        matching the target pixel size, resolution, etc. This method can be 
+        matching the target pixel size, resolution, etc. This method can be
         used by all providers that obtain their data in a different projection
         (for exampe the GFS provier which obtains a geotiff in lat-lng and
         needs to provide data to the model in a UTM projection).
@@ -143,12 +143,12 @@ class Provider(object):
         Burns the features in an ogr dataset into a raster given the options
         passed as an argument. This is used by various vector providers such
         as the OsmProvider and WfsProvider.
-        
-        Dataset may be either a string pointing to a file on the disk, or a 
+
+        Dataset may be either a string pointing to a file on the disk, or a
         gdal dataset object.
         """
         pass
-            
+
     def has_layer(self,layername):
         """
         Checks if this provider is making available a layer with the provided

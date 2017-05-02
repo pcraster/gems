@@ -19,23 +19,23 @@ logger=logging.getLogger()
 
 class WcsProvider(provider.Provider):
     """Documentation WCS provider.
-    
-    
+
+
     """
     def __init__(self, config, grid):
         """
         Initialization code for this specific provider. First initialize the
-        base provider and then to some custom setup stuff specific to the 
+        base provider and then to some custom setup stuff specific to the
         wcs provider.
 
         The provider needs to update the self.available_layers attribute and
-        append all the layers that it can provide to this attribute. Since 
-        a provider can literally provide any sort of layer and any number of 
+        append all the layers that it can provide to this attribute. Since
+        a provider can literally provide any sort of layer and any number of
         them, this cannot be done automatically, and therefore must be done
         explicitly in the provider's __init__.
         """
         provider.Provider.__init__(self, config, grid)
-        
+
         try:
             self._layers = {}
             for wcs_url in config:
@@ -43,7 +43,7 @@ class WcsProvider(provider.Provider):
                 contents = list(wcs.contents)
                 for layer in contents:
                     self.available_layers.append(layer)
-                    #make a mapping in the _layers variable about which wcs url 
+                    #make a mapping in the _layers variable about which wcs url
                     #we need to query to fetch a particular layer
                     self._layers.update({layer:wcs_url})
         except:
@@ -53,8 +53,8 @@ class WcsProvider(provider.Provider):
         """
         The providers' provide() method returns a numpy with the
         correct data type and propotions given the layer name and
-        possibly some extra options. The readmap() in the model 
-        will convert the numpy array to a pcraster map when it is 
+        possibly some extra options. The readmap() in the model
+        will convert the numpy array to a pcraster map when it is
         requested.
         """
         logging.debug("WCS: provide request for layer '%s'"%(name))
@@ -84,36 +84,36 @@ class WcsProvider(provider.Provider):
         else:
             crs = meta.supportedCRS[supported_crses.index(supported_crses[0])]
             srid = supported_crses[0]
-            
+
         if crs is not None and srid is not None:
             logging.debug("WCS: using %s (epsg:%d) to fetch the file from the wcs server"%(crs,srid))
         else:
             logging.debug("WCS: could not agree upon a projection format to fetch data with")
             raise Exception("WCS: no valid projections found")
-        
+
         logging.debug("WCS: reprojecting the chunk mask to the required projection")
-        
+
         project = partial(pyproj.transform, pyproj.Proj(init="epsg:%d"%(self._grid['srid'])), pyproj.Proj(init="epsg:%d"%(srid)))
-        
+
         #Add a small buffer to the request so we fetch an area slightly larger
         #than what we really need. This will prevent some edge effects due
         #to the reprojection.
         projected_geom = transform(project,self._geom.buffer(200))
-        
+
         logging.debug("WCS: original geom: %s"%(self._geom.wkt))
         logging.debug("WCS: reprojected geom: %s"%(projected_geom.wkt))
-        
+
         try:
             logging.debug("WCS: fetching wcs data in %s"%(crs))
             logging.debug("WCS: saving to: %s"%(target_file+".tif"))
-            cov = wcs.getCoverage(identifier=name, crs=crs, bbox=projected_geom.bounds, format=mapformat, width=self._grid['cols'], height=self._grid['rows'], **query_params)            
+            cov = wcs.getCoverage(identifier=name, crs=crs, bbox=projected_geom.bounds, format=mapformat, width=self._grid['cols'], height=self._grid['rows'], **query_params)
             with open(target_file+".tif",'w') as f:
                 f.write(cov.read())
             dataset = gdal.Open(target_file+".tif",gdalconst.GA_ReadOnly)
         except Exception as e:
             logger.error("WCS: failure: %s"%(e))
 
-        
+
         utm_data = self.warp_to_grid(dataset)
         dataset = None
         return utm_data

@@ -32,14 +32,14 @@ def worker(worker_uuid, args, gems_api, gems_beanstalk, gems_auth, gems_tube):
     # Set up logging
     #
     logger = logging.getLogger()
-    logger.setLevel(logging.DEBUG)  
+    logger.setLevel(logging.INFO)  
     formatter = logging.Formatter('%(asctime)s %(levelname)s %(message)s')
     
     #
     # Add a filehandler which writes to the log file
     #
     filehandler = logging.FileHandler('/tmp/worker-%s.log'%(worker_uuid))  
-    filehandler.setLevel(logging.DEBUG)   
+    filehandler.setLevel(logging.ERROR)   
     filehandler.setFormatter(formatter)    
     logger.addHandler(filehandler)
     
@@ -47,7 +47,7 @@ def worker(worker_uuid, args, gems_api, gems_beanstalk, gems_auth, gems_tube):
     # Add a streamhandler for writing log output to stdout
     #
     stdouthandler = logging.StreamHandler(sys.stdout)
-    stdouthandler.setLevel(logging.DEBUG)
+    stdouthandler.setLevel(logging.INFO)
     stdouthandler.setFormatter(formatter)
     logger.addHandler(stdouthandler)
 
@@ -71,7 +71,7 @@ def worker(worker_uuid, args, gems_api, gems_beanstalk, gems_auth, gems_tube):
 
             stream = StringIO()
             streamhandler = logging.StreamHandler(stream)
-            streamhandler.setLevel(logging.DEBUG)
+            streamhandler.setLevel(logging.INFO)
             streamhandler.setFormatter(formatter)
             logger.addHandler(streamhandler)
 
@@ -80,7 +80,7 @@ def worker(worker_uuid, args, gems_api, gems_beanstalk, gems_auth, gems_tube):
             # we are unable to send pings back to the API the error will be 
             # handled elsewhere.
             url = gems_api +"/worker/ping"
-            try: r = requests.post(url, auth=gems_auth, data={'worker_uuid':worker_uuid}, timeout=2.0)
+            try: r = requests.post(url, auth=gems_auth, data={'worker_uuid':worker_uuid}, timeout=5.0)
             except: pass
             
             # Reserve and parse the incoming job (Job Parsing)
