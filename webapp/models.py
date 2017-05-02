@@ -1645,6 +1645,7 @@ Log:
             'grid':self.chunk.grid,
             'modelcode':self.job.modelconfiguration.model.code
         })
+        
 
 
 class User(db.Model, UserMixin):

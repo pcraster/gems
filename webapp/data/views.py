@@ -173,8 +173,8 @@ def mapserver():
         print "serving from cache!~"
         return send_file(cache_file)
         
-@data.route('/download')    
-def download():
+@data.route('/download/<uuid:jobchunk_uuid>')    
+def download(jobchunk_uuid):
     """
     Todo    
     
@@ -186,10 +186,17 @@ def download():
     
     /data/download/xosaf49
     
-    Which then serves the geotiff right from disk.
+    Which then serves the zipfile right from disk.
     
     """
-    pass
+    
+    jobchunk = JobChunk.query.filter_by(uuid=jobchunk_uuid.hex).first()
+    chunk_id = str(Chunk.query.filter_by(id=jobchunk.chunk_id).first().uuid)
+    configkey = jobchunk.job.modelconfiguration.key
+    location = os.path.join(current_app.config["HOME"],'maps',
+                            configkey[0:2], configkey[2:4], configkey,
+                            chunk_id[0:2], chunk_id[2:4], chunk_id)
+    return send_from_directory(location, 'results.tar', as_attachment=True)
 
 @data.route('/tile')
 def tile():

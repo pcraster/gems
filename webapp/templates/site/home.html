@@ -3,232 +3,291 @@
 
 {% block headcss %}
 
-	<style>
-		a:hover {
-			text-decoration:none;
-		}
-	</style>
+<style>
+	a:hover {
+		text-decoration:none;
+	}
+</style>
 {% endblock %}
 
 {% block content %}
 
-	<div class="row" style="margin-top:15px;">
-		{% if not models %}
-			<div class="col-md-8 col-sm-8">
-				<div class="panel panel-default" style="padding-bottom:0">
-					<div class="panel-heading">
-						<strong>Models</strong>
-					</div>
-					<div class="panel-body">
-						<p>No environmental models found in the system. Some models should have been created when installing.</p>
-					</div>
-				</div>
+<div class="row" style="margin-top:15px;">
+	{% if not models %}
+	<div class="col-md-8 col-sm-8">
+		<div class="panel panel-default" style="padding-bottom:0">
+			<div class="panel-heading">
+				<strong>Models</strong>
 			</div>
-		{% else %}
-			<div class="col-md-8 col-sm-8">
-				<div class="row">
-				{% for columns in models | slice(2) -%}
-					<div class="col-md-6 col-sm-6">
-					{%- for model in columns -%}
-						<div class="panel panel-default">
-						  <div class="panel-heading" style="background-color:#eee;">
-						  	<!--<small class="pull-right" style="color:#888;padding-top:5px;">
-						  		Revision: {{model.version}} Valid: 
-						  		{% if model.validated %}Yes{%else%}No{%endif%}
-						  	</small>-->
-						  	<h3 style="margin:0;">
-						  		<strong>{{model.name}}</strong> 
-						  		{% if model.validated %}
-						  			<i class="fa fa-leaf" style="color:#aaa;"></i>
-						  		{% else %}
-						  			
-						  		{% endif %}
-						  	</h3>
-						  	
-						  </div>
-
-						  <div class="panel-heading" >
-						  		{% if not model.validated %}
-						  			<small>
-						  				<strong style="color:#e50000;">This model is not validated yet!</strong><br/> It means there is probably something wrong with the model code. Once a model can be loaded properly and all its parameters, metadata, and reporting information can be read and parsed, it will be marked as validated. Only validated models can be run in the modeller.</small>
-						  		{% endif %}
-
-								<p style="">{{model.meta["abstract"]}}</p>
-
-								{% if model.validated %}
-									<a class="btn btn-default btn-sm" href="{{url_for('modeller.show_modeller',model_name=model.name)}}"><i class="fa fa-play" style="color:#888;"></i> Run model</a>
-								{% else %}
-									<!--<a class="btn btn-default btn-sm disabled" href="#"><i class="fa fa-warning" style="color:red;"></i></a>-->
-								{% endif %}
-
-								{% if current_user.is_admin %}
-									<a class="btn btn-default btn-sm" href="{{url_for('admin.model_editor',model_name=model.name)}}"><i class="fa fa-pencil" style="color:#888;"></i> Edit model code</a>
-
-									<a style="color:#888;" class="btn btn-default btn-sm pull-right" href="{{url_for('admin.model_toggle_pin',model_name=model.name)}}"><i class="fa fa-thumb-tack"></i></a>
-								{% else %}
-									<a class="btn btn-default btn-sm" href="{{url_for('admin.model_editor',model_name=model.name)}}"><i class="fa fa-search" style="color:#888;"></i> View model code</a>
-								{% endif %}
-						  </div>
-						  {% if model.validated %}
-						    <table class="table" style="font-size:12px;color:#555;">
-						    	<tr><td style="padding-left:15px;">Time:</td><td>Runs {{model.time["timesteps"]}} timestep(s) starting at {{model.start}} UTC.</td></tr>
-						    	<tr><td style="padding-left:15px;">Discretization:</td><td>{{model.discretization.name}} (max {{model.maxchunks}} chunks per job)</td></tr>
-						    	<tr><td style="padding-left:15px;">Author:</td><td>{{model.meta["author"]}}</td></tr>
-						    	<tr><td style="color:#aaa;padding-left:15px;" colspan="2">
-								{% for tag in model.meta["tags"] %}
-									<nobr><i class="fa fa-tag"></i> {{tag}}&nbsp;</nobr>
-								{% endfor %}
-						    	</td></tr>
-						    </table>
-						   {% endif %}
-						</div>
-		    		{%- endfor -%}
-		    		</div>
-				{% endfor %}
-				</div> <!--/row-->
-
-
-			<div class="row">
-				<div class="col-md-12 col-sm-12">
-					<hr>
-					
-				</div>
+			<div class="panel-body">
+				<p>No environmental models found in the system. Some models should have been created when installing.</p>
 			</div>
 		</div>
-
-		{% endif %}
-		<div class="col-md-4 col-sm-4">
-			<div class="panel panel-default">
-				{% if current_user.is_admin %}
-					<div class="panel-heading" style="background-color:#f5f5f5;">
-						<strong>GEMS Administration</strong>
-					</div>
-					<div class="list-group">
-						<a href="/admin/datasets" class="list-group-item"><i class="fa fa-fw fa-database"></i> Datasets</a></a>
-						<a href="/admin/discretization" class="list-group-item"><i class="fa fa-fw fa-pie-chart"></i> Domain Discretization</a>
-						<a href="/admin/processing" class="list-group-item"><i class="fa fa-fw fa-gear"></i> Processing</a>
-						<a href="/admin/workers" class="list-group-item"><i class="fa fa-fw fa-android"></i> Workers</a>
-						<a href="/admin/models" class="list-group-item"><i class="fa fa-fw fa-leaf"></i> Models</a>
-						<a href="/admin/users" class="list-group-item"><i class="fa fa-fw fa-user"></i> Users</a>
-					</div>
-				{% else %}
-					<div class="panel-body">
-						<p>
-							<strong>Welcome, {{current_user.username}}!</strong>
-						</p>
-						<p>
-						You are logged in as a regular user. This means you have 
-						limited priveleges, and it is not possible to upload or 
-						modify models. You can only run them with custom parameters.
-						</p>
-					</div>
-				{% endif %}
-
-
-			</div>
-			<div class="panel panel-default">
-				<div class="panel-heading" style="background-color:#f5f5f5;">
-					<strong>API Access</strong>
-				</div>
-				<div class="panel-body">
-					<p>
-						Your API access token is:
-					</p>
-					<p style="text-align:center;">
-						<code>{{current_user.api_token}}</code> <a href="{{url_for('site.myaccount_reset_api_token')}}" class="btn btn-xs btn-default"><i class="fa fa-refresh" style="color:#888;"></i>
-</a>
-					</p>
-					<p style="margin-bottom:0">
-						Please refer to your <a href="{{url_for('site.myaccount')}}">account details</a> page and the GEMS documentation for more information on API access. 
-					</p>
-				</div>
-			</div>
-
-			{% if current_user.is_admin %}
-			<div class="panel panel-default">
-				<div class="panel-heading" style="background-color:#f5f5f5;">
-					<strong>Hidden models</strong>
-				</div>
-
-				<div class="panel-body" style="margin-bottom:0">
-					<p>
-					{% if not other_models %}
-						No hidden models found. Click the pin on any model on the left to hide it.
-					{% else %}
-						These models are visible only to admin users. Click the pin icon to make them available for everybody. These models can be used for testing and development purposes without risking that other useds will load them in the modeller.
-					{% endif %}
-					</p>
-				</div>
-
-
-				<table class="table table-condensed">
-					<tbody>
-					{% for model in other_models %}
-						{% if not model.disabled %}
-						<tr>
+	</div>
+	{% else %}
+	<div class="col-md-8 col-sm-8">
+		<div class="row">
+			{% for columns in models | slice(2) -%}
+			<div class="col-md-6 col-sm-6">
+				{%- for model in columns -%}
+				<div class="panel panel-default">
+					<div class="panel-heading" style="background-color:#eee;">
+						<!--<small class="pull-right" style="color:#888;padding-top:5px;">
+Revision: {{model.version}} Valid:
+{% if model.validated %}Yes{%else%}No{%endif%}
+</small>-->
+						<h3 style="margin:0;">
+							<strong>{{model.name}}</strong>
 							{% if model.validated %}
-								<td style="vertical-align:middle;padding-left:15px;">{{model.name}}</td>
+							<i class="fa fa-leaf" style="color:#aaa;"></i>
 							{% else %}
-								<td style="vertical-align:middle;padding-left:15px;color:#e50000;">{{model.name}}</td>
+
 							{% endif %}
-							
-							
-							<td style="vertical-align:middle;" class="text-right">
-							{% if model.validated %}
-								<a class="btn btn-default btn-sm" href="{{url_for('modeller.show_modeller',model_name=model.name)}}"><i class="fa fa-play" style="color:#888;"></i></a> 
-							{% else %}
-								<a class="btn btn-default btn-sm disabled" href="#"><i class="fa fa-play" style="color:#888;"></i></a>
-							{% endif %}
-								<a class="btn btn-default btn-sm" href="{{url_for('admin.model_editor',model_name=model.name)}}"><i class="fa fa-pencil" style="color:#888;"></i></a>
-								<a style="color:#888;" class="btn btn-default btn-sm" href="{{url_for('admin.model_toggle_disable',model_name=model.name)}}"><i class="fa fa-trash"></i> Delete</a>
-								<a style="color:#888;" class="btn btn-default btn-sm" href="{{url_for('admin.model_toggle_pin',model_name=model.name)}}"><i class="fa fa-thumb-tack"></i></a>
-							</td>
-						</tr>
-						{% else %}
-						<tr>
-							<td style="vertical-align:middle;padding-left:15px;color:#888;">{{model.name}}</td>
-							<td style="vertical-align:middle;color:#888;" class="text-right">
-								<a style="color:#888;" class="btn btn-default btn-sm disabled" href="{{url_for('admin.model_toggle_disable',model_name=model.name)}}"><i class="fa fa-trash"></i> Deleted</a>
-							</td>
-						</tr>
+						</h3>
+
+					</div>
+
+					<div class="panel-heading" >
+						{% if not model.validated %}
+						<small>
+							<strong style="color:#e50000;">This model is not validated yet!</strong><br/> It means there is probably something wrong with the model code. Once a model can be loaded properly and all its parameters, metadata, and reporting information can be read and parsed, it will be marked as validated. Only validated models can be run in the modeller.</small>
 						{% endif %}
-					{% endfor %}
 
+						<p style="">{{model.meta["abstract"]}}</p>
 
+						{% if model.validated %}
+						<a class="btn btn-default btn-sm" href="{{url_for('modeller.show_modeller',model_name=model.name)}}"><i class="fa fa-play" style="color:#888;"></i> Run model</a>
+						{% else %}
+						<!--<a class="btn btn-default btn-sm disabled" href="#"><i class="fa fa-warning" style="color:red;"></i></a>-->
+						{% endif %}
 
+						{% if current_user.is_admin %}
+						<a class="btn btn-default btn-sm" href="{{url_for('admin.model_editor',model_name=model.name)}}"><i class="fa fa-pencil" style="color:#888;"></i> Edit model code</a>
 
-					</tbody>
+						<a style="color:#888;" class="btn btn-default btn-sm pull-right" href="{{url_for('admin.model_toggle_pin',model_name=model.name)}}"><i class="fa fa-thumb-tack"></i></a>
+						{% else %}
+						<a class="btn btn-default btn-sm" href="{{url_for('admin.model_editor',model_name=model.name)}}"><i class="fa fa-search" style="color:#888;"></i> View model code</a>
+						{% endif %}
+					</div>
+					{% if model.validated %}
+					<table class="table" style="font-size:12px;color:#555;">
+						<tr><td style="padding-left:15px;">Time:</td><td>Runs {{model.time["timesteps"]}} timestep(s) starting at {{model.start}} UTC.</td></tr>
+						<tr><td style="padding-left:15px;">Discretization:</td><td>{{model.discretization.name}} (max {{model.maxchunks}} chunks per job)</td></tr>
+						<tr><td style="padding-left:15px;">Author:</td><td>{{model.meta["author"]}}</td></tr>
+						<tr><td style="color:#aaa;padding-left:15px;" colspan="2">
+							{% for tag in model.meta["tags"] %}
+							<nobr><i class="fa fa-tag"></i> {{tag}}&nbsp;</nobr>
+							{% endfor %}
+							</td></tr>
 					</table>
-
-
-			</div>
-
-			<div class="panel panel-default">
-				<div class="panel-heading">
-					<strong>Create a new model</strong>
+					{% endif %}
 				</div>
-				<form method="POST" action="{{url_for('admin.models')}}">
-				<table class="table table-condensed">
-					<tbody>
-						<tr>
-							<td style="vertical-align:bottom;padding-left:15px;padding-top:15px;padding-bottom:15px;width:100%;border:0">
-								<p>Choose a cool model name like <code>my_crop_model</code>:</p>
-								<input type="text" class="form-control input-sm"  style="width:100%" id="modelname" name="modelname" placeholder="Only alphanumeric characters, no spaces.">
-							</td>
-							<td style="vertical-align:bottom;color:#888;;padding-top:15px;padding-bottom:15px;border:0" class="text-right">
-								<button type="submit" class="btn btn-default btn-sm"><i class="fa fa-plus"></i> Create</button>
-							</td>
-						</tr>
-					</tbody>
-				</table>
-					
-				</form>
+				{%- endfor -%}
 			</div>
+			{% endfor %}
+		</div> <!--/row-->
+
+
+		<div class="row">
+			<div class="col-md-12 col-sm-12">
+				<hr>
+
+			</div>
+		</div>
+	</div>
+
+	{% endif %}
+	<div class="col-md-4 col-sm-4">
+		<div class="panel panel-default">
+			{% if current_user.is_admin %}
+			<div class="panel-heading" style="background-color:#f5f5f5;">
+				<strong>GEMS Administration</strong>
+			</div>
+			<div class="list-group">
+				<a href="/admin/datasets" class="list-group-item"><i class="fa fa-fw fa-database"></i> Datasets</a></a>
+			<a href="/admin/discretization" class="list-group-item"><i class="fa fa-fw fa-pie-chart"></i> Domain Discretization</a>
+			<a href="/admin/processing" class="list-group-item"><i class="fa fa-fw fa-gear"></i> Processing</a>
+			<a href="/admin/workers" class="list-group-item"><i class="fa fa-fw fa-android"></i> Workers</a>
+			<a href="/admin/models" class="list-group-item"><i class="fa fa-fw fa-leaf"></i> Models</a>
+			<a href="/admin/users" class="list-group-item"><i class="fa fa-fw fa-user"></i> Users</a>
+		</div>
+		{% else %}
+		<div class="panel-body">
+			<p>
+				<strong>Welcome, {{current_user.username}}!</strong>
+			</p>
+			<p>
+				You are logged in as a regular user. This means you have
+				limited priveleges, and it is not possible to upload or
+				modify models. You can only run them with custom parameters.
+			</p>
+		</div>
+		{% endif %}
+	</div>
+	<!--
+Data Download in the sidebar
+
+-->
+	<div class="panel panel-default">
+		<div class="panel-heading" style="background-color:#f5f5f5;">
+			<strong>Completed Model Runs</strong>
+		</div>
+		<div class="panel-body">
+			{% if jobs.count() == 0 %}
+			<p>
+				When you have completed some model runs you can download the results and rerun the model from this panel.
+			</p>
+			{% else %}
+			<p>
+				Download the data zip files from previous model runs.<br />
+				Click 'Map' to open the modeller with the used parameters loaded.
+			</p>
+			<table class="table">
+				<tbody>
+					<tr>
+						<td style="padding-left:15px;">Submitted</td>
+						<td>Job Log</td>
+						<td>Job Chunks (Download)</td>
+					</tr>
+					{% for j in jobs %}
+					<tr>
+						<td style="padding-left:15px;">
+							{{j.shortdate}}
+						</td>
+						<td>
+							<i class="fa fa-fw fa-wrench"></i> <code><a href="/api/v1/config/{{j.modelconfiguration.key}}">{{j.modelconfiguration.shortkey}}</a></code>
+							<code style="background-color:#333;"><a style="color:#15b01a;" href="/modeller/{{j.modelconfiguration.model.name}}#{{j.modelconfiguration.key}}">Map</a></code>
+						</td>
+						<td>
+							{% for c in j.jobchunks %}
+							<p style="margin-bottom:3px;">
+								{% if c.status_code == 0 %}
+								<i class="fa fa-circle" style="color:#cccccc;"></i>
+								{% endif %}
+								{% if c.status_code == -1 %}
+								<i class="fa fa-circle" style="color:#e50000;"></i>
+								{% endif %}
+								{% if c.status_code == 1 %}
+								<i class="fa fa-circle" style="color:#15b01a;"></i>
+								{% endif %}
+								<code>{{loop.index}}/{{j.jobchunks_total}}</code>
+								<a href="/data/download/{{c.uuid}}">
+									<i class="fa fa-fw fa-angle-right" style="color:#666;"></i><code>Download</code>
+								</a>
+
+							</p>
+							{% endfor %}
+						</td>
+					</tr>
+					{% endfor %}
+				</tbody>
+			</table>
 			{% endif %}
 		</div>
+	</div>
+
+	{% if current_user.is_admin %}
+	<div class="panel panel-default">
+		<div class="panel-heading" style="background-color:#f5f5f5;">
+			<strong>Hidden models</strong>
+		</div>
+
+		<div class="panel-body" style="margin-bottom:0">
+			<p>
+				{% if not other_models %}
+				No hidden models found. Click the pin on any model on the left to hide it.
+				{% else %}
+				These models are visible only to admin users. Click the pin icon to make them available for everybody. These models can be used for testing and development purposes without risking that other useds will load them in the modeller.
+				{% endif %}
+			</p>
+		</div>
+
+
+		<table class="table table-condensed">
+			<tbody>
+				{% for model in other_models %}
+				{% if not model.disabled %}
+				<tr>
+					{% if model.validated %}
+					<td style="vertical-align:middle;padding-left:15px;">{{model.name}}</td>
+					{% else %}
+					<td style="vertical-align:middle;padding-left:15px;color:#e50000;">{{model.name}}</td>
+					{% endif %}
+
+
+					<td style="vertical-align:middle;" class="text-right">
+						{% if model.validated %}
+						<a class="btn btn-default btn-sm" href="{{url_for('modeller.show_modeller',model_name=model.name)}}"><i class="fa fa-play" style="color:#888;"></i></a>
+						{% else %}
+						<a class="btn btn-default btn-sm disabled" href="#"><i class="fa fa-play" style="color:#888;"></i></a>
+						{% endif %}
+						<a class="btn btn-default btn-sm" href="{{url_for('admin.model_editor',model_name=model.name)}}"><i class="fa fa-pencil" style="color:#888;"></i></a>
+						<a style="color:#888;" class="btn btn-default btn-sm" href="{{url_for('admin.model_toggle_disable',model_name=model.name)}}"><i class="fa fa-trash"></i> Delete</a>
+						<a style="color:#888;" class="btn btn-default btn-sm" href="{{url_for('admin.model_toggle_pin',model_name=model.name)}}"><i class="fa fa-thumb-tack"></i></a>
+					</td>
+				</tr>
+				{% else %}
+				<tr>
+					<td style="vertical-align:middle;padding-left:15px;color:#888;">{{model.name}}</td>
+					<td style="vertical-align:middle;color:#888;" class="text-right">
+						<a style="color:#888;" class="btn btn-default btn-sm disabled" href="{{url_for('admin.model_toggle_disable',model_name=model.name)}}"><i class="fa fa-trash"></i> Deleted</a>
+					</td>
+				</tr>
+				{% endif %}
+				{% endfor %}
+
+
+
+
+			</tbody>
+		</table>
 
 
 	</div>
+
+	<div class="panel panel-default">
+		<div class="panel-heading">
+			<strong>Create a new model</strong>
+		</div>
+		<form method="POST" action="{{url_for('admin.models')}}">
+			<table class="table table-condensed">
+				<tbody>
+					<tr>
+						<td style="vertical-align:bottom;padding-left:15px;padding-top:15px;padding-bottom:15px;width:100%;border:0">
+							<p>Choose a cool model name like <code>my_crop_model</code>:</p>
+							<input type="text" class="form-control input-sm"  style="width:100%" id="modelname" name="modelname" placeholder="Only alphanumeric characters, no spaces.">
+						</td>
+						<td style="vertical-align:bottom;color:#888;;padding-top:15px;padding-bottom:15px;border:0" class="text-right">
+							<button type="submit" class="btn btn-default btn-sm"><i class="fa fa-plus"></i> Create</button>
+						</td>
+					</tr>
+				</tbody>
+			</table>
+
+		</form>
+	</div>
+	{% endif %}
+	<div class="panel panel-default">
+		<div class="panel-heading" style="background-color:#f5f5f5;">
+			<strong>API Access</strong>
+		</div>
+		<div class="panel-body">
+			<p>
+				Your API access token is:
+			</p>
+			<p style="text-align:center;">
+				<code>{{current_user.api_token}}</code>
+				<a href="{{url_for('site.myaccount_reset_api_token')}}" class="btn btn-xs btn-default"><i class="fa fa-refresh" style="color:#888;"></i></a>
+			</p>
+			<p style="margin-bottom:0">
+				Please refer to your <a href="{{url_for('site.myaccount')}}">account details</a> page and the GEMS documentation for more information on API access.
+			</p>
+		</div>
+	</div>
+</div>
+
+
+</div>
 
 
 

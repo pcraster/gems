@@ -19,11 +19,12 @@ def home():
         return redirect(url_for('user.login'))
     else:
         #The highlighted models which are available to all users
+        jobs = Job.query.order_by(Job.date_created.desc()).filter(Job.user==current_user, Job.status_code==1).limit(5)
         models = Model.query.order_by(Model.name).filter(Model.highlighted==True, Model.disabled==False).all()
         
         #The other (test) models which are not on the homepage.
         other_models = Model.query.order_by(Model.disabled, Model.name).filter(Model.highlighted==False).all()
-        return render_template("site/home.html", models=models, other_models=other_models)
+        return render_template("site/home.html", models=models, other_models=other_models, jobs=jobs)
         
 @site.route('/myaccount')
 @login_required
