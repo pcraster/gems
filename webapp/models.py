@@ -1450,7 +1450,10 @@ class Job(db.Model):
         
     @property
     def shorterdate(self):
-        return self.date_created.strftime('%a %H:%M')
+        if self.date_created.strftime('%U') == datetime.datetime.now().strftime('%U'):
+            return self.date_created.strftime('%a %H:%M')
+        else:
+            return self.date_created.strftime('%d-%-m %H:%M')
 
     @property
     def jobchunks_list(self):
