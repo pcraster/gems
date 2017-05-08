@@ -196,7 +196,9 @@ def download(jobchunk_uuid):
     location = os.path.join(current_app.config["HOME"],'maps',
                             configkey[0:2], configkey[2:4], configkey,
                             chunk_id[0:2], chunk_id[2:4], chunk_id)
-    return send_from_directory(location, 'results.tar', as_attachment=True)
+    filename = jobchunk.filehash+'.zip'
+    return send_from_directory(location, 'results.zip', 
+                               as_attachment=True, attachment_filename=filename)
 
 @data.route('/tile')
 def tile():

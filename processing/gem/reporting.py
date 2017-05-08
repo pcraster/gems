@@ -1,4 +1,5 @@
 import os
+import shutil
 import sys
 import numpy as np
 import subprocess
@@ -263,18 +264,20 @@ class ModelReporter(object):
         #result in any significant gains and just add overhead to the processing
         #and network transfers.
         logger.debug("Archiving model results into maps package using tar")
-        list_of_folders=os.listdir(directory)
-        download_results=os.path.join(directory,"results.tar")
+        download_results=os.path.join(directory,"results.zip")
 
         
         logger.debug("Downloadable file: %s"%(download_results))
-        t=[
-            "/bin/tar","-cf", download_results, "-C", directory
-        ]
-        t.extend(list_of_folders)
-        rt=subprocess.call(t)
-        logger.debug("Command: %s"%(" ".join(t)))
-        logger.debug("Returned status code %d"%(rt))
+        shutil.make_archive('results', 'zip', root_dir=directory)
+        os.rename('results.zip', download_results)
+        
+#        t=[
+#            "/bin/tar","-cf", download_results, "-C", directory
+#        ]
+#        t.extend(list_of_folders)
+#        rt=subprocess.call(t)
+#        logger.debug("Command: %s"%(" ".join(t)))
+#        logger.debug("Returned status code %d"%(rt))
         
         maps_package=os.path.join(base_directory,"results-jobchunk-%s.tar"%(uuid_jobchunk))
         logger.debug("Maps package file: %s"%(maps_package))
