@@ -265,6 +265,17 @@ class ModelReporter(object):
         #and network transfers.
         logger.debug("Archiving model results into maps package using tar")
         download_results=os.path.join(directory,"results.zip")
+        metadata = os.path.join(directory, 'metadata.json')
+        reports = {'reporting':{},'parameters':self.parameters}
+        for key in self.reporting.keys():
+            reports['reporting'].update({key:{
+                'title':self.reporting[key]['title'],
+                'units':self.reporting[key]['units'],
+                'info':self.reporting[key]['info'],
+                'datatype':self.reporting[key]['datatype'],
+            }})
+        with open(metadata, 'w') as m:
+            m.write(json.dumps(reports, indent=4, sort_keys=True))
 
         
         logger.debug("Downloadable file: %s"%(download_results))

@@ -80,7 +80,7 @@ def worker(worker_uuid, args, gems_api, gems_beanstalk, gems_auth, gems_tube):
             # we are unable to send pings back to the API the error will be 
             # handled elsewhere.
             url = gems_api +"/worker/ping"
-            try: r = requests.post(url, auth=gems_auth, data={'worker_uuid':worker_uuid}, timeout=5.0)
+            try: r = requests.post(url, auth=gems_auth, data={'worker_uuid':worker_uuid}, timeout=10.0)
             except: pass
             
             # Reserve and parse the incoming job (Job Parsing)
@@ -119,12 +119,12 @@ def worker(worker_uuid, args, gems_api, gems_beanstalk, gems_auth, gems_tube):
                     logger.info("[Worker %s] JobChunk %s Reporting Started."%(worker_name,jobchunk_uuid))
                     logger.debug("[Worker %s] Maps package is approx: %.1f MB in size"%(worker_name,os.path.getsize(model._mapspackage) >> 20))
                     logger.info("[Worker %s] Posting maps package: %s"%(worker_name,model._mapspackage))
-                    
-                    files = {'package': open(model._mapspackage,'rb') }
-                    data = {'jobchunk': job["uuid_jobchunk"], 'token':'-' }
-                    status_code = 1                                    
-                    url = gems_api + "/job/chunk/"+job["uuid_jobchunk"]+"/maps"
-                    r = requests.post(url, auth=gems_auth, data=data, files=files)
+                    with open(model._mapspackage, 'rb') as mapspackage:
+                        files = {'package': mapspackage }
+                        data = {'jobchunk': job["uuid_jobchunk"], 'token':'-' }
+                        status_code = 1                                    
+                        url = gems_api + "/job/chunk/"+job["uuid_jobchunk"]+"/maps"
+                        r = requests.post(url, auth=gems_auth, data=data, files=files)
                     r.raise_for_status() # Raises an exception when the status is not ok.
 
                 except Exception as e:
@@ -178,7 +178,8 @@ def worker(worker_uuid, args, gems_api, gems_beanstalk, gems_auth, gems_tube):
                 else:
                     logger.debug("[Worker %s] Posted the logfile of this run to the server. "%(worker_name))
                 finally:
-                    logger.removeHandler(streamhandler) 
+                    logger.removeHandler(streamhandler)
+                    
 
                 logger.info("[Worker %s] All done! Look for another job!"%(worker_name))
             
@@ -221,7 +222,8 @@ if __name__ == "__main__":
             os.makedirs(args.directory)
         os.chdir(args.directory)
         tempfile = os.path.join(args.directory,"gems.txt")
-        open(tempfile,'w')
+        f = open(tempfile,'w')
+        f.close()
         os.remove(tempfile)
     except Exception as e:
         print "Working directory %s is unsuitable. Check permissions. Hint: %s"%(args.directory,e)
