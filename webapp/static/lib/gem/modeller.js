@@ -30,6 +30,19 @@ var M=$.extend(M || {},{
 		$.extend(M.config, config)
 
 		/*
+		Overwrite the common console methods depending on the debug
+		config variable. If debug is set to false, console.log() will
+		do nothing.
+		*/
+		if(! M.config["debug"]){
+		    if(!window.console) window.console = {};
+		    var methods = ["log", "debug", "warn", "info"];
+		    for(var i=0;i<methods.length;i++){
+		    	console[methods[i]] = function(){};
+		    }
+		}
+
+		/*
 		Create the M.config["api_auth"] variable which will use the
 		api_auth_username and api_auth_password config variable to
 		create the HTTP Authentication header which will be sent along
@@ -46,19 +59,6 @@ var M=$.extend(M || {},{
 		details from the API.
 		*/
 		var _config_key=M.hash.init()
-
-		/*
-		Overwrite the common console methods depending on the debug
-		config variable. If debug is set to false, console.log() will
-		do nothing.
-		*/
-		if(! M.config["debug"]){
-		    if(!window.console) window.console = {};
-		    var methods = ["log", "debug", "warn", "info"];
-		    for(var i=0;i<methods.length;i++){
-		    	console[methods[i]] = function(){};
-		    }
-		}
 
 		/*
 		Then fetch the model configuration with the config key for
@@ -204,14 +204,14 @@ var M=$.extend(M || {},{
 			/*
 			Initialize the leaflet map object. It is stored in M.map.obj.
 			*/
+
 			M.map.obj = L.map('map',{
 				'layers':MQ.mapLayer(),
 				'scrollWheelZoom':true,
 				'zoomControl':false,
+				//'attributionControl':false,
 				'minZoom':4,
 				'maxZoom':20,
-				/*
-				'attributionControl':false,*/
 			});
 
 			M.map.geojsonlayer = L.geoJson(undefined, {
@@ -228,8 +228,6 @@ var M=$.extend(M || {},{
 				}
 			}).addTo(M.map.obj);
 
-			L.control.zoom({position:'bottomright'}).addTo(M.map.obj);
-			L.control.scale({position:'bottomleft'}).addTo(M.map.obj);
 			/*
 			Attache some events for when the map is moving
 			*/
@@ -391,6 +389,9 @@ var M=$.extend(M || {},{
 					$('select#selected-timestamp').change(function(){
 						M.map.setTime(this.value)
 					})
+
+					L.control.scale({position:'bottomleft'}).addTo(M.map.obj);
+					L.control.zoom({position:'bottomright'}).addTo(M.map.obj);
 
 					M.map.setTime(params['time'])
 					M.map.setAttribute(params['layers'])
