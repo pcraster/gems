@@ -216,11 +216,13 @@ def job_prognosis():
         #   return o[0](self, self.expr, op, *(other + o[1:]), **kwargs)
         #print Chunk.geom
         chunks = Chunk.query.filter(Chunk.discretization_id==discretization.id).filter(Chunk.geom.intersects(geom)).order_by(ST_Distance(ST_Centroid(Chunk.geom),ST_Centroid(geom))).limit(max_chunks)
+        otherchunks = Chunk.query.filter(Chunk.discretization_id==discretization.id).order_by(ST_Distance(ST_Centroid(Chunk.geom),ST_Centroid(geom))).offset(max_chunks).limit(100)
     else:
         #if there are some chunks which have already been processed with the
         #same config key then exclude those chunks from the intersect 
         #operation using a negated (~) in_()
         chunks = Chunk.query.filter(Chunk.discretization_id==discretization.id).filter(Chunk.geom.intersects(geom),~Chunk.id.in_(chunks_already_processed)).order_by(ST_Distance(ST_Centroid(Chunk.geom),ST_Centroid(geom))).limit(max_chunks)
+        otherchunks = Chunk.query.filter(Chunk.discretization_id==discretization.id).filter(~Chunk.id.in_(chunks_already_processed)).order_by(ST_Distance(ST_Centroid(Chunk.geom),ST_Centroid(geom))).offset(max_chunks).limit(100)
         
     chunks_to_be_processed = [c.id for c in chunks]
     num_of_chunks_to_be_processed = len(chunks_to_be_processed)
@@ -228,11 +230,22 @@ def job_prognosis():
     #Todo: make this limit variable on a per model basis...
     #Todo: some kind of check to see if there are clients 
     #      connected to the app to do processing..
-    features=[]
+    features=[[],[]]
     for c in chunks:
         feat = to_shape(c.geom).simplify(0.005)
         
-        features.append({
+        features[0].append({
+            'type':'Feature',
+            'properties':{
+                'id':str(c.uuid)
+            },
+            'geometry':mapping(feat)
+        })
+        
+    for c in otherchunks:
+        feat = to_shape(c.geom).simplify(0.005)
+        
+        features[1].append({
             'type':'Feature',
             'properties':{
                 'id':str(c.uuid)
@@ -518,7 +531,37 @@ def config_status(config_key):
         raise APIException("The model configuration could not be retrieved with the specified config key.", status_code=404)
     else:
         return jsonify(config.as_dict),200
+        
+@api.route('/shortcon/<config_key>',methods=["GET"])
+def shortcon_status(config_key):
+    """Returns a JSON representation of a modelconfiguration instance. This 
+    contains metadata about the model, reporting information (i.e. output 
+    attributes), and time information about the model. The set of parameters 
+    which are used for the model run are also included.
+    
+    **URL Pattern**
+    
+    ``GET /config/<config_key>``
 
+    **Parameters**
+    
+    None.
+    
+    **Returns**
+    
+    200 OK (application/json)
+        Returns a JSON document of the model configuration.
+        
+    404 Not Found (application/json)
+        This configuration key does not exist.
+        
+    """
+    config = ModelConfiguration.query.filter_by(key=config_key).first()
+    if config is None:
+        raise APIException("The model configuration could not be retrieved with the specified config key.", status_code=404)
+    else:
+        return jsonify(config.as_short_dict),200
+        
 @api.route('/model/<model_name>',methods=["GET"])
 def model_code_view(model_name):
     """
@@ -784,7 +827,7 @@ def jobchunk_maps(jobchunk_uuid):
                         #
                         #Todo: check that the file actually exists and that a manifest is 
                         #      present, otherwise we may be adding maps to the mapindex
-                    #           which do not have a corresponding file on disk.
+                        #      which do not have a corresponding file on disk.
                         #
                         try: maps_list.append(Map(chunk,modelconfiguration,map_dict))
                         except: pass

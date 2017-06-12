@@ -173,8 +173,8 @@ def mapserver():
         print "serving from cache!~"
         return send_file(cache_file)
         
-@data.route('/download')    
-def download():
+@data.route('/download/<uuid:jobchunk_uuid>')    
+def download(jobchunk_uuid):
     """
     Todo    
     
@@ -186,10 +186,19 @@ def download():
     
     /data/download/xosaf49
     
-    Which then serves the geotiff right from disk.
+    Which then serves the zipfile right from disk.
     
     """
-    pass
+    
+    jobchunk = JobChunk.query.filter_by(uuid=jobchunk_uuid.hex).first()
+    chunk_id = str(Chunk.query.filter_by(id=jobchunk.chunk_id).first().uuid)
+    configkey = jobchunk.job.modelconfiguration.key
+    location = os.path.join(current_app.config["HOME"],'maps',
+                            configkey[0:2], configkey[2:4], configkey,
+                            chunk_id[0:2], chunk_id[2:4], chunk_id)
+    filename = jobchunk.filehash+'.zip'
+    return send_from_directory(location, 'results.zip', 
+                               as_attachment=True, attachment_filename=filename)
 
 @data.route('/tile')
 def tile():
@@ -273,22 +282,21 @@ def point():
             p=subprocess.Popen(["/usr/bin/gdallocationinfo","-wgs84","-valonly",sourcefile,str(lng), str(lat)], stdout=subprocess.PIPE)
             stdout, err = p.communicate()
             values = [round(v, rounding) for v in map(float,stdout.split())]
-            
+            current_value=values[timestamps.index(time)]
             
             print "modelparameters:"
             print reporting['symbolizer']['values']
                         
             
-            #results = 
             yaxis = {
                 'min':reporting['symbolizer']['values'][0],
                 'max':reporting['symbolizer']['values'][1]
             }
 
-            return jsonify(value=values,timestamp=timestamps,model=modelconfig.model.name,yaxis=yaxis),200
+            return jsonify(currentvalue=current_value, value=values,timestamp=timestamps,model=modelconfig.model.name,yaxis=yaxis),200
         except Exception as e:
-            return jsonify(value=[],timestamp=[],message="Error:%s"%(e)),500
-    return jsonify(value=[],timestamp=[],message="No data found"),200
+            return jsonify(currentvalue=undefined, value=[],timestamp=[],message="Error:%s"%(e)),500
+    return jsonify(currentvalue=undefined, value=[],timestamp=[],message="No data found"),200
         
     
     

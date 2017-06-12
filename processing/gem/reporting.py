@@ -1,4 +1,5 @@
 import os
+import shutil
 import sys
 import numpy as np
 import subprocess
@@ -250,7 +251,7 @@ class ModelReporter(object):
         #create a manifest file which lists all the created map files (the .vrt
         #ones) along with their timestamp and attribute. when the maps package
         #gets uploaded to the server this file is used to insert all the 
-        #entries into the 'map' table, from where  they can then be found 
+        #entries into the 'map' table, from where they can then be found 
         #by mapserver for displaying as tiles in the web application.
         time_start=now()
         logger.debug("Creating manifest file with %d map layers in it."%(len(self._report_maps)))
@@ -263,7 +264,32 @@ class ModelReporter(object):
         #result in any significant gains and just add overhead to the processing
         #and network transfers.
         logger.debug("Archiving model results into maps package using tar")
-            
+        download_results=os.path.join(directory,"results.zip")
+        metadata = os.path.join(directory, 'metadata.json')
+        reports = {'reporting':{},'parameters':self.parameters}
+        for key in self.reporting.keys():
+            reports['reporting'].update({key:{
+                'title':self.reporting[key]['title'],
+                'units':self.reporting[key]['units'],
+                'info':self.reporting[key]['info'],
+                'datatype':self.reporting[key]['datatype'],
+            }})
+        with open(metadata, 'w') as m:
+            m.write(json.dumps(reports, indent=4, sort_keys=True))
+
+        
+        logger.debug("Downloadable file: %s"%(download_results))
+        shutil.make_archive('results', 'zip', root_dir=directory)
+        os.rename('results.zip', download_results)
+        
+#        t=[
+#            "/bin/tar","-cf", download_results, "-C", directory
+#        ]
+#        t.extend(list_of_folders)
+#        rt=subprocess.call(t)
+#        logger.debug("Command: %s"%(" ".join(t)))
+#        logger.debug("Returned status code %d"%(rt))
+        
         maps_package=os.path.join(base_directory,"results-jobchunk-%s.tar"%(uuid_jobchunk))
         logger.debug("Maps package file: %s"%(maps_package))
         c=[

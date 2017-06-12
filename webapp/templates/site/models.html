@@ -2,12 +2,9 @@
 
 {% block content %}
 
-	<h2>List of models</h2>
-	<p>
-		Choose your poison:
-	</p>
+	<h2>List of model results</h2>
 	<ul>
-	{% for model in models %}
+	{% for result in results %}
 		<li><a href="{{url_for('modeller.show_modeller',model_name=model.name)}}">{{model.name}}</a>
 	{% endfor %}
 	</ul>

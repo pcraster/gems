@@ -14,7 +14,7 @@ var M=$.extend(M || {},{
 			/*
 				M.api.status()
 
-				Status call checks whether the GEMS API can be reached, and 
+				Status call checks whether the GEMS API can be reached, and
 				whether the token we're providing is valid.
 			*/
 			$.ajax({
@@ -42,7 +42,7 @@ var M=$.extend(M || {},{
 
 				Requests a configuration from the API with the given config key.
 				If no config key or an invalid config key is supplied a 404 not found
-				will be returned. 
+				will be returned.
 			*/
 			$.ajax({
 				type:"GET",
@@ -89,7 +89,7 @@ var M=$.extend(M || {},{
 					M.state['job_id']=data["job"]
 					M.panels.showonly('panel-notifications')
 					/*
-					M.api.job_status() starts a loop of requesting job statuses and 
+					M.api.job_status() starts a loop of requesting job statuses and
 					percent done to see how far along the model run is.
 					*/
 					M.api.job_status()
@@ -102,7 +102,7 @@ var M=$.extend(M || {},{
 		},
 		job_prognosis:function() {
 			/*
-			Todo: throttle this call somehow, maybe with jquery debounce. When the 
+			Todo: throttle this call somehow, maybe with jquery debounce. When the
 			window is resized by dragging the browser edge it triggers 100s of calls
 			to the prognosis because the mapmove event is triggered the whole time.
 			Either fix it here, or ensure that the window resize doesnt trigger so
@@ -126,9 +126,14 @@ var M=$.extend(M || {},{
 				},
 				success:function(data) {
 					console.log("Prognosis for config '"+data["configkey"].substr(0,6)+"': "+data["message"])
+					M.map.chunklayer.clearLayers()
+					M.map.chunklayer.addData(data.features[1])
 					M.map.geojsonlayer.clearLayers()
-					M.map.geojsonlayer.addData(data.features)
+					M.map.geojsonlayer.addData(data.features[0])
 					M.map.geojsonlayer.bringToFront()
+					if(M.map.datalayer!=undefined) {
+						M.map.update({configkey:data["configkey"]})
+					}
 					M.state['prognosis']=true
 					M.state['prognosis_message']=data["message"]
 					M.gui.done('api-prognosis')
@@ -153,7 +158,7 @@ var M=$.extend(M || {},{
 						*/
 						M.api.error(xhr)
 					}
-					
+
 				}
 			});
 		},
@@ -164,7 +169,7 @@ var M=$.extend(M || {},{
 			*/
 				$.ajax({
 					type:"GET",
-					url:M.config["api"]+"job/"+job_uuid+"/log", 
+					url:M.config["api"]+"job/"+job_uuid+"/log",
 					headers: {
 						"Authorization": M.config["api_auth"]
 					},
@@ -185,7 +190,7 @@ var M=$.extend(M || {},{
 			percent_list is an array which stores the last 5 percentage complete
 			that were returned from a status request. As long as these values are
 			not all the same, keep requesting a new status <interval> seconds from
-			now. When the model has stalled or crashed, the percentage complete 
+			now. When the model has stalled or crashed, the percentage complete
 			will no longer change, then after 5 times we can stop requesting status
 			updates and show an error message to the user.
 
@@ -203,7 +208,7 @@ var M=$.extend(M || {},{
 			(function updater() {
 				$.ajax({
 					type:"GET",
-					url:M.config["api"]+"job/"+M.state['job_id'], 
+					url:M.config["api"]+"job/"+M.state['job_id'],
 					headers: {
 						"Authorization": M.config["api_auth"]
 					},
@@ -216,16 +221,16 @@ var M=$.extend(M || {},{
 						}
 
 						if( (stopRequestingUpdates==false) && (data["status_code"]==0) ) {
-							/* 
-							Not complete yet. Schedule another status request. 
+							/*
+							Not complete yet. Schedule another status request.
 
-							Todo: maybe slowly increase the time of status updates. The longer it 
+							Todo: maybe slowly increase the time of status updates. The longer it
 							takes, the less point there is in updating the status every 2sec.
 							*/
 							$('div.progress-bar').width(data["percent_complete"]+"%")
 							M.gui.notification("Processing: "+data["percent_complete"]+"% complete")
 							setTimeout(updater, 2000);
-						} 
+						}
 						else if ( (data["status_code"] == 1) && (data["results"]) ) {
 							$('div.progress-bar').width(data["percent_complete"]+"%")
 							M.gui.notification("Processing: "+data["percent_complete"]+"% complete. <a href='javascript:M.api.job_log(\""+data["job"]+"\");'>View log</a>.")
@@ -253,7 +258,7 @@ var M=$.extend(M || {},{
 			/*
 				This error function is called when an API triggers an error response. We check
 				the response for a responseJSON attribute, signifying that at least we got some
-				sort of json response, usually with a 'message' attribute. 
+				sort of json response, usually with a 'message' attribute.
 			*/
 			if(message) {
 				alert("An API error occurred!\n\n"+message)

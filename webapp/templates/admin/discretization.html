@@ -11,6 +11,7 @@
 {% endblock %}
 {% block footjs %}
 	<script src="/static/lib/leaflet/leaflet.js"></script>
+	<script src="https://www.mapquestapi.com/sdk/leaflet/v2.2/mq-map.js?key=Rb8mk6WhnRbq72GpHLRGXnkX5u35Ou3K "></script>
 	<script type="text/javascript">
 		$(document).ready(function() { 
 			$("div.panel-map").each(function(){
@@ -18,17 +19,13 @@
 				var bounds=el.data("bounds").split(",").map(parseFloat)
 				console.log(bounds)
 				var map = L.map(el[0].id,{
-					'scrollWheelZoom':true,
+					'layers':MQ.mapLayer(),
+					'scrollWheelZoom':false,
 					'zoomControl':false,
 					'minZoom':1,
 					'maxZoom':20,
 					'attributionControl':false,
 				});
-				L.tileLayer('http://otile{s}.mqcdn.com/tiles/1.0.0/map/{z}/{x}/{y}.jpg', {
-					attribution: '',
-					maxZoom: 20,
-					subdomains: '1234'
-				}).addTo(map);
 
 				//map.setView([51.505, -0.09], 13);
 				map.fitBounds([[bounds[1],bounds[0]],[bounds[3],bounds[2]]]);

@@ -837,6 +837,13 @@ class Model(db.Model):
             "reporting":self.reporting,
             "time":self.time
         }
+    
+    @property
+    def shortname(self):
+        if len(self.name) >12:
+            return self.name[:9]+"..."
+        else:
+            return self.name
         
     @property
     def filename(self):
@@ -853,6 +860,7 @@ class Model(db.Model):
             print "model dir no exist..try to create... %s"%(_model_dir)
             os.makedirs(_model_dir)
         return os.path.join(_model_dir)
+        
     @property
     def mapserver_config_params(self):
         """
@@ -1067,7 +1075,8 @@ class Model(db.Model):
                 if paramtype is float:
                     try: v=float(v)
                     except: pass
-                modelparams.update({k:v})
+                if v != "###":
+                    modelparams.update({k:v})
 
         #add the default parameters to the configuration as well
         modelparams.update({
@@ -1307,6 +1316,18 @@ class ModelConfiguration(db.Model):
             "timesteps":self.model_timesteps,
             "results":self.results
         }
+        
+    @property
+    def as_short_dict(self):
+        """
+        Return a JSON representation of a modelconfiguration.
+        """
+        return {
+            "parameters":self.parameters,
+            "meta":self.model.meta,
+            "reporting":self.model.reporting,
+        }
+        
     @property
     def as_text(self):
         params_as_str = "\n".join(["%s -> %s"%(param,str(self.parameters[param])) for param in sorted(self.parameters)])
@@ -1349,6 +1370,7 @@ class ModelConfiguration(db.Model):
         with open(os.path.join("/var/mapserver/maps","%s.map"%(self.key)),'w') as f:
             f.write(mapserver_template)
         return True
+        
     @property
     def layer_list(self):
         """
@@ -1427,6 +1449,13 @@ class Job(db.Model):
     @property
     def shortdate(self):
         return self.date_created.strftime('%Y-%m-%d %H:%M:%S')
+        
+    @property
+    def shorterdate(self):
+        if self.date_created.strftime('%U') == datetime.datetime.now().strftime('%U'):
+            return self.date_created.strftime('%a %H:%M')
+        else:
+            return self.date_created.strftime('%d-%-m %H:%M')
 
     @property
     def jobchunks_list(self):
@@ -1595,7 +1624,13 @@ class JobChunk(db.Model):
 
     @property
     def shortkey(self):
-        return str(self.uuid)[0:6]   
+        return str(self.uuid)[0:6]
+        
+    @property
+    def filehash(self):
+        modelname = self.job.modelconfiguration.model.name[:6]
+        timehash = self.job.date_created.strftime('%d%m%H%M')
+        return modelname+'_'+timehash
         
     @property
     def status(self):
@@ -1644,6 +1679,7 @@ Log:
             'grid':self.chunk.grid,
             'modelcode':self.job.modelconfiguration.model.code
         })
+        
 
 
 class User(db.Model, UserMixin):

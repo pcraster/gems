@@ -9,6 +9,7 @@ import datetime
 import logging
 import pytz
 import random
+import ast
 
 #from tzwhere import tzwhere
 #tz = tzwhere.tzwhere()
@@ -382,7 +383,37 @@ class GemModel(DynamicModel, ModelReporter):
         
         Todo: make a decision on how to deal with this in the best way.
         """
-        pass        
+        pass     
+    
+    def lookupdict(self, classmap, string, defaultval=-9999):
+        """
+        Python method for reclassifying a map using a Python dictionary. 
+        The method will take a string that is given through the parameters 
+        section and turn it into a python dictionary. The 'type' key of the 
+        dictionary will determine whether the resulting map will be ordinal,
+        nominal, scalar, boolean or ldd. 
+        """
+        lookup = ast.literal_eval(string)
+        maptype = lookup.get('maptype', 'scalar')
+        resmap = scalar(defaultval)
 
-
-
+                
+        for key in lookup.keys():
+            if isinstance(key, float) or isinstance(key, int):
+                inval = float(key)
+                valuemap = scalar(lookup.get(key))
+                valuemask = ifthen(pcreq(scalar(classmap), inval), valuemap)
+                resmap = cover(valuemask, resmap)
+        
+        if maptype is 'nominal':
+            resmap = pcraster.nominal(resmap)
+        elif maptype is 'ordinal':
+            resmap = pcraster.ordinal(resmap)
+        elif maptype is 'boolean':
+            resmap = pcraster.boolean(resmap)
+        elif maptype is 'ldd':
+            resmap = pcraster.ldd(resmap)
+        else:
+            resmap = pcraster.scalar(resmap)
+                
+        return resmap

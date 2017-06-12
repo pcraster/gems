@@ -1,5 +1,5 @@
 var M=$.extend(M || {},{
-	/* 
+	/*
 	Default configuration values. Overwritten by those passed to M.init()
 	*/
 	config: {
@@ -30,24 +30,6 @@ var M=$.extend(M || {},{
 		$.extend(M.config, config)
 
 		/*
-		Create the M.config["api_auth"] variable which will use the 
-		api_auth_username and api_auth_password config variable to 
-		create the HTTP Authentication header which will be sent along
-		with every API call.
-		*/
-		M.config["api_auth"] = "Basic " + btoa(M.config["api_auth_username"] + ":" + M.config["api_auth_token"])
-
-		/*
-		Parse the hash part (after #) of the url and look for a config
-		key that we can use for initializing the model. If no such key
-		is found, the hash init function falls back to the valie in the
-		M.config["default_config_key"] variable. The config key returned
-		from M.hash.init() is later used to request the configuration 
-		details from the API.
-		*/
-		var _config_key=M.hash.init()
-
-		/*
 		Overwrite the common console methods depending on the debug
 		config variable. If debug is set to false, console.log() will
 		do nothing.
@@ -61,10 +43,28 @@ var M=$.extend(M || {},{
 		}
 
 		/*
+		Create the M.config["api_auth"] variable which will use the
+		api_auth_username and api_auth_password config variable to
+		create the HTTP Authentication header which will be sent along
+		with every API call.
+		*/
+		M.config["api_auth"] = "Basic " + btoa(M.config["api_auth_username"] + ":" + M.config["api_auth_token"])
+
+		/*
+		Parse the hash part (after #) of the url and look for a config
+		key that we can use for initializing the model. If no such key
+		is found, the hash init function falls back to the valie in the
+		M.config["default_config_key"] variable. The config key returned
+		from M.hash.init() is later used to request the configuration
+		details from the API.
+		*/
+		var _config_key=M.hash.init()
+
+		/*
 		Then fetch the model configuration with the config key for
-		this model run. If no key was supplied in the URL hash, the 
+		this model run. If no key was supplied in the URL hash, the
 		default key for this model will be used. After fetching the
-		model configuration from the API, the "parameters" form 
+		model configuration from the API, the "parameters" form
 		will be populated with the correct input params returned by
 		this call.
 		*/
@@ -75,7 +75,7 @@ var M=$.extend(M || {},{
 		output attribute which is visualized with a pseudocolor color ramp.
 		Some javascript is needed though to actually fill in the colors.
 		Various data attributes have been added to the canvas tag (see the
-		html source) which define the color stops. This bit of code loops 
+		html source) which define the color stops. This bit of code loops
 		over all the canvases in the DOM and:
 
 			- colors them in with the proper color map
@@ -83,7 +83,7 @@ var M=$.extend(M || {},{
 
 		*/
 		M.legends.init()
-		
+
 		M.charts.init()
 
 		M.chart.init()
@@ -204,21 +204,41 @@ var M=$.extend(M || {},{
 			/*
 			Initialize the leaflet map object. It is stored in M.map.obj.
 			*/
+
 			M.map.obj = L.map('map',{
+				'layers':MQ.mapLayer(),
 				'scrollWheelZoom':true,
 				'zoomControl':false,
+				//'attributionControl':false,
 				'minZoom':4,
 				'maxZoom':20,
-				'attributionControl':false,
 			});
 
 			/*
-			Add the background tile layer to the map.
+			This is the layer that shows the selected discretization chunk.
+			To Do: Change this to show all chunks, making them selectable to run.
 			*/
-			L.tileLayer('http://otile{s}.mqcdn.com/tiles/1.0.0/map/{z}/{x}/{y}.jpg', {
-				attribution: '',
-				maxZoom: 18,
-				subdomains: '1234'
+			M.map.chunklayer = L.geoJson(undefined, {
+				'style':{
+					"color": "#888",
+					"weight": 1,
+					"opacity": 0.8,
+					"fillOpacity": 0
+				},
+				onEachFeature: function(feature, layer) {
+					layer.on('click', function(e) {
+						M.map.obj.fitBounds(layer.getBounds(),{'padding':[20,20]})
+					})
+					layer.on('mouseover', function(e){
+						initialStyle = layer.options['style']
+						layer.setStyle({color: "#15b01a", weight: 3, fillOpacity: 0.2})
+						layer.bringToFront()
+					})
+					layer.on('mouseout', function(e){
+						layer.setStyle(initialStyle)
+						layer.bringToBack()
+					})
+				}
 			}).addTo(M.map.obj);
 
 			M.map.geojsonlayer = L.geoJson(undefined, {
@@ -235,9 +255,8 @@ var M=$.extend(M || {},{
 				}
 			}).addTo(M.map.obj);
 
-			L.control.scale({position:'bottomleft'}).addTo(M.map.obj);
 			/*
-			Attache some events for when the map is moving
+			Attach some events for when the map is moving
 			*/
 			M.map.obj.on('movestart',M.map.movestart)
 			M.map.obj.on('moveend',M.map.moveend)
@@ -274,6 +293,7 @@ var M=$.extend(M || {},{
 		},
 		datalayer: undefined,
 		geojsonlayer: undefined,
+		chunklayer: undefined,
 		moveend:function(){
 			/*
 			Triggered on a leaflet moveend event. Call the api
@@ -318,6 +338,8 @@ var M=$.extend(M || {},{
 				Maybe update the rest of the UI (chart, legend) also here instead of in the
 				setAttribute command...
 				*/
+				//
+				//M.geojsonlayer.redraw()
 
 				M.hash.update()
 			}
@@ -342,7 +364,7 @@ var M=$.extend(M || {},{
 				is created. Subsequent calls use the data layer setParams() method
 				to update the parameters.
 			*/
-			if(M.map.datalayer==undefined) { 
+			if(M.map.datalayer==undefined) {
 				if('layers' in params && 'time' in params && 'configkey' in params && 'map' in params && 'mapserver' in params) {
 					console.log("Initial loading of the data map layer!")
 					var dataLayer=L.tileLayer.wms(params["mapserver"], {
@@ -368,7 +390,7 @@ var M=$.extend(M || {},{
 					M.map.datalayer=dataLayer
 					M.map.datalayer.addTo(M.map.obj);
 
-					/* 
+					/*
 					Initializes the attributes panel of the map which shows
 					a list of attributes, timesteps, and a colormap legend.
 					*/
@@ -397,6 +419,9 @@ var M=$.extend(M || {},{
 					$('select#selected-timestamp').change(function(){
 						M.map.setTime(this.value)
 					})
+
+					L.control.scale({position:'bottomleft'}).addTo(M.map.obj);
+					L.control.zoom({position:'bottomright'}).addTo(M.map.obj);
 
 					M.map.setTime(params['time'])
 					M.map.setAttribute(params['layers'])
@@ -430,7 +455,7 @@ var M=$.extend(M || {},{
 			M.charts.get('timeseries').setTime(time)
 		},
 		updateSize:function() {
-			/* 
+			/*
 			Updates the map size to match the space from the bottom of the navbar to the
 			bottom of the document.
 			*/
@@ -474,7 +499,7 @@ var M=$.extend(M || {},{
 
 				/*
 				We got some results back after a model run, and it contains a number of time-
-				steps that need to be processed. First order of business is to loop through 
+				steps that need to be processed. First order of business is to loop through
 				the timesteps and add them all to the timesteps select box in the interface.
 				Usually this will not be necessary as the timesteps of a model with a static
 				starting time will not change, but for forecast models it may be that the
@@ -502,11 +527,11 @@ var M=$.extend(M || {},{
 
 				/*
 				This function processes incoming result data to update the map accordingly.
-				Sometimes the map doesn't have a current state yet (ie. a selected attribute 
+				Sometimes the map doesn't have a current state yet (ie. a selected attribute
 				and timestep), like when the model has just been edited and no runs have been
 				done yet with this new configuration. In that case we need to select some
 				sensible defaults to show to the user. So, here we check if the state 'time'
-				and 'layers' variables are undefined, and assign some sensible defaults 
+				and 'layers' variables are undefined, and assign some sensible defaults
 				if they are.
 				*/
 
@@ -514,15 +539,15 @@ var M=$.extend(M || {},{
 				var defaultLayers=(M.hash.values["layers"]==undefined)?Object.keys(results['timesteps'][numOfTimesteps-1]['attributes'])[0]:M.hash.values["layers"];
 
 				if(numOfTimesteps == 1) {
-					/* 
-					Lets not muck about with a timesteps select box if there is only one 
+					/*
+					Lets not muck about with a timesteps select box if there is only one
 					timestep to choose from.
 					*/
 					$("div#panel-timesteps").hide()
 				}
 
 				/*
-				Only when loading in new results, for example after a model run, we set a 
+				Only when loading in new results, for example after a model run, we set a
 				new random number. This will *force* the map tiles to do a hard reload from
 				the server. The random parameter is ignored in the server caching mechanisms.
 				*/
@@ -543,8 +568,8 @@ var M=$.extend(M || {},{
 				So we had some results come in, but these results contained no data on time-
 				steps. This usually happens after a model has just been edited. When the user
 				visits the modeller, the default configuration for that model is loaded into
-				the map. However, there are no results yet created with this config key, so 
-				we simply do nothing. 
+				the map. However, there are no results yet created with this config key, so
+				we simply do nothing.
 				In other scenarios when there is a deeplink to a particular model configuration,
 				some timesteps actually exist in the database and the timesteps will be loaded
 				as normal.
@@ -558,9 +583,9 @@ var M=$.extend(M || {},{
 		defaultOptions:{
 			color: "rgb(255,50,50)",
 			series: {
-				lines: { 
+				lines: {
 					show: true,
-					color: "rgb(255,50,50)", 
+					color: "rgb(255,50,50)",
 					fill: true,
 					fillColor: '#FFCCCC'
 				},
@@ -581,15 +606,15 @@ var M=$.extend(M || {},{
 					}*/
 				]
 			},
-			yaxes: [ 
+			yaxes: [
 					{
 						min: 0.0,
 						max: 1.5,
 						ticks: 4
-					} 
+					}
 				],
-			xaxes: [ 
-	                { 
+			xaxes: [
+	                {
 	                	position:'bottom',
 	                	ticks:10,
 	                	min:-0.5,
@@ -602,8 +627,8 @@ var M=$.extend(M || {},{
 						//minTickSize: [2, "month"]
 					}
 
-	                /*,{ 
-	                	mode: "time", min:(this.modelepoch-(this.data.time.timeunitlength*1000*0.5)), max:(this.modelepoch+((this.data.time.timesteps-1)*this.data.time.timeunitlength*1000)+(this.data.time.timeunitlength*1000*0.5)) 
+	                /*,{
+	                	mode: "time", min:(this.modelepoch-(this.data.time.timeunitlength*1000*0.5)), max:(this.modelepoch+((this.data.time.timesteps-1)*this.data.time.timeunitlength*1000)+(this.data.time.timeunitlength*1000*0.5))
 	                } */
             ]
 		},
@@ -667,7 +692,7 @@ var M=$.extend(M || {},{
 				//$('#panel-params').toggle()
 				$(this).blur()
 				M.panels.editparams()
-				
+
 			})
 			$('a#menu-findplaces').click(function(){
 				$(this).blur()
@@ -676,7 +701,7 @@ var M=$.extend(M || {},{
 
 			/*
 			Set the values in the form with input parameters that correspond
-			with the configuration key. The form will have default values of 
+			with the configuration key. The form will have default values of
 			'###' for all parameters, and these need to be updated to reflect
 			the correct values.
 			*/
@@ -687,8 +712,8 @@ var M=$.extend(M || {},{
 			/*
 			Now that the form contains the right values, we need to attach some
 			events to the inputs which trigger a new prognosis API request when
-			the value changes. For example, when you change a parameter from 
-			0.1 to 0.5, we need to call the server to get a new configuration 
+			the value changes. For example, when you change a parameter from
+			0.1 to 0.5, we need to call the server to get a new configuration
 			key, and to see how many chunks need to be run if we're going to
 			use the new key.
 			*/
@@ -696,8 +721,16 @@ var M=$.extend(M || {},{
 				var input=$(this)
 				//console.log("Input "+input.prop("id")+" has changed!!")
 				M.api.job_prognosis()
+				M.map.updatestate()
 			})
-
+			/*
+			We add a control to the layer select tab that slides in the layers.
+			This way the chart does not get hidden on smaller screens.
+			*/
+			$("h2#output-layer-header").on("click",function(){
+				$("form#attribute-form").slideToggle()
+				$("div#arrow").toggleClass("arrow-down arrow-right")
+			})
 			/*
 			Add the control with input params to the top left of the Leaflet map
 			and disable that mousewheel and click events propagate to the map
@@ -752,14 +785,14 @@ var M=$.extend(M || {},{
 					panel.hide()
 				}
 			})
-			
+
 		}
 	},
 	params: {
 		serialize:function(){
 			/*
 			Serializes the form parameters and adds a parameter 'bbox' which defines
-			the extent of the requested model run. This data is then sent off as a 
+			the extent of the requested model run. This data is then sent off as a
 			prognosis API request.
 			*/
 			var formdata=$("form#model-parameters").serializeArray()
