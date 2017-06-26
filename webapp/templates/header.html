@@ -5,6 +5,8 @@
         <!--<li><a href="/" style="padding:0;padding-left:15px;padding-top:10px;padding-bottom:10px;padding-right:15px;"><img src="/static/gfx/gems-logo-cube.png" style="border:0;height:30px;"></a></li>-->
         {% if request.path != '/' and request.path != '/user/login' %}
           <li><a href="/"><i class="fa fa-arrow-left"></i> Home</a></li>
+		 {% else %}
+		  <li><a href="/" style="padding:0;padding-left:15px;padding-top:10px;padding-bottom:10px;padding-right:15px;"><img src="/static/gfx/gems-logo-cube.png" style="border:0;height:30px;"></a></li>
         {% endif %}
       </ul>
       <!--
@@ -14,7 +16,7 @@
         </p>
       {% endif %}
       -->
-        
+
     {% if not current_user.is_anonymous() %}
       <a href="{{url_for('user.logout')}}" class="btn btn-default navbar-btn pull-right" style="background-color:#222;border-color:#555;color:#aaa;margin-left:15px;"><i class="fa fa-close"></i> Log Out</a>
       <a href="{{url_for('site.myaccount')}}" class="btn btn-default navbar-btn pull-right" style="background-color:#222;border-color:#555;color:#aaa;margin-left:15px;"><i class="fa fa-user"></i> My Account</a>

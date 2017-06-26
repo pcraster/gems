@@ -5,7 +5,7 @@ var M=$.extend(M || {},{
 	config: {
 		version:'0.1',
 		api:'/api/v1/',
-		debug:false
+		debug:true
 	},
 	/*
 	Default state variables. Will be updated as soon as a certain config
@@ -213,6 +213,7 @@ var M=$.extend(M || {},{
 				'minZoom':4,
 				'maxZoom':20,
 			});
+
 			/*
 			This is the layer that shows the selected discretization chunk.
 			To Do: Change this to show all chunks, making them selectable to run.
@@ -220,7 +221,7 @@ var M=$.extend(M || {},{
 			M.map.chunklayer = L.geoJson(undefined, {
 				'style':{
 					"color": "#888",
-					"weight": 1,
+					"weight": 2,
 					"opacity": 0.8,
 					"fillOpacity": 0
 				},
@@ -239,6 +240,7 @@ var M=$.extend(M || {},{
 					})
 				}
 			}).addTo(M.map.obj);
+
 			M.map.geojsonlayer = L.geoJson(undefined, {
 				'style':{
 					"color": "#e50000",

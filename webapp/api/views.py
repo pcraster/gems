@@ -216,13 +216,13 @@ def job_prognosis():
         #   return o[0](self, self.expr, op, *(other + o[1:]), **kwargs)
         #print Chunk.geom
         chunks = Chunk.query.filter(Chunk.discretization_id==discretization.id).filter(Chunk.geom.intersects(geom)).order_by(ST_Distance(ST_Centroid(Chunk.geom),ST_Centroid(geom))).limit(max_chunks)
-        otherchunks = Chunk.query.filter(Chunk.discretization_id==discretization.id).order_by(ST_Distance(ST_Centroid(Chunk.geom),ST_Centroid(geom))).offset(max_chunks).limit(100)
+        otherchunks = Chunk.query.filter(Chunk.discretization_id==discretization.id).filter(Chunk.geom.intersects(geom)).order_by(ST_Distance(ST_Centroid(Chunk.geom),ST_Centroid(geom))).offset(max_chunks).limit(100)
     else:
         #if there are some chunks which have already been processed with the
         #same config key then exclude those chunks from the intersect 
         #operation using a negated (~) in_()
         chunks = Chunk.query.filter(Chunk.discretization_id==discretization.id).filter(Chunk.geom.intersects(geom),~Chunk.id.in_(chunks_already_processed)).order_by(ST_Distance(ST_Centroid(Chunk.geom),ST_Centroid(geom))).limit(max_chunks)
-        otherchunks = Chunk.query.filter(Chunk.discretization_id==discretization.id).filter(~Chunk.id.in_(chunks_already_processed)).order_by(ST_Distance(ST_Centroid(Chunk.geom),ST_Centroid(geom))).offset(max_chunks).limit(100)
+        otherchunks = Chunk.query.filter(Chunk.discretization_id==discretization.id).filter(Chunk.geom.intersects(geom),~Chunk.id.in_(chunks_already_processed)).order_by(ST_Distance(ST_Centroid(Chunk.geom),ST_Centroid(geom))).offset(max_chunks).limit(100)
         
     chunks_to_be_processed = [c.id for c in chunks]
     num_of_chunks_to_be_processed = len(chunks_to_be_processed)
@@ -232,7 +232,7 @@ def job_prognosis():
     #      connected to the app to do processing..
     features=[[],[]]
     for c in chunks:
-        feat = to_shape(c.geom).simplify(0.005)
+        feat = to_shape(c.geom).simplify(0.0005, preserve_topology = False)
         
         features[0].append({
             'type':'Feature',
@@ -243,7 +243,7 @@ def job_prognosis():
         })
         
     for c in otherchunks:
-        feat = to_shape(c.geom).simplify(0.005)
+        feat = to_shape(c.geom).simplify(0.0005, preserve_topology = False)
         
         features[1].append({
             'type':'Feature',
