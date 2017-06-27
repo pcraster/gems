@@ -2,7 +2,7 @@
 
 {% block footjs %}
 	<script src="/static/lib/jquery/jquery-debounce.js"></script>
-	
+
 
 	<script src="/static/lib/leaflet/leaflet.js"></script>
 	<script src="/static/lib/leaflet-plugins/grid/L.Grid.js"></script>
@@ -66,7 +66,7 @@
 			viewport:{ selector: 'body', padding: 7 }
 		})
 
-		$(document).ready(function() { 
+		$(document).ready(function() {
 			M.init({
 				model:'{{model.name}}',
 				mapfile:'{{model.mapserver_mapfile}}',
@@ -78,7 +78,7 @@
 				default_view_extent:'{{discretization.extent_as_bounds}}',
 				hash:'{{model.default_modeller_hash}}',
 				geonames_api_username:'{{config["GEONAMES_API_USERNAME"]}}'
-			}); 
+			});
 		});
 
 	</script>
@@ -101,6 +101,7 @@
     {% if not current_user.is_anonymous() %}
       <a href="{{url_for('user.logout')}}" class="btn btn-default navbar-btn pull-right" style="background-color:#111;border-color:#555;color:#aaa;margin-left:15px;"><i class="fa fa-close"></i> Log Out</a>
       <a href="{{url_for('site.myaccount')}}" class="btn btn-default navbar-btn pull-right" style="background-color:#111;border-color:#555;color:#aaa;margin-left:15px;"><i class="fa fa-user"></i> My Account</a>
+	  <a href="{{url_for('site.about')}}" class="btn btn-default navbar-btn pull-right" style="background-color:#222;border-color:#555;color:#aaa;margin-left:15px;"><i class="fa fa-book"></i></a>
     {% endif %}
 		<ul class="nav navbar-nav navbar-right">
 			<li><a href="{{url_for('site.datasources')}}" style="color:#888;"><i class="fa fa-caret-right"></i> Data sources and attribution</a></li>
@@ -141,7 +142,7 @@ opacity:0.8;
 {% endblock %}
 
 {% block modeller %}
-	
+
 	{% if modelconfiguration %}
 		loading with configuration
 	{% endif %}
@@ -175,8 +176,8 @@ opacity:0.8;
 						<label for="{{parameter}}" class="col-sm-4 control-label">{{parameter}}</label>
 						<div class="col-sm-8">
 							<input type="text" class="form-control input-sm" id="{{parameter}}" placeholder="" name="{{parameter}}" style="width:100%;text-align:center;" value="###">
-							<!-- 
-							The '###' values will be replaced when a JavaScript loads the 
+							<!--
+							The '###' values will be replaced when a JavaScript loads the
 							actual parameters corresponding to the model configuration.
 							-->
 						</div>
@@ -203,7 +204,7 @@ opacity:0.8;
 		</div>
 
 		<div id="panel-attributes" class="map-control map-control-right" style="width:350px;">
-			<h2 id="output-layer-header"><div class="arrow-down" id="arrow"></div>Output layers</h2>
+			<h2 id="output-layer-header"><i class="fa fa-chevron-circle-down" id="arrow"></i> Output layers</h2>
 			<p style="color:#888;">Hint: Hold down SPACE to quickly show and hide the data layer.</p>
 			<form class="form-horizontal" id="attribute-form">
 				{% for attribute in model.reporting %}
@@ -212,7 +213,7 @@ opacity:0.8;
 				</div>
 				{% endfor %}
 
-			</form>		
+			</form>
 			<div id="panel-timesteps">
 				<hr/>
 				<strong>Timesteps</strong><br/>
@@ -255,23 +256,23 @@ opacity:0.8;
 								<li style="left:100%">500</li>
 							</ul>
 						</div>
-						<canvas 
-							id="legend-item-{{attribute}}-colormap" 
-							width="255" 
-							height="28" 
-							class="legend-colormap" 
-							data-layer="{{attribute}}" 
-							data-color-stops="{% for color in model.reporting[attribute].symbolizer.colors %}{{color}} {% endfor %}" 
-							data-min="{{ model.reporting[attribute].symbolizer['values'][0] }}" 
-							data-max="{{ model.reporting[attribute].symbolizer['values'][1] }}" 
-							data-ticks="{{model.reporting[attribute].symbolizer['ticks']}}" 
+						<canvas
+							id="legend-item-{{attribute}}-colormap"
+							width="255"
+							height="28"
+							class="legend-colormap"
+							data-layer="{{attribute}}"
+							data-color-stops="{% for color in model.reporting[attribute].symbolizer.colors %}{{color}} {% endfor %}"
+							data-min="{{ model.reporting[attribute].symbolizer['values'][0] }}"
+							data-max="{{ model.reporting[attribute].symbolizer['values'][1] }}"
+							data-ticks="{{model.reporting[attribute].symbolizer['ticks']}}"
 							data-ticks-ul="ticks-for-{{attribute}}">
 						</canvas>
 					{% endif %}
 					<p>{{ model.reporting[attribute].info }}</p>
 				</div>
 				{% endfor %}
-				
+
 
 				<div id="legend-chart-timeseries" class="legend-chart" data-chart-id="timeseries">
 					<hr/>
@@ -292,15 +293,15 @@ opacity:0.8;
 					<hr/>
 					<h2>Timeseries: {{ model.reporting[attribute].title }}</h2>
 					<p style="color:#888;">Hint: Click a location on the map to view the timeseries data.</p>
-					<canvas 
+					<canvas
 						id="legend-chart-canvas-{{attribute}}"
-						data-min="{{ model.reporting[attribute].symbolizer['values'][0] }}" 
-						data-max="{{ model.reporting[attribute].symbolizer['values'][1] }}" 
+						data-min="{{ model.reporting[attribute].symbolizer['values'][0] }}"
+						data-max="{{ model.reporting[attribute].symbolizer['values'][1] }}"
 						data-ticks="{{model.reporting[attribute].symbolizer['ticks']}}"
-						data-labels="1,2,3,4,5,6,7,8,9,10,11,12" 
-						data-timesteps="{{model.time['timesteps']}}" 
-						data-for-attribute="{{attribute}}" 
-						width="255" 
+						data-labels="1,2,3,4,5,6,7,8,9,10,11,12"
+						data-timesteps="{{model.time['timesteps']}}"
+						data-for-attribute="{{attribute}}"
+						width="255"
 						height="160">
 					</canvas>
 				</div>

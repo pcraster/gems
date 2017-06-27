@@ -729,7 +729,7 @@ var M=$.extend(M || {},{
 			*/
 			$("h2#output-layer-header").on("click",function(){
 				$("form#attribute-form").slideToggle()
-				$("div#arrow").toggleClass("arrow-down arrow-right")
+				$("i#arrow").toggleClass("fa-chevron-circle-down fa-chevron-circle-right")
 			})
 			/*
 			Add the control with input params to the top left of the Leaflet map

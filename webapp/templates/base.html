@@ -6,7 +6,7 @@
 	<head>
 		<title>GEMS: Global Environmental Modelling System</title>
 		<link href="/static/lib/bootstrap/bootstrap.min.css" rel="stylesheet">
-		<link href="/static/lib/fontawesome/font-awesome.min.css" rel="stylesheet">
+		<link href="/static/lib/fontawesome/css/font-awesome.min.css" rel="stylesheet">
 		<link href="/static/lib/gem/gems.css" rel="stylesheet">
 		{% block headcss %}{% endblock %}
 		{% block headjs %}{% endblock %}
@@ -18,15 +18,15 @@
 		{% block header %}
 				{% include "header.html" %}
 		{% endblock %}
-		
+
 		{% include "flashes.html" %}
-		
+
 		{% block editor %}
 		{% endblock %}
 
 		{% block modeller %}
 		{% endblock %}
-		
+
 		<div class="container-fluid">
 			{% block content %}{% endblock %}
 		</div>
