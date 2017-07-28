@@ -1,0 +1,102 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+
+<div class="row">
+	<div class="col-md-2 col-sm-2">
+	</div>
+	<div class="col-md-8 col-sm-8">
+		<h2 style="text-align:center;">GEMS Manual</h2>
+		<div class="well well-sm">
+			<p>
+
+				GEMS is used by students and researchers to:
+			</p>
+			<ul>
+				<li>Deploy models for use anywhere on the globe using open data.</li>
+				<li>View and share model results.</li>
+				<li>Download the results of their model runs for further use.</li>
+			</ul>
+		</div>
+		<div class="well well-sm">
+			<h4>Models in GEMS</h4>
+			<ul>
+				<li><a href="#">Overview of Models in GEMS</a></li>
+				<li><a href="#">Running Models in GEMS</a></li>
+				<li><a href="#">Editing model parameters</a></li>
+			</ul>
+			<h4>Model results</h4>
+			<ul>
+				<li><a href="#">View model output</a></li>
+				<li><a href="#">Downloading Model Output</a></li>
+			</ul>
+		</div>
+		<h3 id="topic-overview-of-models">Overview of Models in GEMS</h3>
+		<p>
+			If you are logged in to GEMS, you will see a list of available models (Figure 1). Select which model you want to run by pressing the 'Run Model' button.
+		</p>
+		<div style="text-align:center;padding:20px 0px;">
+			<img src="/static/gfx/manual/homepage.png" style="width:80%;"><br/>
+			<small><strong>Figure 1. The home view of GEMS</strong></small>
+		</div>
+		<h3 id="topic-running-models">Running Models in GEMS</h3>
+		<p>
+			To run a model in GEMS:
+		</p>
+		<ol>
+			<li>1. Click on the ‘> Run model’ button. This will take you to a map.</li>
+			<li>2. On the map, pan and zoom to the location where you want to run the model. The red polygon shows the select modelling area. To select an area, it must be in the middle of the map. If an area has already been modelled with the current settings, you cannot run it again.</li>
+		</ol>
+		<div style="text-align:center;padding:20px 0px;">
+			<img src="/static/gfx/manual/modelinterface.png" style="width:100%;"><br/>
+			<small><strong>Figure 2. The modelling interface</strong></small>
+		</div>
+		<h3 id="topic-editing-model-parameters">Editing model parameters</h3>
+		<p>
+			There are two types of parameters:
+		</p>
+		<ol>
+			<li>Numeric parameters – These are single numbers.</li>
+			<li>Lookup tables – These contain a list of numbers between curly brackets { }. The numbers come in pairs, connected with a colon (:) and separated with a comma. These tables convert a map with classes to a numeric map. For example the lookup table ‘{ 1: 0.1, 2: 0.2, 3: 0.3, 4: 0.4 }’, will convert a map with four classes (1, 2, 3, and 4, for example a vegetation map) to a numeric map with the values 0.1 for class 1, 0.2 for class 2, etc. (for example for vegetation cover fractions).</li>
+		</ol>
+
+		<p>
+			You can change the model parameters by clicking on the ‘Edit parameters’ button. A list with model parameters appears Figure 4. After you change the parameters, you need to run the model again.
+		</p>
+		<div style="text-align:center;padding:20px 0px;">
+			<img src="/static/gfx/manual/parameters.png" style="width:90%;"><br/>
+			<small><strong>Figure 3. Model parameter window</strong></small>
+		</div>
+		<h3 id="topic-view-model-output">View model output</h3>
+		<p>
+			After the model is run, you can show the output maps in GEMS. In the output window (Figure 3), you need to select one of the maps that the model produces. For dynamic model output:
+		</p>
+		<ul>
+			<li>Maps for each timestep can be selected under timesteps. </li>
+			<li>If you double-click on the map, a timeseries for that location will be shown.</li>
+		</ul>
+		<p>
+			For models that output initial, static calculations, that output is available under the first timestep (timestep 0). This is the case for the input_test_rainfall_runoff_erosion model. For dynamic models with final, static output, that output is available under the last timestep in the list. This is the case for the estimate yearly soil detachment. Keep in mind that values outside the legend will not be displayed (they appear transparent on the map).
+		</p>
+		<div style="text-align:center;padding:20px 0px;">
+			<img src="/static/gfx/manual/output.png" style="width:80%;"><br/>
+			<small><strong>Figure 4. Model output interface</strong></small>
+		</div>
+		<h3 id="topic-download-model-output">Downloading Model Output</h3>
+		<p>
+			If you are satisfied with a model run, you can store the resulting maps, and use these maps for custom visualisation in QGIS. On the Home page in GEMS, there is a ‘Completed Model Runs’ box on the right (Figure 5). Here, the last five model runs are available.
+		</p>
+		<ul>
+			<li>View the results online by clicking on the Map button.</li>
+			<li>Review your model parameters by clicking on the name of the model (this name is in blue and shortened to fit the window).</li>
+			<li>Download the whole set of maps with the Download button. This will download a zip file with all the maps for each timestep. Extract this file, to get a folder per model output, which contain .vrt files for each timestep. The .vrt files can be opened in QGIS.</li>
+		</ul>
+		<div style="text-align:center;padding:20px 0px;">
+			<img src="/static/gfx/manual/download.png" style="width:50%;"><br/>
+			<small><strong>Figure 5. The sidebar for downloading and reviewing recent model runs</strong></small>
+		</div>
+
+	</div>
+</div>
+{% endblock %}

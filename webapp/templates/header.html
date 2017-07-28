@@ -19,7 +19,7 @@
     {% if not current_user.is_anonymous() %}
       <a href="{{url_for('user.logout')}}" class="btn btn-default navbar-btn pull-right" style="background-color:#222;border-color:#555;color:#aaa;margin-left:15px;"><i class="fa fa-close"></i> Log Out</a>
       <a href="{{url_for('site.myaccount')}}" class="btn btn-default navbar-btn pull-right" style="background-color:#222;border-color:#555;color:#aaa;margin-left:15px;"><i class="fa fa-user"></i> My Account</a>
-	  <a href="{{url_for('site.about')}}" class="btn btn-default navbar-btn pull-right" style="background-color:#222;border-color:#555;color:#aaa;margin-left:15px;"><i class="fa fa-book"></i></a>
+	  <a href="{{url_for('site.manual')}}" class="btn btn-default navbar-btn pull-right" style="background-color:#222;border-color:#555;color:#aaa;margin-left:15px;"><i class="fa fa-book"></i></a>
     {% endif %}
     <ul class="nav navbar-nav navbar-right">
       <li><a href="{{url_for('site.datasources')}}" style="color:#888;"><i class="fa fa-chevron-right"></i> Data sources and attribution</a></li>

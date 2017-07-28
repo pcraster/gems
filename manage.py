@@ -1,4 +1,7 @@
 #!/usr/bin/env python
+import os
+import shutil
+import pwd
 from flask.ext.script import Manager, Shell, Server
 from webapp import *
 
@@ -41,6 +44,24 @@ def reset_password(username):
     user.password = user_manager.hash_password(new_password)
     db.session.commit()
     print "New password for user '%s': %s"%(username,new_password)
+
+@manager.command
+def data_cleanup():
+    """
+    Drop all maps, jobchunks and jobs from database.
+    Delete all temporary data in the incoming_maps and maps
+    """
+    Map.query.delete()
+    JobChunk.query.delete()
+    Job.query.delete()
+    db.session.commit()
+    directories_list=['maps', 'incoming_maps']
+    gemsuser = pwd.getpwnam('gems')
+    for directory in directories_list:
+        curdir = os.path.join(current_app.config['HOME'],directory)
+        shutil.rmtree(curdir, ignore_errors=True)
+        os.makedirs(curdir)
+        os.chown(curdir, gemsuser.pw_uid, gemsuser.pw_gid)
 
 if __name__=="__main__":
     manager.run()

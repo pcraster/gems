@@ -53,3 +53,7 @@ def about():
 @site.route('/datasources')
 def datasources():
     return render_template("site/datasources.html")
+    
+@site.route('/manual')
+def manual():
+    return render_template("site/manual.html")
