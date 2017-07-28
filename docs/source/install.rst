@@ -340,13 +340,14 @@ Verify that the mapserver CGI script can be executed by pointing your browser at
 
 Initialization
 ++++++++++++++
-The web application is now up and running, but it does not have users of any data yet. This initialization takes place via a web interface. This will create the necessary data folders, create the tables in the database, add some users, add chunkschemes, and upload some default models you can play with. Point a modern browser at ``http://geowebfg01.geo.uu.nl/install`` and click the install button. Please be patient as it may take a while to initialize everything. If an error occurs it will generally give some debug information about what went wrong. Fix it, reload the page, and click the button again.
+The web application is now up and running, but it does not have users of any data yet. This initialization takes place via a web interface. This will create the necessary data folders, create the tables in the database, add some users, add chunkschemes, and upload some default models you can play with. Point a modern browser at ``http://<ServerName>/install`` and click the install button. Please be patient as it may take a while to initialize everything. If an error occurs it will generally give some debug information about what went wrong. Fix it, reload the page, and click the button again.
 
 Once the application has been installed, the install link described above will be invalidated so that you can't do a new installation while there is still another one present. If you want to do a reinstall anyway (reset to factory settings as it were) then manually remove the ``./install/install-ok.txt``file in the data directory. Once this file has been removed you can visit the install link again. 
 
 .. warning::
 
 	Removing the ``./install/install-ok.txt`` file in the data directory and running the reinstalling script **WILL DELETE ALL DATA IN THE WEB APPLICATION!**
+	To delete temporary data from the webapplication run the data cleanup script in the GEMS manage.py file with ``./manage.py data_cleanup``.
 
 .. notice::
 

@@ -14,7 +14,7 @@ Welcome to the GEMS documentation.
    intro
    prerequisites
    install
-   
+   webapplication
    overview
    
    datamodel
