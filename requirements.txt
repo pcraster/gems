@@ -11,7 +11,7 @@ SQLAlchemy==0.9.8
 pyproj==1.9.3
 beanstalkc==0.4.0
 utm==0.4.0
-Pillow==2.3.0
+Pillow==8.1.2
 OWSLib==0.8.13
 Shapely==1.4.4
 Sphinx==1.3.1
